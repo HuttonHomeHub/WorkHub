@@ -1,48 +1,32 @@
 <!--
-Thanks for contributing to WorkHub! Please complete this template.
-Keep the PR focused — one logical change per PR. See CONTRIBUTING.md.
+Filled in by Claude (see docs/PROCESS.md). One logical change per PR; the title
+is a Conventional Commit (it becomes the squash-merge commit).
 -->
 
 ## Summary
 
-<!-- What does this PR do and why? Link the issue it closes. -->
+<!-- What changed and why, in a few bullets. -->
 
-Closes #
+## Change class
 
-<!-- For a feature, link its approved spec + plan (see docs/PROCESS.md). -->
+<!-- Trivial | Small | Feature | Architectural, and any escalation trigger hit.
+Link the feature doc (docs/features/<slug>.md) or ADR where there is one. -->
 
-Spec / plan:
+## How has this been tested
 
-## Type of change
+<!-- Commands run and their results, e.g.
+`pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm docs:check` ✔
+API e2e / Playwright / contract:generate where relevant. Say what was not run. -->
 
-- [ ] ✨ Feature (`feat`)
-- [ ] 🐛 Bug fix (`fix`)
-- [ ] ♻️ Refactor (`refactor`)
-- [ ] 📝 Documentation (`docs`)
-- [ ] 🧪 Tests (`test`)
-- [ ] 🔧 Build/CI/chore
-- [ ] ⚠️ Breaking change
+## Reviews run
 
-## How has this been tested?
+<!-- Agent → findings fixed / dismissed (with reason). "None" for Trivial. -->
 
-<!-- Describe tests added/updated and manual verification steps. -->
+## Risk & rollback
 
-## Feature Completion Criteria
+<!-- Migration? Contract change? New dependency? How to roll back
+(previous image tag; restore a backup if a migration is destructive). -->
 
-<!-- Definition of Done — see docs/PROCESS.md. Tick all that apply. -->
+## Changeset
 
-- [ ] **Code** implemented to the approved design/architecture
-- [ ] **Tests** completed (unit + integration/API + e2e/a11y as applicable; coverage not regressed)
-- [ ] **Documentation** updated (`docs/`, `README`, `CLAUDE.md`, ADRs; API contract regenerated with `pnpm contract:generate` if endpoints changed)
-- [ ] **Security** reviewed (authentication, ownership checks / IDOR, validation, secrets)
-- [ ] **Performance** considered (queries/N+1, pagination, caching/async where justified)
-- [ ] **Accessibility** considered (WCAG 2.2 AA for UI changes)
-- [ ] **Docker build** succeeds (if runtime/deps changed)
-- [ ] **CI** passes (format, lint, typecheck, tests)
-- [ ] **Changelog** updated — changeset added (`pnpm changeset`) for user-visible change
-- [ ] **Version impact** assessed (SemVer bump; breaking changes flagged)
-- [ ] Commits follow [Conventional Commits](https://www.conventionalcommits.org/)
-
-## Screenshots / notes
-
-<!-- UI changes: include before/after screenshots. Other notes for reviewers. -->
+<!-- Yes (patch/minor + why) or No (docs, CI or tooling only). -->

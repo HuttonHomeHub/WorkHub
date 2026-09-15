@@ -8,10 +8,10 @@ and [`CLAUDE.md`](../CLAUDE.md) links to them.
 
 | Document                                             | What it covers                                          |
 | ---------------------------------------------------- | ------------------------------------------------------- |
-| [PRODUCT.md](PRODUCT.md)                             | What WorkHub is: users, platform, UI, locale, hosting   |
-| [PROCESS.md](PROCESS.md)                             | Delivery process: idea → spec → design → plan → build   |
-| [templates/](templates/)                             | Feature-spec & implementation-plan templates            |
-| [examples/](examples/)                               | Worked example of the process (no code)                 |
+| [PRODUCT.md](PRODUCT.md)                             | What WorkHub is, plus Now / Next / Later                |
+| [PROCESS.md](PROCESS.md)                             | Change classes, approvals, reviews, releases            |
+| [features/](features/README.md)                      | Feature docs: plans that become living documentation    |
+| [templates/](templates/README.md)                    | Feature doc template (ADR template is in `adr/`)        |
 | [ARCHITECTURE.md](ARCHITECTURE.md)                   | System design, components, data flow, boundaries        |
 | [FRONTEND_ARCHITECTURE.md](FRONTEND_ARCHITECTURE.md) | Frontend structure, state, routing, data, auth, theming |
 | [BACKEND_ARCHITECTURE.md](BACKEND_ARCHITECTURE.md)   | Modules, DI, validation, errors, jobs, cache, auth/z    |
@@ -28,7 +28,6 @@ and [`CLAUDE.md`](../CLAUDE.md) links to them.
 | [TESTING.md](TESTING.md)                             | Test strategy, tooling, coverage expectations           |
 | [DEVELOPMENT.md](DEVELOPMENT.md)                     | Local environment setup and day-to-day workflow         |
 | [DEPLOYMENT.md](DEPLOYMENT.md)                       | Release process, containers, environments               |
-| [ROADMAP.md](ROADMAP.md)                             | Direction and milestones                                |
 | [BACKLOG.md](BACKLOG.md)                             | Candidate work, not yet scheduled                       |
 | [DECISIONS.md](DECISIONS.md)                         | Lightweight running decision log                        |
 | [TECH_DEBT.md](TECH_DEBT.md)                         | Known debt and remediation intent                       |

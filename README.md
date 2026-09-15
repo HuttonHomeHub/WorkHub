@@ -99,32 +99,30 @@ covered in [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) and
 
 ## 📚 Documentation
 
-| Document                                                         | Purpose                                     |
-| ---------------------------------------------------------------- | ------------------------------------------- |
-| [`docs/PRODUCT.md`](docs/PRODUCT.md)                             | What WorkHub is: users, platform, decisions |
-| [`CLAUDE.md`](CLAUDE.md)                                         | Operating manual for Claude Code            |
-| [`docs/PROCESS.md`](docs/PROCESS.md)                             | How features go from idea to shipped        |
-| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)                   | System design and boundaries                |
-| [`docs/FRONTEND_ARCHITECTURE.md`](docs/FRONTEND_ARCHITECTURE.md) | Frontend architecture & patterns            |
-| [`docs/BACKEND_ARCHITECTURE.md`](docs/BACKEND_ARCHITECTURE.md)   | Backend architecture & patterns             |
-| [`docs/DATABASE.md`](docs/DATABASE.md)                           | Database standards & philosophy             |
-| [`docs/SECURITY_STANDARDS.md`](docs/SECURITY_STANDARDS.md)       | Security engineering standards              |
-| [`docs/OBSERVABILITY.md`](docs/OBSERVABILITY.md)                 | Logging, metrics, tracing, health           |
-| [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md)                     | Performance standards                       |
-| [`docs/REFERENCE_FEATURE.md`](docs/REFERENCE_FEATURE.md)         | The canonical backend feature template      |
-| [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md)                 | Design tokens, theming, components          |
-| [`docs/UX_STANDARDS.md`](docs/UX_STANDARDS.md)                   | Project-wide UX principles                  |
-| [`docs/COMPONENT_LIBRARY.md`](docs/COMPONENT_LIBRARY.md)         | Component guidelines & lifecycle            |
-| [`docs/FRONTEND_QUALITY.md`](docs/FRONTEND_QUALITY.md)           | FE testing, a11y, perf, bundle              |
-| [`docs/API.md`](docs/API.md)                                     | REST/OpenAPI conventions                    |
-| [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md)                     | Local dev environment guide                 |
-| [`docs/TESTING.md`](docs/TESTING.md)                             | Test strategy and tooling                   |
-| [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)                       | Release & deployment                        |
-| [`docs/ROADMAP.md`](docs/ROADMAP.md)                             | Direction and milestones                    |
-| [`docs/adr/`](docs/adr/)                                         | Architecture Decision Records               |
-| [`.claude/agents/`](.claude/agents/)                             | Specialised frontend & backend agents       |
-| [`CONTRIBUTING.md`](CONTRIBUTING.md)                             | How to contribute                           |
-| [`SECURITY.md`](SECURITY.md)                                     | Reporting vulnerabilities                   |
+| Document                                                         | Purpose                                 |
+| ---------------------------------------------------------------- | --------------------------------------- |
+| [`docs/PRODUCT.md`](docs/PRODUCT.md)                             | What WorkHub is, and Now / Next / Later |
+| [`CLAUDE.md`](CLAUDE.md)                                         | Operating manual for Claude Code        |
+| [`docs/PROCESS.md`](docs/PROCESS.md)                             | How changes go from idea to merged      |
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)                   | System design and boundaries            |
+| [`docs/FRONTEND_ARCHITECTURE.md`](docs/FRONTEND_ARCHITECTURE.md) | Frontend architecture & patterns        |
+| [`docs/BACKEND_ARCHITECTURE.md`](docs/BACKEND_ARCHITECTURE.md)   | Backend architecture & patterns         |
+| [`docs/DATABASE.md`](docs/DATABASE.md)                           | Database standards & philosophy         |
+| [`docs/SECURITY_STANDARDS.md`](docs/SECURITY_STANDARDS.md)       | Security engineering standards          |
+| [`docs/OBSERVABILITY.md`](docs/OBSERVABILITY.md)                 | Logging, metrics, tracing, health       |
+| [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md)                     | Performance standards                   |
+| [`docs/REFERENCE_FEATURE.md`](docs/REFERENCE_FEATURE.md)         | The canonical backend feature template  |
+| [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md)                 | Design tokens, theming, components      |
+| [`docs/UX_STANDARDS.md`](docs/UX_STANDARDS.md)                   | Project-wide UX principles              |
+| [`docs/COMPONENT_LIBRARY.md`](docs/COMPONENT_LIBRARY.md)         | Component guidelines & lifecycle        |
+| [`docs/FRONTEND_QUALITY.md`](docs/FRONTEND_QUALITY.md)           | FE testing, a11y, perf, bundle          |
+| [`docs/API.md`](docs/API.md)                                     | REST/OpenAPI conventions                |
+| [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md)                     | Local dev environment guide             |
+| [`docs/TESTING.md`](docs/TESTING.md)                             | Test strategy and tooling               |
+| [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)                       | Release & deployment                    |
+| [`docs/adr/`](docs/adr/)                                         | Architecture Decision Records           |
+| [`.claude/agents/`](.claude/agents/README.md)                    | Claude Code review and planning agents  |
+| [`SECURITY.md`](SECURITY.md)                                     | Reporting vulnerabilities               |
 
 Some standards documents predate the product decisions and carry a "pending
 rewrite" banner; where they conflict, [`docs/PRODUCT.md`](docs/PRODUCT.md) wins.

@@ -134,4 +134,26 @@ Not built: domain features, passkeys, backups, the sidebar and command palette.
 
 ## Roadmap
 
-Direction and milestones live in [ROADMAP.md](ROADMAP.md) for now.
+Scheduled work, updated in the PR that starts or finishes an item. Sizes: S
+(one PR), M (a few PRs), L (a feature doc and several slices). Unscheduled
+candidates are in [BACKLOG.md](BACKLOG.md).
+
+### Now
+
+- `M` Standards rewrite: process and agents (step 3), frontend and UX (step 4),
+  backend (step 5), operations docs (step 6) — ADR-0019's follow-up PRs.
+
+### Next
+
+- `M` Backups: nightly dump, encrypted off-site copy, restore drill, data export.
+- `L` Login hardening — passkeys, session policy, brute-force posture; required
+  before the first public deployment.
+- `L` App shell: sidebar rail, density tokens, three-way theme, router pending
+  and error states.
+- `M` CI: Docker image build, Firefox e2e, multi-arch (amd64 + arm64) images.
+
+### Later
+
+- `L` First domain feature (purpose TBD).
+- `M` Command palette (Ctrl/Cmd+K).
+- `S` Error-code catalogue for API errors.

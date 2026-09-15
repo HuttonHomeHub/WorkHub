@@ -1,49 +1,54 @@
-# Claude agents
+# Claude Code agents
 
-Specialised subagents for WorkHub. Each lives in a Markdown file here with YAML
-frontmatter (`name`, `description`, `tools`, `model`) and a system prompt. Claude
-Code can delegate to them automatically based on their `description`, or you can
-invoke one explicitly (e.g. "use the security-reviewer").
+The canonical guide to WorkHub's subagents: what each owns, when it runs, and
+the report every reviewer returns. [`CLAUDE.md`](../../CLAUDE.md) §7 links here;
+the process they serve is [`docs/PROCESS.md`](../../docs/PROCESS.md).
 
-## Discovery
+Agents do not run on their own. The planner runs from `/feature`; reviewers run
+from `/review`, which picks them by the paths a diff touches. Each file has
+frontmatter `name` (equal to its filename), `description`, `tools` and `model` —
+`pnpm docs:check` enforces the first two.
 
-| Agent               | Use it when…                                                                                                                                                                    | Edits code?      |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
-| **feature-analyst** | A new idea/feature/requirement is raised. Run **first**: produces the Feature Spec + Implementation Plan per [`docs/PROCESS.md`](../../docs/PROCESS.md) and stops for approval. | Specs/plans only |
+## Trigger matrix
 
-## Frontend agents
+| Agent                      | Owns                                                                                                               | Run when the diff touches                                                                                                 | Tools / model                                                                |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| **planner**                | Classifying a change; feature docs and ADR drafts; design across data, API and desktop UI                          | Before any Feature or Architectural change (`/feature`, `/adr`)                                                           | Read, Grep, Glob, Bash, Write, Edit (docs only) / opus                       |
+| **ui-reviewer**            | Desktop UX, state coverage, copy, tokens and no one-off styling, component API, bundle and render cost             | `apps/web/src/**`                                                                                                         | Read, Grep, Glob, Bash / sonnet                                              |
+| **accessibility-reviewer** | WCAG 2.2 AA: keyboard, focus, landmarks, status messages, contrast, reflow                                         | Interactive UI in `apps/web/src/**`                                                                                       | Read, Grep, Glob, Bash / sonnet                                              |
+| **backend-reviewer**       | REST/OpenAPI conventions, envelopes, contract drift, pagination, query efficiency                                  | Controllers, DTOs, services, repositories in `apps/api/src/**`                                                            | Read, Grep, Glob, Bash / sonnet                                              |
+| **security-reviewer**      | Auth, sessions, passkeys, ownership 404s, validation, secrets, proxy trust, rate limits, headers, new dependencies | `apps/api/src/common/{auth,guards}/**`, `apps/api/src/config/**`, data access, auth UI, `package.json` dependency changes | Read, Grep, Glob, Bash / opus                                                |
+| **database-architect**     | Schema, constraints, indexes, migration safety                                                                     | `apps/api/prisma/schema.prisma`, `apps/api/prisma/migrations/**` — **before** writing a migration                         | Read, Grep, Glob, Bash, Write, Edit (schema, migrations, DATABASE.md) / opus |
+| **test-engineer**          | API e2e, unit and Playwright + axe tests; red-first regression tests                                               | Behaviour changed without matching tests, or a bug fix                                                                    | Read, Grep, Glob, Bash, Write, Edit (tests only) / sonnet                    |
+| **devops-reviewer**        | Workflows, release path, Changesets invariants, images, compose, exposure, secrets                                 | `.github/**`, `**/Dockerfile`, `docker-compose*.yml`, nginx config, `.changeset/config.json`                              | Read, Grep, Glob, Bash / sonnet                                              |
 
-| Agent                      | Use it when…                                                                                                                                      | Edits code?    |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | -------------- |
-| **ui-architect**           | Designing/evolving frontend architecture — feature module, state/data/routing, layout, or a frontend ADR. Run **before** building non-trivial UI. | Docs/ADRs only |
-| **ux-reviewer**            | Reviewing a user-facing change for consistency, hierarchy, state coverage, copy, responsive behaviour.                                            | No (review)    |
-| **accessibility-reviewer** | Auditing UI against WCAG 2.2 AA. Run after building interactive UI.                                                                               | No (review)    |
-| **component-reviewer**     | Reviewing a component's API, composability, token/variant usage, tests; catching one-off styling.                                                 | No (review)    |
-| **performance-reviewer**   | Frontend bundle size, code splitting, lazy loading, render efficiency, CWV.                                                                       | No (review)    |
+Every agent treats [`docs/PRODUCT.md`](../../docs/PRODUCT.md) and ADR-0019 as
+winning over any standards document still marked "Pending rewrite".
 
-## Backend agents
+## Reviewer output contract
 
-| Agent                            | Use it when…                                                                                                             | Edits code?            |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ---------------------- |
-| **database-architect**           | Designing/changing the data model — Prisma models, migrations, indexes, constraints. Run **before** writing a migration. | Schema/migrations/docs |
-| **api-reviewer**                 | Reviewing endpoints/DTOs for REST/OpenAPI conventions, status codes, envelopes, pagination.                              | No (review)            |
-| **security-reviewer**            | Reviewing auth, ownership scoping (IDOR), validation, secrets, injection, rate limiting, Docker/deps.                    | No (review)            |
-| **backend-performance-reviewer** | Reviewing query efficiency (N+1/indexes), caching correctness, async/queue offload, transactions.                        | No (review)            |
-| **test-engineer**                | Designing/writing tests (unit, API/Supertest, e2e) or assessing coverage.                                                | Tests                  |
-| **devops-reviewer**              | Reviewing Dockerfiles, compose, GitHub Actions, release/versioning, secret handling.                                     | No (review)            |
+```text
+Verdict: Approve | Approve with suggestions | Changes required
 
-## Typical flow
+Blocking
+| file:line | rule (owning doc) | fix |
 
-1. **Discover** — for any new requirement, run **feature-analyst** first to
-   produce the spec + plan, then get approval (see `docs/PROCESS.md`).
-2. **Design** a non-trivial change with **ui-architect** (frontend) or
-   **database-architect** (data model).
-3. Implement it, following the approved plan and the docs.
-4. **Review** with the relevant reviewers — e.g. for an API change:
-   **api-reviewer** + **security-reviewer** (+ **backend-performance-reviewer**,
-   **test-engineer**); for UI: **component/accessibility/ux** reviewers.
-5. Address **blocking** findings before merge.
+Suggestions
+- file:line — suggestion
 
-Reviewers are read-only and report blocking vs. suggested findings with
-file/line references; they never approve by silence. See each agent file for its
-detailed checklist, and `CLAUDE.md` §3 for how changes are classified.
+Commands run / evidence
+- `command` → result
+
+Not checked
+- what, and why
+```
+
+- **Blocking** means a documented rule is broken; the owning doc is cited.
+- Empty sections say "None". A reviewer never approves by silence.
+- Findings are advice: reproduce each blocking finding before fixing it, and
+  record dismissals with a reason in the PR body (PROCESS.md).
+
+## Skills
+
+Recurring workflows live in [`.claude/skills/`](../skills/README.md): `/ship`,
+`/review`, `/feature`, `/deps`, `/release`, `/adr`.

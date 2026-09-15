@@ -231,7 +231,8 @@ screen-reader support, and a test. Detailed authoring rules are in
 
 - Currency and dates via `Intl` APIs (locale-aware); money stored/handled as
   integer minor units (see [`API.md`](API.md)). No hard-coded currency symbols
-  or date formats — i18n is on the [roadmap](ROADMAP.md).
+  or date formats — the single locale is set in one place
+  ([PRODUCT.md](PRODUCT.md#locale)).
 - Microcopy: plain, concise, sentence case; consistent terminology; actionable
   error and empty-state text.
 
@@ -239,5 +240,5 @@ screen-reader support, and a test. Detailed authoring rules are in
 
 - Changing a token changes the whole app — token edits require review and a note
   here. New component patterns are added to the design system, never inlined at
-  a call site. The **UX Reviewer** and **Component Reviewer** agents enforce
-  consistency and the no-one-off-styling rule.
+  a call site. The **ui-reviewer** agent enforces consistency and the
+  no-one-off-styling rule.
