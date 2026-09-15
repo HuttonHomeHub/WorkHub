@@ -109,11 +109,14 @@ flowchart LR
   `IMAGE_TAG`) have **no defaults** — compose refuses to start without them.
 - Deploy = update `IMAGE_TAG` in `.env.production`, then
   `docker compose -f docker-compose.prod.yml --env-file .env.production pull && … up -d`.
-- Your proxy must forward `X-Forwarded-For`/`X-Forwarded-Proto`; both the web
-  nginx and the API honour them (`trust proxy`).
-- `AUTH_TRUSTED_PROXIES` (default `172.16.0.0/12`, the Docker networks) tells the
-  API which `X-Forwarded-For` hops to skip, so auth rate limits apply per client.
-  If your reverse proxy runs on a different host, add its address.
+- Your proxy must forward `X-Forwarded-For`/`X-Forwarded-Proto`.
+- `AUTH_TRUSTED_PROXIES` (default `172.16.0.0/12`, the Docker networks) is the
+  list of proxy IPs/CIDRs the API trusts. Only hops from those addresses are
+  skipped in `X-Forwarded-For` — both for Better Auth's sign-in limits and for
+  Express's `trust proxy` (the Nest throttler's client IP) — so rate limits
+  apply per client and a client can't spoof its address. If your reverse proxy
+  reaches the web container from outside the Docker networks (another host),
+  add its address. Use IPs/CIDRs only, not names like `loopback`.
 
 ### Your first account
 
