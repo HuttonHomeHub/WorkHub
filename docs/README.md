@@ -8,6 +8,7 @@ source of truth for standards; these documents expand on specific areas.
 
 | Document                                             | What it covers                                          |
 | ---------------------------------------------------- | ------------------------------------------------------- |
+| [PRODUCT.md](PRODUCT.md)                             | What WorkHub is: users, platform, UI, locale, hosting   |
 | [PROCESS.md](PROCESS.md)                             | Delivery process: idea → spec → design → plan → build   |
 | [templates/](templates/)                             | Feature-spec & implementation-plan templates            |
 | [examples/](examples/)                               | Worked example of the process (no code)                 |
