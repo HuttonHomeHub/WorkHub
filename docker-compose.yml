@@ -60,7 +60,10 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD:-app}@db:5432/${POSTGRES_DB:-app}?schema=public
       API_PORT: 3000
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080}
-      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-local-dev-only-secret-change-me}
+      # NODE_ENV is production here, so the secret must pass production
+      # validation (>= 32 chars, no placeholder). This default is for this local
+      # stack only — never deploy with it.
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-local-compose-stack-only-secret-never-deploy}
       BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:8080}
       # Skip the web nginx hop in X-Forwarded-For (per-client auth rate limits).
       AUTH_TRUSTED_PROXIES: ${AUTH_TRUSTED_PROXIES:-172.16.0.0/12}

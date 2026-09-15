@@ -1,5 +1,11 @@
 import { z } from 'zod';
 
+/** `openssl rand -base64 32` yields 44 characters; 32 is the production floor. */
+export const PRODUCTION_SECRET_MIN_LENGTH = 32;
+
+/** Substrings of example/placeholder secrets that must never reach production. */
+const PLACEHOLDER_SECRET_MARKERS = ['dev-insecure', 'change-me', 'changeme', '<openssl', 'example'];
+
 /**
  * Environment schema — the single source of truth for configuration shape.
  * The app validates the environment at startup and refuses to boot on invalid
@@ -51,12 +57,24 @@ export const envSchema = z
       .transform((value) => value === 'true'),
   })
   .superRefine((env, ctx) => {
-    // Never allow the insecure development secret in production.
-    if (env.NODE_ENV === 'production' && env.BETTER_AUTH_SECRET.includes('dev-insecure')) {
+    if (env.NODE_ENV !== 'production') return;
+    // Sessions are signed with this secret: never boot production with a
+    // short one or a copied placeholder (the dev default, .env.example).
+    const secret = env.BETTER_AUTH_SECRET;
+    if (secret.length < PRODUCTION_SECRET_MIN_LENGTH) {
       ctx.addIssue({
         code: 'custom',
         path: ['BETTER_AUTH_SECRET'],
-        message: 'A strong BETTER_AUTH_SECRET must be set in production.',
+        message: `BETTER_AUTH_SECRET must be at least ${PRODUCTION_SECRET_MIN_LENGTH} characters in production (generate one with \`openssl rand -base64 32\`).`,
+      });
+    }
+    const lowered = secret.toLowerCase();
+    if (PLACEHOLDER_SECRET_MARKERS.some((marker) => lowered.includes(marker))) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['BETTER_AUTH_SECRET'],
+        message:
+          'BETTER_AUTH_SECRET is a placeholder; set a random secret in production (`openssl rand -base64 32`).',
       });
     }
   });

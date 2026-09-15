@@ -107,6 +107,10 @@ flowchart LR
   would start against an empty database.
 - Required secrets (`POSTGRES_PASSWORD`, `BETTER_AUTH_SECRET`, `APP_ORIGIN`,
   `IMAGE_TAG`) have **no defaults** — compose refuses to start without them.
+  The API also refuses to start in production unless `BETTER_AUTH_SECRET` is
+  at least 32 characters and not a placeholder (anything containing
+  `change-me`, `changeme`, `example`, `dev-insecure`, or `<openssl`) —
+  generate it with `openssl rand -base64 32`.
 - Deploy = update `IMAGE_TAG` in `.env.production`, then
   `docker compose -f docker-compose.prod.yml --env-file .env.production pull && … up -d`.
 - Your proxy must forward `X-Forwarded-For`/`X-Forwarded-Proto`.
