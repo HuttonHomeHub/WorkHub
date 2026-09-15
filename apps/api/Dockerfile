@@ -28,9 +28,15 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
 # --- Build: compile the API and generate the Prisma client -------------------
 FROM deps AS build
 COPY . .
+# `deploy` installs a fresh @prisma/client into /out, so the client is generated
+# again from a schema copied INTO /out — Prisma writes the client next to the
+# @prisma/client it resolves from the schema's location. The first generate only
+# serves the TypeScript build.
 RUN pnpm --filter @repo/api prisma:generate \
     && pnpm --filter @repo/api build \
-    && pnpm --filter @repo/api --prod deploy --legacy /out
+    && pnpm --filter @repo/api --prod deploy --legacy /out \
+    && cp -r apps/api/prisma /out/prisma \
+    && cd /out && ./node_modules/.bin/prisma generate
 
 # --- Runtime: minimal, non-root ----------------------------------------------
 FROM node:24-alpine AS runtime
@@ -42,7 +48,7 @@ COPY --chown=node:node --from=build /out/dist ./dist
 COPY --chown=node:node --from=build /out/node_modules ./node_modules
 COPY --chown=node:node --from=build /out/package.json ./package.json
 # Schema + migrations for `prisma migrate deploy`.
-COPY --chown=node:node --from=build /app/apps/api/prisma ./prisma
+COPY --chown=node:node --from=build /out/prisma ./prisma
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
   CMD node -e "fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
