@@ -1,6 +1,6 @@
 /**
  * Commitlint configuration — enforces Conventional Commits.
- * See docs/CONTRIBUTING guidance and CLAUDE.md "Commit standards".
+ * See docs/DEVELOPMENT.md (Workflow) and CLAUDE.md §6.
  *
  * Format: <type>(<optional scope>): <subject>
  * Example: feat(api): add a recurring job scheduler
@@ -28,7 +28,8 @@ export default {
     'scope-enum': [
       2,
       'always',
-      ['web', 'api', 'config', 'types', 'db', 'ci', 'docs', 'deps', 'release', 'repo'],
+      // `deps-dev` is Dependabot's prefix for development dependencies.
+      ['web', 'api', 'config', 'types', 'db', 'ci', 'docs', 'deps', 'deps-dev', 'release', 'repo'],
     ],
     'scope-case': [2, 'always', 'kebab-case'],
     'subject-case': [2, 'never', ['upper-case', 'pascal-case', 'start-case']],

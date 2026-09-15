@@ -131,6 +131,25 @@ run `pnpm contract:generate` and commit the result — CI fails on drift
 - Add a dependency to a specific package:
   `pnpm --filter @repo/web add <pkg>`.
 
+## Workflow
+
+The delivery process — change classes, approvals, reviews and releases — is in
+[`PROCESS.md`](PROCESS.md). The mechanics:
+
+- Branch from up-to-date `main` as `feat/<slug>`, `fix/<slug>`, `docs/<slug>`
+  or `chore/<slug>`; rebase rather than merge `main` in.
+- Commit with [Conventional Commits](https://www.conventionalcommits.org/)
+  (`pnpm commit` prompts for one); types and scopes are in
+  [`commitlint.config.js`](../commitlint.config.js).
+- Before pushing, run what CI enforces:
+  `pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm docs:check`,
+  plus `pnpm contract:generate` after an API change.
+- Open a PR into `main` using the
+  [template](../.github/pull_request_template.md); it is squash-merged with a
+  Conventional Commit title.
+- Report security issues privately, never in a public issue
+  ([`SECURITY.md`](../SECURITY.md)).
+
 ## Git hooks
 
 Husky installs hooks on `pnpm install`:
