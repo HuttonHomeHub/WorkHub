@@ -24,5 +24,14 @@ directory alongside your code change.
 | `minor` | Backwards-compatible new features              | 0.x.0  |
 | `major` | Breaking changes to a public API or contract   | x.0.0  |
 
-Releases are cut automatically by the `release` GitHub Actions workflow when
-changesets land on `main`. See [`docs/DEPLOYMENT.md`](../docs/DEPLOYMENT.md).
+When changesets land on `main`, the `release` GitHub Actions workflow opens or
+updates a "Version Packages" PR; merging that PR cuts the release. See
+[`docs/DEPLOYMENT.md`](../docs/DEPLOYMENT.md).
+
+## Why `config.json` looks the way it does
+
+- `privatePackages: { version: true, tag: true }` — every workspace package is
+  `private`, and Changesets 3 would otherwise neither version nor tag them.
+- `fixed: [["@repo/api", "@repo/web", "@repo/types"]]` — the apps share one
+  version, so the release tags (`@repo/api@X.Y.Z`, `@repo/web@X.Y.Z`) and the
+  images built from them always match one `IMAGE_TAG`.

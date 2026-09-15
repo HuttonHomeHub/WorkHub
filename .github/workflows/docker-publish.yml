@@ -1,13 +1,14 @@
 name: Publish container images
 
+# Changesets tags each released package as `<name>@<version>` (e.g.
+# `@repo/api@0.2.0`), so each app's image is built from its own tag. The apps
+# are versioned together (`fixed` in .changeset/config.json), so one release
+# produces matching `api` and `web` versions for docker-compose.prod.yml's
+# single IMAGE_TAG. See docs/DEPLOYMENT.md.
 on:
   push:
-    tags: ['v*.*.*']
+    tags: ['@repo/api@*', '@repo/web@*']
   workflow_dispatch:
-    inputs:
-      tag:
-        description: 'Image tag to publish (defaults to git sha)'
-        required: false
 
 concurrency:
   group: docker-${{ github.ref }}
@@ -32,12 +33,35 @@ jobs:
           - app: web
             dockerfile: apps/web/Dockerfile
     steps:
+      # A tag push builds only the app it names; a manual run builds both
+      # (tagged by commit sha only).
+      - name: Resolve version from tag
+        id: release
+        env:
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+          PREFIX: '@repo/${{ matrix.app }}@'
+        run: |
+          if [ "$REF_TYPE" != "tag" ]; then
+            echo "build=true" >> "$GITHUB_OUTPUT"
+            echo "version=" >> "$GITHUB_OUTPUT"
+          elif [ "${REF_NAME#"$PREFIX"}" != "$REF_NAME" ]; then
+            echo "build=true" >> "$GITHUB_OUTPUT"
+            echo "version=${REF_NAME#"$PREFIX"}" >> "$GITHUB_OUTPUT"
+          else
+            echo "build=false" >> "$GITHUB_OUTPUT"
+            echo "Tag $REF_NAME is not a ${{ matrix.app }} release; skipping."
+          fi
+
       - uses: actions/checkout@v7
+        if: steps.release.outputs.build == 'true'
 
       - name: Set up Docker Buildx
+        if: steps.release.outputs.build == 'true'
         uses: docker/setup-buildx-action@v4
 
       - name: Log in to GitHub Container Registry
+        if: steps.release.outputs.build == 'true'
         uses: docker/login-action@v4
         with:
           registry: ghcr.io
@@ -45,17 +69,18 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extract metadata
+        if: steps.release.outputs.build == 'true'
         id: meta
         uses: docker/metadata-action@v6
         with:
           images: ghcr.io/${{ github.repository }}/${{ matrix.app }}
           tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{version}},value=${{ steps.release.outputs.version }},enable=${{ steps.release.outputs.version != '' }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ steps.release.outputs.version }},enable=${{ steps.release.outputs.version != '' }}
             type=sha
-            type=ref,event=branch
 
       - name: Build and push
+        if: steps.release.outputs.build == 'true'
         uses: docker/build-push-action@v7
         with:
           context: .

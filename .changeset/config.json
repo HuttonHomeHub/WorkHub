@@ -2,10 +2,11 @@
   "$schema": "https://unpkg.com/@changesets/config@3.0.0/schema.json",
   "changelog": ["@changesets/changelog-github", { "repo": "HuttonHomeHub/WorkHub" }],
   "commit": false,
-  "fixed": [],
+  "fixed": [["@repo/api", "@repo/web", "@repo/types"]],
   "linked": [],
   "access": "restricted",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": []
+  "ignore": [],
+  "privatePackages": { "version": true, "tag": true }
 }
