@@ -47,6 +47,10 @@ const STALE_TERMS = [
     'repository placeholders point at HuttonHomeHub/WorkHub',
   ],
   [
+    /open (email\/password )?(self-?)?sign-?up|sign up and you're in/i,
+    'public sign-up is off by default (ADR-0018)',
+  ],
+  [
     /hosting platform (is )?(an open decision|undecided)|deliberately undecided/i,
     'hosting is decided: self-hosted Compose (DEPLOYMENT.md)',
   ],

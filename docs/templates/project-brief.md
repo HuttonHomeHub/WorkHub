@@ -57,7 +57,8 @@ baseline. Anything that deviates from the base stack/architecture needs an ADR.
 ## 5. Tenancy & Roles
 
 <!-- THE most architecture-shaping decision on this base. The base assumes
-     INDIVIDUAL ACCOUNTS: open signup, every user owns their own data, and there
+     INDIVIDUAL ACCOUNTS: every user owns their own data, public sign-up is off
+     (accounts are created with `pnpm user:create`, ADR-0018), and there
      are no organisations, roles, sharing, or admin (owner-based access,
      ADR-0016). If your app needs teams/workspaces, roles, sharing between
      users, or an admin, say so here — that supersedes ADR-0016 and needs a new

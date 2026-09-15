@@ -4,7 +4,8 @@ The Blank App web client: **React 19 + TypeScript + Vite**, styled with **Tailwi
 and **shadcn/ui** components, using **Lucide** icons.
 
 > **Status:** walking skeleton. The app entry, providers, router, auth feature
-> (open signup / sign-in / sign-out with a protected shell), the typed API
+> (sign-in / sign-out with a protected shell; the sign-up page only when the API
+> enables it, ADR-0018), the typed API
 > client (`GET /api/v1/me` on the home page), and base primitives are live. The **architecture** is defined in
 > [`docs/FRONTEND_ARCHITECTURE.md`](../../docs/FRONTEND_ARCHITECTURE.md), the
 > **design system** in [`docs/DESIGN_SYSTEM.md`](../../docs/DESIGN_SYSTEM.md)

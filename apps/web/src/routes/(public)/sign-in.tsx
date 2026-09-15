@@ -2,7 +2,7 @@ import { createFileRoute, Link, redirect, useNavigate } from '@tanstack/react-ro
 import { z } from 'zod';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ensureSession, SignInForm } from '@/features/auth';
+import { ensureAuthConfig, ensureSession, SignInForm, useAuthConfig } from '@/features/auth';
 
 const searchSchema = z.object({
   /** Where to go after signing in (set by the auth guard). */
@@ -11,9 +11,13 @@ const searchSchema = z.object({
 
 export const Route = createFileRoute('/(public)/sign-in')({
   validateSearch: searchSchema,
-  // Already signed in? Straight to the app.
   beforeLoad: async ({ context }) => {
-    const session = await ensureSession(context.queryClient);
+    // Load the public config up front so the page renders without a flash.
+    const [session] = await Promise.all([
+      ensureSession(context.queryClient),
+      ensureAuthConfig(context.queryClient),
+    ]);
+    // Already signed in? Straight to the app.
     // eslint-disable-next-line @typescript-eslint/only-throw-error -- thrown redirects are the TanStack Router control-flow idiom
     if (session) throw redirect({ to: '/' });
   },
@@ -23,6 +27,7 @@ export const Route = createFileRoute('/(public)/sign-in')({
 function SignInPage() {
   const { redirect: redirectTo } = Route.useSearch();
   const navigate = useNavigate();
+  const { data: config } = useAuthConfig();
   return (
     <div className="bg-background text-foreground flex min-h-svh items-center justify-center p-4">
       <Card className="w-full max-w-sm">
@@ -32,15 +37,18 @@ function SignInPage() {
         </CardHeader>
         <CardContent className="grid gap-4">
           <SignInForm onSuccess={() => void navigate({ to: redirectTo ?? '/' })} />
-          <p className="text-muted-foreground text-center text-sm">
-            No account?{' '}
-            <Link
-              to="/sign-up"
-              className="text-primary font-medium underline-offset-4 hover:underline"
-            >
-              Create one
-            </Link>
-          </p>
+          {/* Public sign-up is off unless the API enables it (ADR-0018). */}
+          {config?.signUpEnabled ? (
+            <p className="text-muted-foreground text-center text-sm">
+              No account?{' '}
+              <Link
+                to="/sign-up"
+                className="text-primary font-medium underline-offset-4 hover:underline"
+              >
+                Create one
+              </Link>
+            </p>
+          ) : null}
         </CardContent>
       </Card>
     </div>

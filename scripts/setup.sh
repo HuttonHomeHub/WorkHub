@@ -53,9 +53,11 @@ pnpm --filter @repo/types build
 info "Generating the Prisma client and applying migrations"
 pnpm --filter @repo/api prisma:generate
 if pnpm --filter @repo/api prisma:deploy; then
-  :
+  # 7. Development account (ADR-0018) ------------------------------------------
+  info "Seeding the development account"
+  pnpm db:seed || warn "Could not seed the dev account — run 'pnpm db:seed' later."
 else
   warn "Could not apply migrations — is PostgreSQL up and DATABASE_URL correct?"
 fi
 
-info "Setup complete. Run 'pnpm dev' to start the apps."
+info "Setup complete. Run 'pnpm dev', then sign in as dev@example.com / dev-password-123."

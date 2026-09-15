@@ -80,6 +80,20 @@ flowchart LR
   API which `X-Forwarded-For` hops to skip, so auth rate limits apply per client.
   If your reverse proxy runs on a different host, add its address.
 
+### Your first account
+
+Public sign-up is off by default (ADR-0018), so create your account on the
+server once the stack is up — the command prompts for the password:
+
+```bash
+docker compose -f docker-compose.prod.yml --env-file .env.production \
+  exec api node dist/cli/user.js create --email you@example.com --name "You"
+```
+
+`… exec api node dist/cli/user.js reset-password --email you@example.com`
+resets a password and signs out that account's sessions. Never seed a
+development account in production — `db:seed` refuses to run there.
+
 ## Database migrations
 
 - Applied with `prisma migrate deploy` by the compose `migrate` one-shot

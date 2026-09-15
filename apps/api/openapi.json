@@ -339,6 +339,32 @@
         "summary": "Get the authenticated user",
         "tags": ["me"]
       }
+    },
+    "/api/v1/config": {
+      "get": {
+        "operationId": "PublicConfigController_getConfig_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PublicConfigResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get public client configuration",
+        "tags": ["config"]
+      }
     }
   },
   "info": {
@@ -374,6 +400,16 @@
           }
         },
         "required": ["id", "email", "name"]
+      },
+      "PublicConfigResponseDto": {
+        "type": "object",
+        "properties": {
+          "signUpEnabled": {
+            "type": "boolean",
+            "description": "Whether the public sign-up page is available (ADR-0018)."
+          }
+        },
+        "required": ["signUpEnabled"]
       }
     }
   }

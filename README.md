@@ -80,9 +80,11 @@ git clone https://github.com/HuttonHomeHub/WorkHub.git && cd WorkHub
 pnpm dev
 ```
 
-Then open <http://localhost:5173> — sign up and you're in: the base ships a
-working auth walking skeleton (open email/password signup, sessions, a
-protected shell) with owner-based access (ADR-0016).
+Then open <http://localhost:5173> and sign in as **dev@example.com** /
+**dev-password-123** — `setup.sh` seeds that development account. The base
+ships a working auth walking skeleton (email/password sessions, a protected
+shell, owner-based access — ADR-0016). Public sign-up is off by default: create
+real accounts with `pnpm user:create` (ADR-0018).
 
 Or run the full stack in containers (served at <http://localhost:8080>,
 migrations applied automatically):
@@ -111,6 +113,9 @@ covered in [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) and
 | `pnpm gen:feature <entity>` | Generate a backend feature from the template   |
 | `pnpm contract:generate`    | Regenerate the OpenAPI contract + client types |
 | `pnpm docs:check`           | Check docs for broken links and stale terms    |
+| `pnpm db:seed`              | (Re)create the dev account (never production)  |
+| `pnpm user:create`          | Create an account (`--email`, `--name`)        |
+| `pnpm user:reset-password`  | Reset a password and sign out its sessions     |
 
 ## 📚 Documentation
 

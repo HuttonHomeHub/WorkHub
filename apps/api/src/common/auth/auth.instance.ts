@@ -25,8 +25,10 @@ function assertValidName(name: unknown): void {
 }
 
 /**
- * Builds the Better Auth instance (ADR-0003). Open email/password signup for
- * individual accounts (ADR-0016) — no organisations, no roles.
+ * Builds the Better Auth instance (ADR-0003): email/password accounts for
+ * individual users (ADR-0016) — no organisations, no roles. Public sign-up is
+ * off unless `AUTH_SIGNUP_ENABLED=true`; otherwise accounts are created and
+ * passwords reset from the server with `pnpm user:*` (ADR-0018).
  *
  * - Sessions are stored in Postgres via the Prisma adapter and carried in a
  *   secure, http-only cookie; `getSession` validates it server-side.
@@ -49,6 +51,7 @@ export function createAuth(prisma: PrismaService, config: AppConfigService) {
     database: prismaAdapter(prisma, { provider: 'postgresql' }),
     emailAndPassword: {
       enabled: true,
+      disableSignUp: !config.authSignUpEnabled,
       minPasswordLength: PASSWORD_MIN_LENGTH,
       maxPasswordLength: PASSWORD_MAX_LENGTH,
       // Email verification requires an SMTP integration — see docs/adr/0016.

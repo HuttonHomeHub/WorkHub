@@ -1,17 +1,14 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 
+import { E2E_USER } from './fixtures';
+
 /**
- * The critical auth journey (docs/TESTING.md): open signup → protected page →
- * sign-out → sign-in, plus automated WCAG 2.2 AA checks on each screen
- * (docs/FRONTEND_QUALITY.md — a11y is a merge requirement).
+ * The critical auth journey (docs/TESTING.md): closed sign-up → sign-in →
+ * protected page → sign-out, plus automated WCAG 2.2 AA checks on each screen
+ * (docs/FRONTEND_QUALITY.md — a11y is a merge requirement). The account comes
+ * from `global-setup.ts` because public sign-up is off by default (ADR-0018).
  */
-
-const password = 'a-strong-password-123';
-
-function uniqueEmail(): string {
-  return `e2e-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.com`;
-}
 
 async function expectNoA11yViolations(page: Page): Promise<void> {
   const results = await new AxeBuilder({ page })
@@ -20,37 +17,39 @@ async function expectNoA11yViolations(page: Page): Promise<void> {
   expect(results.violations).toEqual([]);
 }
 
-test('signs up, reaches the protected home, signs out, signs back in', async ({ page }) => {
-  const email = uniqueEmail();
+function uniqueEmail(): string {
+  return `e2e-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.com`;
+}
 
+test('offers no public sign-up by default', async ({ page }) => {
+  await page.goto('/sign-in');
+  await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Create one' })).toHaveCount(0);
+
+  // The sign-up page itself is unreachable.
+  await page.goto('/sign-up');
+  await expect(page).toHaveURL(/\/sign-in/);
+});
+
+test('signs in, reaches the protected home, and signs out', async ({ page }) => {
   // Unauthenticated visitors are redirected to sign-in.
   await page.goto('/');
   await expect(page).toHaveURL(/\/sign-in/);
   await expectNoA11yViolations(page);
 
-  // Open signup.
-  await page.getByRole('link', { name: 'Create one' }).click();
-  await expect(page).toHaveURL(/\/sign-up/);
-  await expectNoA11yViolations(page);
+  await page.getByLabel('Email').fill(E2E_USER.email);
+  await page.getByLabel('Password').fill(E2E_USER.password);
+  await page.getByRole('button', { name: 'Sign in' }).click();
 
-  await page.getByLabel('Name').fill('E2E User');
-  await page.getByLabel('Email').fill(email);
-  await page.getByLabel('Password').fill(password);
-  await page.getByRole('button', { name: 'Create account' }).click();
-
-  // Landed on the protected home page.
-  await expect(page.getByRole('heading', { name: 'Welcome, E2E User' })).toBeVisible();
+  // Landed on the protected home page, with the profile from GET /api/v1/me.
+  await expect(page.getByRole('heading', { name: `Welcome, ${E2E_USER.name}` })).toBeVisible();
   await expectNoA11yViolations(page);
 
   // Sign out → back to sign-in; the protected page is gone.
   await page.getByRole('button', { name: 'Sign out' }).click();
   await expect(page).toHaveURL(/\/sign-in/);
-
-  // Sign back in.
-  await page.getByLabel('Email').fill(email);
-  await page.getByLabel('Password').fill(password);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page.getByRole('heading', { name: 'Welcome, E2E User' })).toBeVisible();
+  await page.goto('/');
+  await expect(page).toHaveURL(/\/sign-in/);
 });
 
 test('shows validation errors and rejects wrong credentials', async ({ page }) => {

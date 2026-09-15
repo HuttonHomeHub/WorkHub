@@ -41,3 +41,4 @@ future maintainers (human or AI) the _why_, not just the _what_.
 | [0015](0015-template-driven-feature-development.md)        | Template-driven feature development       | Accepted               |
 | [0016](0016-owner-based-access-individual-accounts.md)     | Owner-based access, individual accounts   | Accepted               |
 | [0017](0017-shared-contracts-and-generated-api-client.md)  | Shared contracts, generated API client    | Accepted               |
+| [0018](0018-closed-signup-cli-account-management.md)       | Closed sign-up, CLI account management    | Accepted               |

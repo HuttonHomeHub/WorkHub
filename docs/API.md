@@ -88,12 +88,14 @@ A single, predictable error shape (`ApiError` in `@repo/types`):
 
 - Cookie-based sessions via Better Auth (secure, http-only, same-site).
 - **Auth endpoints live at `/api/auth/*`** (unversioned — they are Better
-  Auth's own surface, mounted outside the Nest router): open email/password
-  signup (`POST /api/auth/sign-up/email`), sign-in
-  (`POST /api/auth/sign-in/email`), session (`GET /api/auth/get-session`),
-  and sign-out (`POST /api/auth/sign-out`).
+  Auth's own surface, mounted outside the Nest router): email/password sign-up
+  (`POST /api/auth/sign-up/email` — refused unless `AUTH_SIGNUP_ENABLED=true`,
+  ADR-0018), sign-in (`POST /api/auth/sign-in/email`), session
+  (`GET /api/auth/get-session`), and sign-out (`POST /api/auth/sign-out`).
 - `GET /api/v1/me` returns the authenticated user's profile in the standard
   envelope.
+- `GET /api/v1/config` (public) returns non-sensitive client settings the
+  signed-out screens need, e.g. `{ "data": { "signUpEnabled": false } }`.
 - State-changing requests require CSRF protection (Better Auth validates the
   Origin header against the trusted origins).
 - `/api/auth/*` is mounted outside the Nest router, so Better Auth's own limiter

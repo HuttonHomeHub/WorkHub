@@ -8,7 +8,9 @@ import type { PrismaService } from '../src/prisma/prisma.service';
 
 /**
  * End-to-end tests for the real authentication flow (Better Auth, ADR-0003):
- * open email/password signup → session cookie → protected route → sign-out.
+ * email/password sign-up → session cookie → protected route → sign-out. Public
+ * sign-up is off by default (ADR-0018), so this suite turns it on; the default
+ * (closed) behaviour is covered by `accounts.e2e-spec.ts`.
  * Unlike the reference e2e (which overrides the auth seam), this exercises the
  * production wiring: the /api/auth/* handler, cookie session validation in
  * AuthContextService, and the deny-by-default guard.
@@ -41,6 +43,7 @@ describe.skipIf(!hasDatabase)('Authentication (e2e)', () => {
 
   beforeAll(async () => {
     process.env.LOG_LEVEL ??= 'silent';
+    process.env.AUTH_SIGNUP_ENABLED = 'true';
     const { AppModule } = await import('../src/app.module');
     const { configureApp } = await import('../src/app.setup');
     const { PrismaService: PrismaServiceToken } = await import('../src/prisma/prisma.service');
@@ -70,7 +73,7 @@ describe.skipIf(!hasDatabase)('Authentication (e2e)', () => {
   });
 
   it('signs up, holds a session, and signs out', async () => {
-    // Open signup (ADR-0016).
+    // Public sign-up (enabled for this suite; off by default, ADR-0018).
     const signUp = await request(app.getHttpServer())
       .post('/api/auth/sign-up/email')
       .send({ email, password, name: 'Auth E2E' })

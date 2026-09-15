@@ -37,6 +37,14 @@ export const envSchema = z
      * shares one auth rate-limit bucket.
      */
     AUTH_TRUSTED_PROXIES: z.string().default(''),
+    /**
+     * Public self-service sign-up (ADR-0018). Off by default: accounts are
+     * created with `pnpm user:create`. Set true for apps anyone may join.
+     */
+    AUTH_SIGNUP_ENABLED: z
+      .enum(['true', 'false'])
+      .default('false')
+      .transform((value) => value === 'true'),
   })
   .superRefine((env, ctx) => {
     // Never allow the insecure development secret in production.

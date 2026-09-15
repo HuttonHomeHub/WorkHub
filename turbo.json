@@ -23,6 +23,7 @@
         "BETTER_AUTH_URL",
         "AUTH_RATE_LIMIT_ENABLED",
         "AUTH_TRUSTED_PROXIES",
+        "AUTH_SIGNUP_ENABLED",
         "RATE_LIMIT_*",
         "LOG_LEVEL",
         "API_PROXY_TARGET",

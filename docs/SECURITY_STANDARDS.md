@@ -22,6 +22,14 @@
 - A global authentication guard establishes the principal; unauthenticated
   requests get **401**. Sessions expire and can be revoked.
 - Sensitive actions (password/email change, etc.) require re-authentication.
+- **Closed sign-up by default** (ADR-0018): with `AUTH_SIGNUP_ENABLED=false`
+  Better Auth refuses sign-up server-side and the web hides the page. Accounts
+  are created and passwords reset with `pnpm user:create` /
+  `pnpm user:reset-password`, which use Better Auth's hashing; a reset signs out
+  every session of that account. Enable public sign-up only together with email
+  verification.
+- The development account from `pnpm db:seed` has a published password; the
+  seed refuses to run with `NODE_ENV=production`.
 
 ## Authorisation — ownership (ADR-0016)
 
