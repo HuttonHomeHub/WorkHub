@@ -30,24 +30,22 @@ link to the canonical document instead of restating a rule.
 
 ## 3. How to work
 
-Classify every change before starting:
+Classify every change before starting. The gates for each class, approval,
+reviewer findings, releases and maintenance are in
+[`docs/PROCESS.md`](docs/PROCESS.md) — the canonical detail.
 
-| Class             | Examples                                                                                     | What you do                                 |
-| ----------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------- |
-| **Trivial**       | Typo, docs wording, dependency patch                                                         | Just do it                                  |
-| **Small**         | Bug fix, contained tweak; one PR, no schema or contract break                                | State a 3–5 bullet plan, then proceed       |
-| **Feature**       | New capability, model or endpoint; more than one PR                                          | Write a plan; wait for the owner's approval |
-| **Architectural** | New infrastructure, superseding an ADR, diverging from the template, major dependency change | Write an ADR; wait for the owner's approval |
+| Class             | Examples                                                                                     | What you do                                             |
+| ----------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| **Trivial**       | Typo, docs wording, dependency patch                                                         | Just do it                                              |
+| **Small**         | Bug fix, contained tweak; one PR, no schema or contract break                                | State a 3–5 bullet plan, then proceed                   |
+| **Feature**       | New capability, model or endpoint; more than one PR                                          | `/feature` → feature doc; wait for the owner's approval |
+| **Architectural** | New infrastructure, superseding an ADR, diverging from the template, major dependency change | `/adr`; wait for the owner's approval                   |
 
 **Escalation triggers** — each raises the class by at least one: a database
 migration; auth or ownership code; a new runtime dependency or service; a
 breaking OpenAPI change; a change to a CI or security gate.
 
-- Ask for approval with **AskUserQuestion**, putting your recommended option
-  first and saying why. Ask only questions whose answers change the design;
-  state defaults for the rest.
-- `docs/PROCESS.md` still describes the older team process. Until it is
-  rewritten, these change classes govern.
+- Ask for approval with **AskUserQuestion**, recommended option first.
 - **The owner merges.** Merge only when told to in this session, only with CI
   green, and never the "Version Packages" release PR unless asked.
 
@@ -109,13 +107,16 @@ pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm docs:check
   Commit title.
 - **Changesets** (`pnpm changeset`) only for changes to the running app (api, web
   or shared runtime code) — not for docs, CI or tooling.
-- PR body: **Summary** and **How has this been tested**, following
-  `.github/pull_request_template.md`.
+- PR body: fill in every section of `.github/pull_request_template.md` (`/ship`
+  does this).
 
 ## 7. Agents & skills
 
-- Subagents and when to use them: [`.claude/agents/README.md`](.claude/agents/README.md).
-- Reviewer findings are advice: verify each against the code before acting on it.
+- Subagents, their triggers and the reviewer output contract:
+  [`.claude/agents/README.md`](.claude/agents/README.md).
+- Skills: `/ship`, `/review`, `/feature`, `/deps`, `/release`, `/adr`
+  ([`.claude/skills/`](.claude/skills/README.md)).
+- Reviewer findings are advice: reproduce each before acting on it.
 
 ## 8. Where things live
 
@@ -137,16 +138,17 @@ pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm docs:check
 | Tests and CI jobs                     | [`docs/TESTING.md`](docs/TESTING.md)                                                                       |
 | Local development                     | [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md)                                                               |
 | Releases and deployment               | [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)                                                                 |
-| Delivery process (pending rewrite)    | [`docs/PROCESS.md`](docs/PROCESS.md)                                                                       |
+| Delivery process                      | [`docs/PROCESS.md`](docs/PROCESS.md)                                                                       |
+| Feature docs                          | [`docs/features/`](docs/features/README.md)                                                                |
 | Architectural decisions (immutable)   | [`docs/adr/`](docs/adr/)                                                                                   |
 | Smaller decisions, newest first       | [`docs/DECISIONS.md`](docs/DECISIONS.md)                                                                   |
 | Known debt with remediation intent    | [`docs/TECH_DEBT.md`](docs/TECH_DEBT.md)                                                                   |
-| Direction / candidate work            | [`docs/ROADMAP.md`](docs/ROADMAP.md), [`docs/BACKLOG.md`](docs/BACKLOG.md)                                 |
+| Now / Next / Later, candidate work    | [`docs/PRODUCT.md`](docs/PRODUCT.md#roadmap), [`docs/BACKLOG.md`](docs/BACKLOG.md)                         |
 
 An **ADR** records an architecturally significant, hard-to-reverse choice
 (supersede, never edit). **DECISIONS.md** logs smaller choices. **TECH_DEBT.md**
-tracks shortcuts we mean to fix. **ROADMAP/BACKLOG** hold planned and candidate
-work.
+tracks shortcuts we mean to fix. PRODUCT.md's **Roadmap** holds scheduled work;
+**BACKLOG.md** holds unscheduled candidates.
 
 ## 9. Keeping docs true
 
