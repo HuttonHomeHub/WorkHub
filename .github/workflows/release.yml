@@ -18,6 +18,9 @@ jobs:
     permissions:
       contents: write # create tags/releases and push version commits
       pull-requests: write # open/update the "Version Packages" PR
+    outputs:
+      published: ${{ steps.changesets.outputs.published }}
+      version: ${{ steps.version.outputs.version }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -38,11 +41,11 @@ jobs:
       # Changesets either opens/updates a release PR that bumps versions and
       # updates CHANGELOG.md, or — when such a PR is merged — publishes the
       # release: our packages are private, so "publish" only creates the
-      # `@repo/api@X.Y.Z` / `@repo/web@X.Y.Z` git tags that trigger the image
-      # workflow. See docs/DEPLOYMENT.md.
+      # `@repo/api@X.Y.Z` / `@repo/web@X.Y.Z` git tags. See docs/DEPLOYMENT.md.
       # Needs the repo setting "Allow GitHub Actions to create and approve pull
       # requests" (Settings → Actions → General).
       - name: Create release pull request or publish
+        id: changesets
         uses: changesets/action@v2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -50,3 +53,35 @@ jobs:
           publish-script: pnpm release
           commit-message: 'chore(release): version packages'
           pr-title: 'chore(release): version packages'
+
+      # api, web, and types share one version (`fixed` in
+      # .changeset/config.json), so the api entry names the release.
+      - name: Resolve the released version
+        id: version
+        if: steps.changesets.outputs.published == 'true'
+        env:
+          PUBLISHED_PACKAGES: ${{ steps.changesets.outputs.published-packages }}
+        run: |
+          version=$(node -e '
+            const released = JSON.parse(process.env.PUBLISHED_PACKAGES);
+            const api = released.find((pkg) => pkg.name === "@repo/api");
+            if (!api) {
+              console.error("@repo/api was not released: " + process.env.PUBLISHED_PACKAGES);
+              process.exit(1);
+            }
+            console.log(api.version);
+          ')
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+  # Tags pushed with GITHUB_TOKEN don't start other workflows, so the release
+  # calls the image workflow directly instead of relying on its tag trigger.
+  publish-images:
+    name: Publish container images
+    needs: release
+    if: needs.release.outputs.published == 'true'
+    permissions:
+      contents: read
+      packages: write # push to GitHub Container Registry
+    uses: ./.github/workflows/docker-publish.yml
+    with:
+      version: ${{ needs.release.outputs.version }}

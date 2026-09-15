@@ -13,7 +13,7 @@ flowchart TD
   C -- yes --> D[Open/update 'Version Packages' PR]
   D --> E[Maintainer merges version PR]
   E --> F[Versions bumped + CHANGELOG updated + tags @repo/api@X.Y.Z, @repo/web@X.Y.Z]
-  F --> G[docker-publish workflow on each app tag]
+  F --> G[Release workflow calls docker-publish with the version]
   G --> H[Images pushed to ghcr.io as X.Y.Z, X.Y + sha]
   H --> I[Promote images through environments]
   C -- no --> J[No release]
@@ -35,12 +35,32 @@ flowchart TD
   `api` and `web` images. Don't remove either without changing the image
   workflow.
 
+### Why the release calls the image workflow directly
+
+The release workflow pushes tags and the Version Packages PR with the built-in
+`GITHUB_TOKEN`, and **GitHub never starts workflows from events that token
+causes**. Two consequences:
+
+- **Images:** a tag push from the release would not trigger
+  `docker-publish.yml`, so the release job reads the released version from
+  `changesets/action`'s outputs and calls `docker-publish.yml` itself
+  (`workflow_call`).
+- **The Version Packages PR gets no CI checks.** Before merging it, run CI by
+  **closing and reopening the PR** (a person reopening it fires
+  `pull_request`), or push an empty commit to its branch
+  (`git commit --allow-empty -m "chore(release): run ci"`). A GitHub App or PAT
+  token would avoid this but adds a long-lived secret; see
+  [TECH_DEBT.md](TECH_DEBT.md).
+
 ## Container images
 
-- Built by [`docker-publish.yml`](../.github/workflows/docker-publish.yml) when
-  a release tag is pushed — `@repo/api@X.Y.Z` builds the `api` image,
-  `@repo/web@X.Y.Z` the `web` image — or manually via `workflow_dispatch`
-  (both images, tagged by commit sha only).
+- Built by [`docker-publish.yml`](../.github/workflows/docker-publish.yml):
+  - **on release** — called by the release workflow with the released version;
+    builds both images;
+  - **when a person pushes a release tag** — `@repo/api@X.Y.Z` builds the
+    `api` image, `@repo/web@X.Y.Z` the `web` image (e.g. to rebuild a release);
+  - **manually** via `workflow_dispatch` — both images, tagged by commit sha
+    only.
 - Published to **GitHub Container Registry**:
   - `ghcr.io/huttonhomehub/workhub/api`
   - `ghcr.io/huttonhomehub/workhub/web`
