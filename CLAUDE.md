@@ -165,9 +165,10 @@ Full detail in [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md). Summary:
 
 1. Merging changesets to `main` makes the **Release** workflow open/update a
    "Version Packages" PR.
-2. Merging that PR bumps versions, updates `CHANGELOG.md`, and tags `vX.Y.Z`.
-3. The tag triggers the **Publish container images** workflow, pushing `api` and
-   `web` images to **GHCR** with SemVer + SHA tags, SBOM, and provenance.
+2. Merging that PR bumps versions (api, web, and types move together), updates
+   `CHANGELOG.md`, and tags each package as `@repo/api@X.Y.Z`, `@repo/web@X.Y.Z`.
+3. Each app tag triggers the **Publish container images** workflow, pushing that
+   image to **GHCR** as `X.Y.Z`, `X.Y`, and `sha`, with SBOM and provenance.
 4. Deployment promotes those immutable images through environments.
 
 ## 12. Frontend architecture, UI standards & design system

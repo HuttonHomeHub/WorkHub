@@ -54,6 +54,10 @@ const STALE_TERMS = [
     /hosting platform (is )?(an open decision|undecided)|deliberately undecided/i,
     'hosting is decided: self-hosted Compose (DEPLOYMENT.md)',
   ],
+  [
+    /\bvX\.Y\.Z\b|IMAGE_TAG=v\d/,
+    'releases are tagged @repo/<app>@X.Y.Z and images X.Y.Z, without a v (DEPLOYMENT.md)',
+  ],
 ];
 
 function markdownFiles(dir) {
