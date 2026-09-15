@@ -39,7 +39,7 @@ jobs:
       # updates CHANGELOG.md, or — when such a PR is merged — publishes the
       # release. See docs/DEPLOYMENT.md and .changeset/README.md.
       - name: Create release pull request or publish
-        uses: changesets/action@v1
+        uses: changesets/action@v2
         with:
           version: pnpm version-packages
           publish: pnpm release
