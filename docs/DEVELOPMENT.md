@@ -27,7 +27,9 @@ corepack enable            # enable pnpm at the version pinned in package.json
 ```
 
 `setup.sh` copies [`.env.example`](../.env.example) to `.env`. Review it and set
-real secrets before connecting to real services. **Never commit `.env`.**
+real secrets before connecting to real services. **Never commit `.env`.** The
+API loads it on start-up (variables already set in the environment win), so no
+`export` is needed before `pnpm dev`.
 
 ## Running
 
