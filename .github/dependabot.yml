@@ -59,6 +59,12 @@ updates:
       # Remove this ignore when doing the TypeScript 7 migration deliberately.
       - dependency-name: 'typescript'
         update-types: ['version-update:semver-major']
+      # NestJS held at 11: @nestjs/throttler (API rate limiting) supports
+      # @nestjs/common/core only up to v11, and v12 ships ESM packages that broke
+      # decorator metadata in our tests. Remove once throttler supports v12, then
+      # migrate the whole @nestjs/* group together (docs/TECH_DEBT.md).
+      - dependency-name: '@nestjs/*'
+        update-types: ['version-update:semver-major']
 
   # --- GitHub Actions --------------------------------------------------------
   - package-ecosystem: github-actions
