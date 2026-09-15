@@ -35,24 +35,24 @@
     "zod": "^4.0.0"
   },
   "devDependencies": {
-    "@axe-core/playwright": "^4.10.1",
+    "@axe-core/playwright": "^4.13.0",
     "@playwright/test": "catalog:",
     "@repo/config": "workspace:*",
-    "@tailwindcss/vite": "^4.0.0",
-    "@tanstack/router-plugin": "^1.132.0",
+    "@tailwindcss/vite": "^4.3.3",
+    "@tanstack/router-plugin": "^1.168.37",
     "@testing-library/jest-dom": "^6.6.3",
-    "@testing-library/react": "^16.2.0",
-    "@testing-library/user-event": "^14.5.2",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.7",
     "@types/react": "^19.0.7",
     "@types/react-dom": "^19.0.3",
-    "@vitejs/plugin-react": "^6.0.3",
+    "@vitejs/plugin-react": "^6.1.1",
     "eslint": "^9.18.0",
     "jsdom": "^29.1.1",
-    "prettier-plugin-tailwindcss": "^0.8.0",
+    "prettier-plugin-tailwindcss": "^0.8.1",
     "rimraf": "^6.0.1",
-    "tailwindcss": "^4.0.0",
+    "tailwindcss": "^4.3.3",
     "typescript": "catalog:",
-    "vite": "^8.1.4",
+    "vite": "^8.3.0",
     "vitest": "catalog:"
   }
 }
