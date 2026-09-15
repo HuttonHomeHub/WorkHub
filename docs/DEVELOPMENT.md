@@ -63,6 +63,12 @@ docker compose logs -f api
 docker compose down        # add -v to also drop the database volume
 ```
 
+The compose project is `workhub` and the local database lives in the volume
+`workhub-dev-db-data` (container `workhub-db-1`). Stacks started before the
+rename used `blank-app`: remove the old container
+(`docker rm -f blank-app-db-1`), then re-run `./scripts/setup.sh` to recreate
+the database and re-seed the dev account.
+
 ## Accounts (no email)
 
 Public sign-up is off by default and nothing sends email (ADR-0018):

@@ -1,4 +1,4 @@
-# nginx config for serving the Blank App SPA and proxying the API.
+# nginx config for serving the WorkHub SPA and proxying the API.
 #
 # This is an nginx *template*: the image entrypoint substitutes ${API_UPSTREAM}
 # (default `api:3000`, set in the Dockerfile) at container start. nginx's own

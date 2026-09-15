@@ -17,10 +17,14 @@ import { AppConfigService } from './config/app-config.service';
 export function configureApp(app: INestApplication): void {
   const config = app.get(AppConfigService);
 
-  // Behind the web container's nginx (and the operator's reverse proxy):
-  // honour X-Forwarded-* so secure cookies and client IPs resolve correctly.
+  // Honour X-Forwarded-* only from the configured proxy hops (web nginx, the
+  // operator's reverse proxy) — the same AUTH_TRUSTED_PROXIES list Better Auth
+  // uses. Trusting every peer would let a client pick its own `req.ip`, and so
+  // its own throttler bucket. With none configured (e.g. `pnpm dev`, where the
+  // Vite proxy connects from loopback), `req.ip` is the connecting peer.
   const instance = app.getHttpAdapter().getInstance() as Express;
-  instance.set('trust proxy', true);
+  const trustedProxies = config.authTrustedProxies;
+  instance.set('trust proxy', trustedProxies.length > 0 ? trustedProxies : false);
 
   // Security headers.
   app.use(helmet());

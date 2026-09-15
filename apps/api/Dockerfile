@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 # -----------------------------------------------------------------------------
-# Multi-stage build for the Blank App API (@repo/api).
+# Multi-stage build for the WorkHub API (@repo/api).
 # Built from the repository root so pnpm workspace packages resolve:
 #   docker build -f apps/api/Dockerfile -t app-api .
 #

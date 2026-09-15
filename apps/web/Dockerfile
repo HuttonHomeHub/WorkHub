@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 # -----------------------------------------------------------------------------
-# Multi-stage build for the Blank App web client (@repo/web).
+# Multi-stage build for the WorkHub web client (@repo/web).
 # Produces a static bundle served by nginx, which also proxies /api/* to the
 # API service — the bundle contains NO environment-specific URLs, so the same
 # image runs in every environment. Build from the repository root:

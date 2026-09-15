@@ -36,6 +36,33 @@ for path in "$MODULE_DEST" "$E2E_DEST"; do
   fi
 done
 
+# --e2e pushes a throwaway schema with --accept-data-loss (and pushes the real
+# one back afterwards), which can drop tables and data. Refuse BEFORE touching
+# anything unless DATABASE_URL names a *_test database or this is CI's
+# disposable database.
+database_name() {
+  local url="${1%%\?*}"
+  printf '%s' "${url##*/}"
+}
+
+assert_disposable_database() {
+  local name
+  name=$(database_name "${DATABASE_URL:-}")
+  if [ "${CI:-}" = "true" ] || [[ "$name" == *_test ]]; then
+    return 0
+  fi
+  cat >&2 <<EOF
+verify-template: refusing to run --e2e against database '${name:-<DATABASE_URL unset>}'.
+  It pushes a throwaway schema with --accept-data-loss, which can destroy data.
+  Point DATABASE_URL at a test database whose name ends in _test, e.g.:
+    DATABASE_URL='postgresql://app:app@localhost:5432/app_test?schema=public' \\
+      bash scripts/verify-template.sh --e2e
+EOF
+  exit 1
+}
+
+if $E2E; then assert_disposable_database; fi
+
 BACKUP=$(mktemp -d)
 for file in "${TOUCHED[@]}"; do
   mkdir -p "$BACKUP/$(dirname "$file")"

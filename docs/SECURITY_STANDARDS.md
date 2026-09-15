@@ -90,6 +90,9 @@
 - **Limits must be per client.** Behind proxies, `AUTH_TRUSTED_PROXIES` must list
   the proxy hops (the compose files default to the Docker network range);
   otherwise no client IP can be resolved and every client shares one bucket.
+  The same list is the API's Express `trust proxy` setting, so
+  `X-Forwarded-For` from any other peer is ignored and cannot pick a throttler
+  bucket.
   Counters live in memory, i.e. per API instance — several instances need
   shared storage (see [`TECH_DEBT.md`](TECH_DEBT.md)).
 - Guard against enumeration (uniform responses/timing on auth), and cap payload

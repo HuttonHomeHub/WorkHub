@@ -4,9 +4,9 @@
 #   1. Create an env file (never commit it):  see ".env.example" → production block
 #   2. docker compose -f docker-compose.prod.yml --env-file .env.production up -d
 #   3. Point your reverse proxy (Caddy / Traefik / Nginx Proxy Manager / …) at
-#      http://<host>:${WEB_PORT} and terminate TLS there. Forward
-#      X-Forwarded-For / X-Forwarded-Proto — both the web nginx and the API
-#      honour them.
+#      http://127.0.0.1:${WEB_PORT} and terminate TLS there. Forward
+#      X-Forwarded-For / X-Forwarded-Proto. The port binds to localhost by
+#      default; set WEB_BIND_ADDRESS if the proxy runs elsewhere.
 #
 # Design (docs/DEPLOYMENT.md):
 #   - The ONLY exposed port is the web container's HTTP port. The SPA and the
@@ -17,12 +17,21 @@
 #     only after it succeeds. Images are pinned by tag: deploy = change
 #     IMAGE_TAG, `docker compose … pull && up -d`.
 
-name: blank-app
+name: workhub
+
+# Bounded container logs: Docker's json-file driver otherwise grows forever
+# and can fill the disk. 5 × 10 MB per container.
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: '5'
 
 services:
   db:
     image: postgres:17-alpine
     restart: unless-stopped
+    logging: *default-logging
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-app}
       POSTGRES_PASSWORD: '${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in the env file}'
@@ -39,6 +48,7 @@ services:
     image: '${IMAGE_BASE:-ghcr.io/huttonhomehub/workhub}/api:${IMAGE_TAG:?pin IMAGE_TAG to a released version}'
     command: ['node_modules/.bin/prisma', 'migrate', 'deploy']
     restart: 'no'
+    logging: *default-logging
     depends_on:
       db:
         condition: service_healthy
@@ -48,6 +58,7 @@ services:
   api:
     image: ${IMAGE_BASE:-ghcr.io/huttonhomehub/workhub}/api:${IMAGE_TAG}
     restart: unless-stopped
+    logging: *default-logging
     depends_on:
       db:
         condition: service_healthy
@@ -70,13 +81,21 @@ services:
   web:
     image: ${IMAGE_BASE:-ghcr.io/huttonhomehub/workhub}/web:${IMAGE_TAG}
     restart: unless-stopped
+    logging: *default-logging
     depends_on:
       - api
     environment:
       API_UPSTREAM: api:3000
     ports:
-      # The single public-facing port — point your reverse proxy here.
-      - '${WEB_PORT:-8080}:8080'
+      # The single exposed port — point your reverse proxy here. Docker's
+      # published ports bypass host firewalls (ufw/firewalld), so bind to
+      # localhost unless the proxy must reach it from elsewhere
+      # (WEB_BIND_ADDRESS, docs/DEPLOYMENT.md).
+      - '${WEB_BIND_ADDRESS:-127.0.0.1}:${WEB_PORT:-8080}:8080'
 
 volumes:
   db-data:
+    # Pinned so the data never depends on the compose project name. NEVER rename
+    # this without migrating the data first — a new name starts an EMPTY
+    # database and the app boots against it without complaint.
+    name: workhub-db-data

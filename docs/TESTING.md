@@ -80,7 +80,7 @@ pnpm test:e2e       # all end-to-end tests
 pnpm --filter @repo/api test         # API unit tests only
 pnpm --filter @repo/api test:e2e     # API HTTP e2e (Supertest)
 pnpm --filter @repo/web test:watch   # web unit tests in watch mode
-bash scripts/verify-template.sh --e2e  # generated feature, incl. its API e2e (needs DATABASE_URL)
+bash scripts/verify-template.sh --e2e  # generated feature, incl. its API e2e (DATABASE_URL must name a *_test database)
 ```
 
 ## CI

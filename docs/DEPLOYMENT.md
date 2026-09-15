@@ -13,7 +13,7 @@ flowchart TD
   C -- yes --> D[Open/update 'Version Packages' PR]
   D --> E[Maintainer merges version PR]
   E --> F[Versions bumped + CHANGELOG updated + tags @repo/api@X.Y.Z, @repo/web@X.Y.Z]
-  F --> G[docker-publish workflow on each app tag]
+  F --> G[Release workflow calls docker-publish with the version]
   G --> H[Images pushed to ghcr.io as X.Y.Z, X.Y + sha]
   H --> I[Promote images through environments]
   C -- no --> J[No release]
@@ -35,12 +35,32 @@ flowchart TD
   `api` and `web` images. Don't remove either without changing the image
   workflow.
 
+### Why the release calls the image workflow directly
+
+The release workflow pushes tags and the Version Packages PR with the built-in
+`GITHUB_TOKEN`, and **GitHub never starts workflows from events that token
+causes**. Two consequences:
+
+- **Images:** a tag push from the release would not trigger
+  `docker-publish.yml`, so the release job reads the released version from
+  `changesets/action`'s outputs and calls `docker-publish.yml` itself
+  (`workflow_call`).
+- **The Version Packages PR gets no CI checks.** Before merging it, run CI by
+  **closing and reopening the PR** (a person reopening it fires
+  `pull_request`), or push an empty commit to its branch
+  (`git commit --allow-empty -m "chore(release): run ci"`). A GitHub App or PAT
+  token would avoid this but adds a long-lived secret; see
+  [TECH_DEBT.md](TECH_DEBT.md).
+
 ## Container images
 
-- Built by [`docker-publish.yml`](../.github/workflows/docker-publish.yml) when
-  a release tag is pushed — `@repo/api@X.Y.Z` builds the `api` image,
-  `@repo/web@X.Y.Z` the `web` image — or manually via `workflow_dispatch`
-  (both images, tagged by commit sha only).
+- Built by [`docker-publish.yml`](../.github/workflows/docker-publish.yml):
+  - **on release** — called by the release workflow with the released version;
+    builds both images;
+  - **when a person pushes a release tag** — `@repo/api@X.Y.Z` builds the
+    `api` image, `@repo/web@X.Y.Z` the `web` image (e.g. to rebuild a release);
+  - **manually** via `workflow_dispatch` — both images, tagged by commit sha
+    only.
 - Published to **GitHub Container Registry**:
   - `ghcr.io/huttonhomehub/workhub/api`
   - `ghcr.io/huttonhomehub/workhub/web`
@@ -80,16 +100,38 @@ flowchart LR
 - **One origin, one exposed port.** The web container serves the SPA and
   proxies `/api/*` to the API — no URLs are baked into the bundle, auth
   cookies stay first-party, and CORS is a non-issue in production.
-- Postgres is reachable only on the compose network (no host port).
+- **The port binds to `127.0.0.1` by default** (`WEB_BIND_ADDRESS`), because
+  Docker's published ports bypass host firewalls such as ufw. That suits a
+  reverse proxy running directly on the same host. Otherwise set
+  `WEB_BIND_ADDRESS` in `.env.production` deliberately:
+  - proxy on **another machine** — this host's LAN/VPN address the proxy can
+    reach (not `0.0.0.0` on an internet-facing host);
+  - proxy in a **container on this host** — the Docker bridge gateway (e.g.
+    `172.17.0.1`), or attach the proxy to the `workhub_default` network and
+    target `web:8080` directly.
+- **Container logs rotate** (`json-file`, 10 MB × 5 files per service), so
+  they can't fill the disk; ship them elsewhere if you need longer history.
+- Postgres is reachable only on the compose network (no host port). Its data
+  lives in the Docker volume **`workhub-db-data`**, named explicitly so it
+  doesn't depend on the compose project name. **Never rename it** without
+  migrating the data first — compose would create an empty volume and the app
+  would start against an empty database.
 - Required secrets (`POSTGRES_PASSWORD`, `BETTER_AUTH_SECRET`, `APP_ORIGIN`,
   `IMAGE_TAG`) have **no defaults** — compose refuses to start without them.
+  The API also refuses to start in production unless `BETTER_AUTH_SECRET` is
+  at least 32 characters and not a placeholder (anything containing
+  `change-me`, `changeme`, `example`, `dev-insecure`, or `<openssl`) —
+  generate it with `openssl rand -base64 32`.
 - Deploy = update `IMAGE_TAG` in `.env.production`, then
   `docker compose -f docker-compose.prod.yml --env-file .env.production pull && … up -d`.
-- Your proxy must forward `X-Forwarded-For`/`X-Forwarded-Proto`; both the web
-  nginx and the API honour them (`trust proxy`).
-- `AUTH_TRUSTED_PROXIES` (default `172.16.0.0/12`, the Docker networks) tells the
-  API which `X-Forwarded-For` hops to skip, so auth rate limits apply per client.
-  If your reverse proxy runs on a different host, add its address.
+- Your proxy must forward `X-Forwarded-For`/`X-Forwarded-Proto`.
+- `AUTH_TRUSTED_PROXIES` (default `172.16.0.0/12`, the Docker networks) is the
+  list of proxy IPs/CIDRs the API trusts. Only hops from those addresses are
+  skipped in `X-Forwarded-For` — both for Better Auth's sign-in limits and for
+  Express's `trust proxy` (the Nest throttler's client IP) — so rate limits
+  apply per client and a client can't spoof its address. If your reverse proxy
+  reaches the web container from outside the Docker networks (another host),
+  add its address. Use IPs/CIDRs only, not names like `loopback`.
 
 ### Your first account
 
