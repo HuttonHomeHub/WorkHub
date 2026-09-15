@@ -1,6 +1,6 @@
 # ADR-0016: Owner-based access for individual accounts
 
-- **Status:** Accepted (supersedes ADR-0012)
+- **Status:** Accepted (supersedes ADR-0012; its open sign-up is amended by ADR-0018)
 - **Date:** 2026-07-12
 - **Deciders:** Project owner, Backend architecture, Security
 

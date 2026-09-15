@@ -44,6 +44,11 @@ export class AppConfigService {
       .filter(Boolean);
   }
 
+  /** Public self-service sign-up (ADR-0018); off unless AUTH_SIGNUP_ENABLED=true. */
+  get authSignUpEnabled(): boolean {
+    return this.config.get('AUTH_SIGNUP_ENABLED', { infer: true });
+  }
+
   /** `undefined` defers to Better Auth's default (enabled in production). */
   get authRateLimitEnabled(): boolean | undefined {
     return this.config.get('AUTH_RATE_LIMIT_ENABLED', { infer: true });

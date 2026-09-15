@@ -15,6 +15,7 @@ import { AppConfigModule } from './config/config.module';
 import { HealthModule } from './health/health.module';
 import { MeModule } from './me/me.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { PublicConfigModule } from './public-config/public-config.module';
 
 /**
  * Root module. Wires global cross-cutting concerns once — structured logging
@@ -66,6 +67,7 @@ import { PrismaModule } from './prisma/prisma.module';
     AuthModule,
     HealthModule,
     MeModule,
+    PublicConfigModule,
   ],
   providers: [
     // Global validation: reject unknown fields, coerce types, 422 on failure.
