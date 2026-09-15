@@ -6,7 +6,8 @@ authentication via **Better Auth**, and an **OpenAPI** contract generated with
 
 > **Status:** walking skeleton. The cross-cutting infrastructure is live (config,
 > logging, rate limiting, validation, envelopes, health, OpenAPI) and Better Auth
-> is wired end-to-end: open email/password signup at `/api/auth/*`, session
+> is wired end-to-end: email/password auth at `/api/auth/*` (public sign-up
+> off by default; accounts via `pnpm user:create`, ADR-0018), session
 > validation in the deny-by-default guard, and the protected `GET /api/v1/me`.
 > The schema holds only the authentication tables — **no domain features exist
 > yet**. Build features with `pnpm gen:feature <entity>` from the non-shipping

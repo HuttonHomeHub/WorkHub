@@ -17,8 +17,9 @@ feature template) so a real application can be built on top of it quickly and
 consistently.
 
 > **Current stage: walking skeleton (no domain features).** The foundation and
-> a working end-to-end auth skeleton exist — open email/password signup
-> (Better Auth), sessions, a protected home page, and a `/api/v1/me` endpoint —
+> a working end-to-end auth skeleton exist — email/password sign-in (Better
+> Auth; public sign-up off by default, accounts via `pnpm user:create`,
+> ADR-0018), sessions, a protected home page, and a `/api/v1/me` endpoint —
 > but domain/business code does **not**. When you start a real app, replace
 > this section with the app's purpose, users, and goals, and build features
 > from the reference template (§12, ADR-0015). Do not assume domain code
@@ -274,6 +275,7 @@ Recorded as ADRs in [`docs/adr/`](docs/adr/). Current set:
 - **ADR-0015** — Template-driven feature development (canonical standard).
 - **ADR-0016** — Owner-based access for individual accounts (supersedes 0012).
 - **ADR-0017** — Shared contracts and a generated API client.
+- **ADR-0018** — Closed sign-up with server-side account management.
 
 A lighter-weight running log of smaller decisions is in
 [`docs/DECISIONS.md`](docs/DECISIONS.md).
@@ -282,8 +284,11 @@ A lighter-weight running log of smaller decisions is in
 
 - No domain code exists yet; the walking skeleton (auth + protected shell) is
   the only live feature surface. Docs describe intent and conventions.
-- Email verification / password reset are off until an SMTP integration is
-  added (see ADR-0016); CI e2e runs the chromium project only
+- No email is sent: public sign-up is off by default and passwords are reset
+  with `pnpm user:reset-password` (ADR-0018); add an SMTP integration (email
+  verification, self-service reset) before enabling public sign-up. Local
+  development signs in as `dev@example.com` from `pnpm db:seed`. CI e2e runs the
+  chromium project only
   (`docs/TECH_DEBT.md`).
 - The reference deployment is **self-hosted Docker Compose behind the
   operator's reverse proxy** (`docker-compose.prod.yml`); the images remain

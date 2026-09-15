@@ -35,8 +35,12 @@ real secrets before connecting to real services. **Never commit `.env`.**
 pnpm dev            # run web + api in watch mode (Turborepo orchestrates)
 ```
 
-- Web dev server: <http://localhost:5173> (proxies `/api` to the API).
+- Web dev server: <http://localhost:5173> (proxies `/api` to the API). Sign in
+  as **dev@example.com** / **dev-password-123** (see [Accounts](#accounts-no-email)).
 - API: <http://localhost:3000>.
+- In Codespaces opened in the browser, add the forwarded web address
+  (`https://<codespace>-5173.app.github.dev`) to `CORS_ORIGINS` in `.env` —
+  Better Auth rejects sign-in from origins it doesn't trust.
 
 Run a single app:
 
@@ -52,6 +56,19 @@ docker compose up -d       # db + api + web
 docker compose logs -f api
 docker compose down        # add -v to also drop the database volume
 ```
+
+## Accounts (no email)
+
+Public sign-up is off by default and nothing sends email (ADR-0018):
+
+```bash
+pnpm db:seed                                           # (re)create dev@example.com / dev-password-123; refuses in production
+pnpm user:create --email you@example.com --name "You"  # prompts for the password
+pnpm user:reset-password --email you@example.com       # new password; signs out existing sessions
+```
+
+`setup.sh` runs `pnpm db:seed` for you. Set `AUTH_SIGNUP_ENABLED=true` in `.env`
+to try the public sign-up page locally.
 
 ## Database & Prisma
 

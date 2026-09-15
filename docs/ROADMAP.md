@@ -25,7 +25,7 @@ models.**
 
 Vite app entry, providers, TanStack Router/Query, RHF + Zod, app shell + base
 shadcn/ui primitives per `docs/FRONTEND_ARCHITECTURE.md`; authentication wired
-end-to-end (Better Auth: open signup, sessions, owner-based access — ADR-0016);
+end-to-end (Better Auth: sign-up, sessions, owner-based access — ADR-0016);
 same-origin /api proxying; production compose with a migration step; CI runs
 the full `pnpm build` and the Playwright auth journey (with axe a11y checks).
 
@@ -35,6 +35,12 @@ Node 24 LTS and a dev container; per-client rate limiting of the auth routes;
 a buildable api image; shared contracts with a generated, typed API client
 (ADR-0017); `pnpm gen:feature` with CI verification including API e2e; docs made
 single-source and guarded by `pnpm docs:check`.
+
+### ✅ M3 — Closed sign-up (done)
+
+Public sign-up off by default; accounts created and passwords reset from the
+server (`pnpm user:*`), a seeded development account, no email required
+(ADR-0018).
 
 ### 🔜 When you start an application
 
