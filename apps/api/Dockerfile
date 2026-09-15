@@ -10,7 +10,7 @@
 # -----------------------------------------------------------------------------
 
 # --- Base: pinned Node + pnpm via corepack -----------------------------------
-FROM node:22-alpine AS base
+FROM node:24-alpine AS base
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
 RUN corepack enable
@@ -33,7 +33,7 @@ RUN pnpm --filter @repo/api prisma:generate \
     && pnpm --filter @repo/api --prod deploy /out
 
 # --- Runtime: minimal, non-root ----------------------------------------------
-FROM node:22-alpine AS runtime
+FROM node:24-alpine AS runtime
 ENV NODE_ENV=production
 WORKDIR /app
 # Run as the built-in unprivileged `node` user.

@@ -47,7 +47,7 @@ performance**. Concretely:
 | Concern        | Choice                                              |
 | -------------- | --------------------------------------------------- |
 | Monorepo       | Turborepo + pnpm workspaces                         |
-| Language       | TypeScript (strict) on Node.js 22 LTS               |
+| Language       | TypeScript (strict) on Node.js 24 LTS               |
 | Frontend       | React 19 + Vite                                     |
 | Styling / UI   | Tailwind CSS v4, shadcn/ui, Lucide icons            |
 | Backend        | NestJS 11                                           |

@@ -64,8 +64,10 @@ scripts/      Repository automation
 
 ## 🚀 Quick start
 
-**Prerequisites:** Node.js ≥ 22 (see [`.nvmrc`](.nvmrc)), pnpm ≥ 10 (via
-`corepack enable`), and Docker (for local PostgreSQL).
+**Prerequisites:** Node.js ≥ 24 (see [`.nvmrc`](.nvmrc)), pnpm ≥ 10 (via
+`corepack enable`), and Docker (for local PostgreSQL) — or open it in
+GitHub Codespaces / a dev container, which sets all of this up for you
+([`.devcontainer/`](.devcontainer/devcontainer.json)).
 
 ```bash
 # 1. Clone and enter

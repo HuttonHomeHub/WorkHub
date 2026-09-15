@@ -6,10 +6,18 @@ How to set up a local environment and work day-to-day.
 
 | Tool    | Version    | Notes                                               |
 | ------- | ---------- | --------------------------------------------------- |
-| Node.js | ≥ 22 (LTS) | Use the version in [`.nvmrc`](../.nvmrc); `nvm use` |
+| Node.js | ≥ 24 (LTS) | Use the version in [`.nvmrc`](../.nvmrc); `nvm use` |
 | pnpm    | ≥ 10       | `corepack enable` provides the pinned version       |
 | Docker  | recent     | For local PostgreSQL / full-stack compose           |
 | Git     | recent     | —                                                   |
+
+## Codespaces / dev container (zero setup)
+
+Open the repo in GitHub Codespaces or VS Code's "Reopen in Container". The
+[`.devcontainer/`](../.devcontainer/devcontainer.json) pins Node 24, provides
+Docker, and runs `./scripts/setup.sh` on creation — so dependencies, `.env`,
+Postgres, and migrations are ready when the editor opens. Then `pnpm dev`.
+Recommended editor extensions come from [`.vscode/extensions.json`](../.vscode/extensions.json).
 
 ## First-time setup
 
