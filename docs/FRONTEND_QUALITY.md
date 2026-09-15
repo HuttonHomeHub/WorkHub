@@ -1,5 +1,7 @@
 # Frontend Quality Standards
 
+> **Pending rewrite (ADR-0019).** Parts of this document assume mobile performance targets (a mid-tier phone on 4G) and an 80% coverage bar that CI does not enforce — where it conflicts with [PRODUCT.md](PRODUCT.md), PRODUCT.md wins.
+
 > The non-negotiable quality bar for `apps/web`. These are merge requirements,
 > enforced by CI, reviewers, and the specialised agents in `.claude/agents/`.
 

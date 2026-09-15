@@ -19,6 +19,8 @@ baseline. Anything that deviates from the base stack/architecture needs an ADR.
 
 # Project Brief: <App name>
 
+> **Pending rewrite (ADR-0019).** Parts of this document assume a new app built on a generic base; WorkHub’s product context now lives in PRODUCT.md — where it conflicts with [PRODUCT.md](../PRODUCT.md), PRODUCT.md wins.
+
 - **Status:** Draft | In review | Approved
 - **Owner(s):** <name(s)>
 - **Date:** <YYYY-MM-DD>

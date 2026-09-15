@@ -1,5 +1,7 @@
 # Performance & Scalability Standards
 
+> **Pending rewrite (ADR-0019).** Parts of this document assume Redis caching, BullMQ queues and horizontal scaling across API instances — where it conflicts with [PRODUCT.md](PRODUCT.md), PRODUCT.md wins.
+
 > Backend and system performance standards. Frontend performance lives in
 > [`FRONTEND_QUALITY.md`](FRONTEND_QUALITY.md). Guiding rule: **measure before
 > optimising; no un-measured claims.**

@@ -6,6 +6,8 @@ in. Delete guidance comments. NO application code is written at this stage.
 
 # Feature Spec: <Feature name>
 
+> **Pending rewrite (ADR-0019).** Parts of this document assume a team process and features that may need sharing, teams or several currencies — where it conflicts with [PRODUCT.md](../PRODUCT.md), PRODUCT.md wins.
+
 - **Status:** Draft | In review | Approved | Superseded
 - **Author(s):** <name(s)>
 - **Date:** YYYY-MM-DD

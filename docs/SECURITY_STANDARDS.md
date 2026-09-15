@@ -1,5 +1,7 @@
 # Security Standards
 
+> **Pending rewrite (ADR-0019).** Parts of this document assume an append-only audit log and object-storage buckets, and do not yet require passkeys for an internet-facing deployment — where it conflicts with [PRODUCT.md](PRODUCT.md), PRODUCT.md wins.
+
 > Engineering security standards for Blank App — **security is enabled by default**,
 > not opt-in. This complements the vulnerability-reporting policy in
 > [`SECURITY.md`](../SECURITY.md) and `CLAUDE.md` §14. Backed by ADR-0003

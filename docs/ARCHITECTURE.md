@@ -1,5 +1,7 @@
 # Architecture
 
+> **Pending rewrite (ADR-0019).** Parts of this document assume OpenTelemetry as planned work and images promoted through several environments — where it conflicts with [PRODUCT.md](PRODUCT.md), PRODUCT.md wins.
+
 > **Status:** foundational. This document describes the intended architecture
 > and the conventions code must follow. Domain modules are added as features
 > are built; update this document alongside them.

@@ -1,5 +1,7 @@
 # Testing
 
+> **Pending rewrite (ADR-0019).** Parts of this document assume an 80% coverage bar that CI does not enforce and Chromium-only browser tests — where it conflicts with [PRODUCT.md](PRODUCT.md), PRODUCT.md wins.
+
 > Tests are part of the definition of done. Every feature ships with tests;
 > every bug fix ships with a regression test.
 

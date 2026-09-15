@@ -1,5 +1,7 @@
 # API conventions
 
+> **Pending rewrite (ADR-0019).** Parts of this document assume amounts in any currency and audit columns on resources — where it conflicts with [PRODUCT.md](PRODUCT.md), PRODUCT.md wins.
+
 > The conventions every endpoint must follow. Demonstrated by the reference
 > template ([`docs/REFERENCE_FEATURE.md`](REFERENCE_FEATURE.md),
 > `apps/api/examples/reference-feature/`) and wired globally per

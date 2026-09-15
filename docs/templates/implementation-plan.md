@@ -7,6 +7,8 @@ or attach to the tracking issue. Sequence work as thin vertical slices that keep
 
 # Implementation Plan: <Feature name>
 
+> **Pending rewrite (ADR-0019).** Parts of this document assume a team process in which every change gets an epic-to-step breakdown — where it conflicts with [PRODUCT.md](../PRODUCT.md), PRODUCT.md wins.
+
 - **Feature spec:** <link to the approved spec>
 - **Status:** Draft | Approved | In progress | Done
 - **Owner:** <name>

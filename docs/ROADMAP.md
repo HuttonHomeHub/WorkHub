@@ -1,8 +1,10 @@
 # Roadmap
 
-> Blank App is a **base repository**, so this roadmap describes the _foundation's_
-> direction, not a product. When you build a real application on top of it,
-> **replace this file** with your product's roadmap and milestones.
+> **Pending rewrite (ADR-0019).** Parts of this document assume a generic base repository rather than WorkHub — where it conflicts with [PRODUCT.md](PRODUCT.md), PRODUCT.md wins.
+
+> This roadmap still records the foundation's milestones. WorkHub's product
+> roadmap (Now / Next / Later) replaces it once the process PR lands; the
+> product decisions are in [PRODUCT.md](PRODUCT.md).
 
 ## Purpose
 
