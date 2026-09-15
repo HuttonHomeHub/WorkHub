@@ -69,7 +69,7 @@ flowchart LR
   B -- no --> D{Reusable or one screen?}
   D -- reusable --> E[Design against tokens + a11y]
   E --> F[Build primitive/composite + tests + TSDoc]
-  F --> G[Component Reviewer + A11y Reviewer]
+  F --> G[ui-reviewer + accessibility-reviewer]
   G --> H[Merge into design system]
   D -- one screen --> I[Build in the feature, still token-driven]
   H --> J[Maintain: version via changeset if behaviour changes]
@@ -80,8 +80,8 @@ flowchart LR
 2. **Design** — against tokens and accessibility from the start.
 3. **Build** — typed API, all states, light+dark, keyboard + SR support.
 4. **Test** — behaviour and a11y (see below).
-5. **Review** — Component + Accessibility reviewers (agents) for non-trivial
-   components.
+5. **Review** — the ui-reviewer and accessibility-reviewer agents (`/review`)
+   for non-trivial components.
 6. **Document** — props (TSDoc) and usage; add to the design-system inventory.
 7. **Maintain** — behaviour-changing edits get a changeset; keep the API stable.
 8. **Deprecate** — mark deprecated, document the replacement, remove once unused.

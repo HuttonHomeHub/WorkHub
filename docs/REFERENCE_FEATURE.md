@@ -30,7 +30,7 @@ rules — if a rule and this page ever disagree, the linked standard wins.
 ## Creating a new feature
 
 1. **Run the delivery process first** ([`PROCESS.md`](PROCESS.md)): an approved
-   spec + plan.
+   feature doc in [`docs/features/`](features/README.md).
 2. **Generate it:** `pnpm gen:feature <entity>` — singular, kebab-case
    (e.g. `time-entry`; pass `--plural` if the naive plural is wrong). It writes,
    with every rename done consistently:
@@ -49,8 +49,9 @@ rules — if a rule and this page ever disagree, the linked standard wins.
    `apps/api/openapi.json` + `packages/types/src/openapi.gen.ts` (ADR-0017).
 6. **Make the tests green**, update [`API.md`](API.md) if conventions changed,
    and add a changeset.
-7. **Review** with the api, security, backend-performance, and test-engineer
-   agents.
+7. **Review** with `/review`, which runs the backend-reviewer,
+   security-reviewer, database-architect and test-engineer agents on these
+   paths.
 
 ## Backend feature anatomy
 
