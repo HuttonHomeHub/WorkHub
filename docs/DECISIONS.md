@@ -10,6 +10,28 @@ get an ADR instead (and may be linked from here).
 
 ---
 
+### 2026-09-15 — Dependency pass: release tags follow Changesets; NestJS 12 deferred
+
+**Decision.** Take the open Dependabot updates as a few grouped PRs
+instead of one at a time. Move to Changesets 3 and `changesets/action` v2, with
+`privatePackages` enabled and `@repo/api`, `@repo/web`, `@repo/types` in one
+`fixed` version group. Publish images from the tags Changesets actually creates
+(`@repo/api@X.Y.Z`, `@repo/web@X.Y.Z`) and tag images `X.Y.Z` / `X.Y` / `sha`
+with no `v`. Take Better Auth 1.7. Defer NestJS 12 (tracked in
+[TECH_DEBT.md](TECH_DEBT.md)).
+
+**Why.** Changesets 3 stops versioning private packages by default, which
+would have silently ended releases. Also, the image workflow triggered on `v*.*.*`
+tags, which Changesets never creates, so no image would ever have been
+published after a release. `@nestjs/throttler` does not support NestJS 12 yet.
+
+**Consequences.** One release version names both images (`IMAGE_TAG=X.Y.Z`).
+Removing `fixed` or `privatePackages` breaks image publishing. The account CLI
+passes Better Auth's `email-password` provisioning source to `createUser`.
+`pnpm docs:check` rejects `vX.Y.Z` wording.
+
+---
+
 ### 2026-09-15 — Tidy the base: Node 24, generator, shared contracts, single-source docs
 
 **Decision.** Keep the repository a domain-neutral base but point its
