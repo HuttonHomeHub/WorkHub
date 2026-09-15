@@ -22,7 +22,7 @@
     "@radix-ui/react-slot": "^1.1.1",
     "@repo/types": "workspace:*",
     "@tanstack/react-query": "^5.90.5",
-    "@tanstack/react-router": "^1.132.0",
+    "@tanstack/react-router": "^1.170.35",
     "better-auth": "^1.7.5",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
