@@ -18,6 +18,8 @@ function chromiumConfig() {
 // (CI does this; locally `docker compose up db` + `pnpm --filter @repo/api prisma:migrate`).
 export default defineConfig({
   testDir: './e2e',
+  // Creates the journey account (public sign-up is off by default, ADR-0018).
+  globalSetup: './e2e/global-setup.ts',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,

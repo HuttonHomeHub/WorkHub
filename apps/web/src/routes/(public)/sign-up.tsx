@@ -1,14 +1,20 @@
 import { createFileRoute, Link, redirect, useNavigate } from '@tanstack/react-router';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ensureSession, SignUpForm } from '@/features/auth';
+import { ensureAuthConfig, ensureSession, SignUpForm } from '@/features/auth';
 
 export const Route = createFileRoute('/(public)/sign-up')({
-  // Already signed in? Straight to the app.
   beforeLoad: async ({ context }) => {
-    const session = await ensureSession(context.queryClient);
+    const [session, config] = await Promise.all([
+      ensureSession(context.queryClient),
+      ensureAuthConfig(context.queryClient),
+    ]);
+    // Already signed in? Straight to the app.
     // eslint-disable-next-line @typescript-eslint/only-throw-error -- thrown redirects are the TanStack Router control-flow idiom
     if (session) throw redirect({ to: '/' });
+    // Public sign-up is off unless the API enables it (ADR-0018).
+    // eslint-disable-next-line @typescript-eslint/only-throw-error -- thrown redirects are the TanStack Router control-flow idiom
+    if (!config.signUpEnabled) throw redirect({ to: '/sign-in' });
   },
   component: SignUpPage,
 });
