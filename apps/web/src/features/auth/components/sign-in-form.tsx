@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 
-import { useSignIn } from '../api/session';
+import { AuthRequestError, useSignIn } from '../api/session';
 import { signInSchema, type SignInInput } from '../schemas/auth';
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -21,6 +21,20 @@ interface SignInFormProps {
   onSuccess: () => void;
 }
 
+/**
+ * Only a 401 means the email or password was wrong. Anything else (a rejected
+ * origin, the API being down, …) gets a neutral message — blaming the
+ * credentials for those sends people chasing the wrong problem. The real cause
+ * is in the API log.
+ */
+function signInErrorMessage(error: unknown): string {
+  if (error instanceof AuthRequestError) {
+    if (error.status === 401) return 'Wrong email or password. Try again.';
+    if (error.status === 429) return 'Too many sign-in attempts. Wait a minute and try again.';
+  }
+  return "We couldn't sign you in right now. Try again in a moment.";
+}
+
 export function SignInForm({ onSuccess }: SignInFormProps) {
   const signIn = useSignIn();
   const form = useForm<SignInInput>({
@@ -38,7 +52,7 @@ export function SignInForm({ onSuccess }: SignInFormProps) {
       <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4" noValidate>
         {signIn.isError ? (
           <Alert variant="destructive">
-            <AlertDescription>Wrong email or password. Try again.</AlertDescription>
+            <AlertDescription>{signInErrorMessage(signIn.error)}</AlertDescription>
           </Alert>
         ) : null}
         <FormField

@@ -38,9 +38,13 @@ pnpm dev            # run web + api in watch mode (Turborepo orchestrates)
 - Web dev server: <http://localhost:5173> (proxies `/api` to the API). Sign in
   as **dev@example.com** / **dev-password-123** (see [Accounts](#accounts-no-email)).
 - API: <http://localhost:3000>.
-- In Codespaces opened in the browser, add the forwarded web address
-  (`https://<codespace>-5173.app.github.dev`) to `CORS_ORIGINS` in `.env` —
-  Better Auth rejects sign-in from origins it doesn't trust.
+- **Sign-in only works from trusted addresses.** Better Auth rejects sign-in
+  from any origin not in `CORS_ORIGINS`. The default covers
+  `http://localhost:5173` and `https://localhost:5173` (VS Code port forwarding
+  may use https). In Codespaces opened in the browser, also add the forwarded
+  address (`https://<codespace>-5173.app.github.dev`) to `.env` and restart
+  `pnpm dev`. If sign-in says _"We couldn't sign you in right now"_, check the API
+  log for `Invalid origin: …`.
 
 Run a single app:
 

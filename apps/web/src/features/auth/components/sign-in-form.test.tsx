@@ -56,16 +56,47 @@ describe('SignInForm', () => {
     });
   });
 
-  it('shows a friendly error when the server rejects the credentials', async () => {
+  async function submitAndGetAlert() {
     const user = userEvent.setup();
-    signInEmail.mockResolvedValue({ error: { message: 'Invalid email or password' } });
+    await user.type(screen.getByLabelText('Email'), 'user@example.com');
+    await user.type(screen.getByLabelText('Password'), 'some-password');
+    await user.click(screen.getByRole('button', { name: /sign in/i }));
+    return screen.findByRole('alert');
+  }
+
+  it('says the credentials are wrong only when the server returns 401', async () => {
+    signInEmail.mockResolvedValue({
+      error: {
+        status: 401,
+        code: 'INVALID_EMAIL_OR_PASSWORD',
+        message: 'Invalid email or password',
+      },
+    });
     const { onSuccess } = renderForm();
 
-    await user.type(screen.getByLabelText('Email'), 'user@example.com');
-    await user.type(screen.getByLabelText('Password'), 'wrong-password');
-    await user.click(screen.getByRole('button', { name: /sign in/i }));
-
-    expect(await screen.findByRole('alert')).toHaveTextContent('Wrong email or password');
+    expect(await submitAndGetAlert()).toHaveTextContent('Wrong email or password');
     expect(onSuccess).not.toHaveBeenCalled();
+  });
+
+  // Regression: a rejected origin (403) used to show "Wrong email or password",
+  // sending the user after a password problem that didn't exist.
+  it('does not blame the credentials when the request is rejected for another reason', async () => {
+    signInEmail.mockResolvedValue({
+      error: { status: 403, code: 'INVALID_ORIGIN', message: 'Invalid origin' },
+    });
+    renderForm();
+
+    const alert = await submitAndGetAlert();
+    expect(alert).toHaveTextContent("We couldn't sign you in right now");
+    expect(alert).not.toHaveTextContent('Wrong email or password');
+  });
+
+  it('explains rate limiting (429)', async () => {
+    signInEmail.mockResolvedValue({
+      error: { status: 429, message: 'Too many requests. Please try again later.' },
+    });
+    renderForm();
+
+    expect(await submitAndGetAlert()).toHaveTextContent('Too many sign-in attempts');
   });
 });

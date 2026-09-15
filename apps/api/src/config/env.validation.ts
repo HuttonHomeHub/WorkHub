@@ -11,8 +11,12 @@ export const envSchema = z
     API_PORT: z.coerce.number().int().positive().default(3000),
     /** PostgreSQL connection string (postgresql://…). */
     DATABASE_URL: z.string().min(1),
-    /** Comma-separated list of allowed CORS origins. */
-    CORS_ORIGINS: z.string().default('http://localhost:5173'),
+    /**
+     * Comma-separated trusted origins (CORS + Better Auth's origin check). The
+     * default covers the Vite dev server over http and https (VS Code port
+     * forwarding may serve https://localhost).
+     */
+    CORS_ORIGINS: z.string().default('http://localhost:5173,https://localhost:5173'),
     /** Session signing secret — must be strong in production. */
     BETTER_AUTH_SECRET: z.string().min(16).default('dev-insecure-secret-change-me!!'),
     BETTER_AUTH_URL: z.string().min(1).default('http://localhost:3000'),
