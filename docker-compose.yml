@@ -11,7 +11,7 @@
 # the SPA and the API share one origin (nginx proxies /api/* to the api
 # service), exactly as in production.
 
-name: blank-app
+name: workhub
 
 services:
   db:
@@ -81,3 +81,6 @@ services:
 
 volumes:
   db-data:
+    # Pinned so the data never depends on the compose project name. NEVER rename
+    # this without migrating the data first — a new name starts an empty database.
+    name: workhub-dev-db-data

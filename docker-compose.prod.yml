@@ -17,7 +17,7 @@
 #     only after it succeeds. Images are pinned by tag: deploy = change
 #     IMAGE_TAG, `docker compose … pull && up -d`.
 
-name: blank-app
+name: workhub
 
 services:
   db:
@@ -80,3 +80,7 @@ services:
 
 volumes:
   db-data:
+    # Pinned so the data never depends on the compose project name. NEVER rename
+    # this without migrating the data first — a new name starts an EMPTY
+    # database and the app boots against it without complaint.
+    name: workhub-db-data

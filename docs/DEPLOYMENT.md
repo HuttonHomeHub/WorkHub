@@ -100,7 +100,11 @@ flowchart LR
 - **One origin, one exposed port.** The web container serves the SPA and
   proxies `/api/*` to the API — no URLs are baked into the bundle, auth
   cookies stay first-party, and CORS is a non-issue in production.
-- Postgres is reachable only on the compose network (no host port).
+- Postgres is reachable only on the compose network (no host port). Its data
+  lives in the Docker volume **`workhub-db-data`**, named explicitly so it
+  doesn't depend on the compose project name. **Never rename it** without
+  migrating the data first — compose would create an empty volume and the app
+  would start against an empty database.
 - Required secrets (`POSTGRES_PASSWORD`, `BETTER_AUTH_SECRET`, `APP_ORIGIN`,
   `IMAGE_TAG`) have **no defaults** — compose refuses to start without them.
 - Deploy = update `IMAGE_TAG` in `.env.production`, then
