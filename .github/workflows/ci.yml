@@ -54,6 +54,13 @@ jobs:
       - name: Build
         run: pnpm build
 
+      # The committed OpenAPI contract and the client types generated from it
+      # must match the code (ADR-0017). Run `pnpm contract:generate` to fix.
+      - name: Check the API contract is up to date
+        run: |
+          pnpm contract:generate
+          git diff --exit-code -- apps/api/openapi.json packages/types/src/openapi.gen.ts
+
   template:
     name: Verify feature template
     runs-on: ubuntu-latest

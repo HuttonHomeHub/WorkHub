@@ -20,6 +20,7 @@
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "test:e2e": "turbo run test:e2e",
+    "contract:generate": "pnpm --filter @repo/types build && pnpm --filter @repo/api openapi && pnpm --filter @repo/types openapi:types",
     "clean": "turbo run clean && rimraf node_modules .turbo",
     "prepare": "husky",
     "commit": "cz",

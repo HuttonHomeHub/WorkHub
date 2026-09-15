@@ -1,8 +1,9 @@
 import { Controller, Get } from '@nestjs/common';
-import { ApiCookieAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiCookieAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { Principal } from '../common/auth/principal';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { ApiDataResponse } from '../common/openapi/api-responses';
 
 import { MeResponseDto } from './dto/me-response.dto';
 
@@ -17,7 +18,7 @@ import { MeResponseDto } from './dto/me-response.dto';
 export class MeController {
   @Get()
   @ApiOperation({ summary: 'Get the authenticated user' })
-  @ApiOkResponse({ type: MeResponseDto })
+  @ApiDataResponse(MeResponseDto)
   getMe(@CurrentUser() user: Principal): MeResponseDto {
     return MeResponseDto.from(user);
   }

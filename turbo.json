@@ -11,6 +11,7 @@
       "env": ["VITE_*"]
     },
     "dev": {
+      "dependsOn": ["^build"],
       "cache": false,
       "persistent": true,
       "passThroughEnv": [
@@ -20,6 +21,11 @@
         "CORS_ORIGINS",
         "BETTER_AUTH_SECRET",
         "BETTER_AUTH_URL",
+        "AUTH_RATE_LIMIT_ENABLED",
+        "AUTH_TRUSTED_PROXIES",
+        "RATE_LIMIT_*",
+        "LOG_LEVEL",
+        "API_PROXY_TARGET",
         "POSTGRES_*"
       ]
     },

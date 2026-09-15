@@ -25,15 +25,16 @@ COPY packages/types/package.json packages/types/
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
     pnpm install --frozen-lockfile --filter @repo/api...
 
-# --- Build: compile the API and generate the Prisma client -------------------
+# --- Build: compile the API (and the packages it depends on) + Prisma client --
 FROM deps AS build
 COPY . .
+# `@repo/api...` builds workspace dependencies (e.g. @repo/types) first.
 # `deploy` installs a fresh @prisma/client into /out, so the client is generated
 # again from a schema copied INTO /out — Prisma writes the client next to the
 # @prisma/client it resolves from the schema's location. The first generate only
 # serves the TypeScript build.
 RUN pnpm --filter @repo/api prisma:generate \
-    && pnpm --filter @repo/api build \
+    && pnpm --filter "@repo/api..." build \
     && pnpm --filter @repo/api --prod deploy --legacy /out \
     && cp -r apps/api/prisma /out/prisma \
     && cd /out && ./node_modules/.bin/prisma generate

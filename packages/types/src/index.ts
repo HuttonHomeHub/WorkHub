@@ -1,15 +1,14 @@
 /**
- * @repo/types — shared contracts between the `web` and `api` workspaces.
+ * @repo/types — the contract package shared by the `web` and `api` workspaces
+ * (ADR-0017): response envelopes, the API types generated from the OpenAPI
+ * spec, and small runtime constants for rules both sides enforce.
  *
- * This package is intentionally free of runtime dependencies: it should
- * contain only types, interfaces, enums, and small pure helpers that both
- * the frontend and backend need to agree on (DTO shapes, API response
- * envelopes, shared enums).
- *
- * Application domain models are NOT defined yet — this repository is at the
- * foundation stage. Add contracts here as features are designed, and keep
- * them the single source of truth for cross-boundary shapes.
+ * Keep it free of runtime dependencies. Anything here is the single source of
+ * truth for a cross-boundary shape or rule — never duplicate it in an app.
  */
+
+export * from './auth.js';
+export type { components, paths } from './openapi.gen.js';
 
 /** Standard envelope for successful API responses. */
 export interface ApiResponse<T> {
@@ -31,5 +30,3 @@ export interface PageMeta {
   nextCursor: string | null;
   hasMore: boolean;
 }
-
-export {};

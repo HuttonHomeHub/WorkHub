@@ -47,6 +47,9 @@ else
 fi
 
 # 6. Database schema ----------------------------------------------------------
+info "Building shared packages (@repo/types, ADR-0017)"
+pnpm --filter @repo/types build
+
 info "Generating the Prisma client and applying migrations"
 pnpm --filter @repo/api prisma:generate
 if pnpm --filter @repo/api prisma:deploy; then

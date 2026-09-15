@@ -2,7 +2,11 @@
   "extends": "@repo/config/tsconfig/base.json",
   "compilerOptions": {
     "rootDir": "src",
-    "outDir": "dist"
+    "outDir": "dist",
+    // Keep incremental build info inside dist/: if dist/ is deleted (or never
+    // copied, as in Docker) the build info goes with it, so tsc can't skip
+    // emitting a missing dist/ as "up to date".
+    "tsBuildInfoFile": "dist/.tsbuildinfo"
   },
   "include": ["src/**/*.ts"]
 }

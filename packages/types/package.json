@@ -2,22 +2,32 @@
   "name": "@repo/types",
   "version": "0.1.0",
   "private": true,
-  "description": "Shared TypeScript types and DTO contracts between the web and api workspaces.",
+  "description": "Shared contracts between the web and api workspaces: envelopes, generated API types, and shared rules.",
   "license": "MIT",
   "type": "module",
-  "main": "./src/index.ts",
+  "main": "./dist/index.js",
   "types": "./src/index.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "source": "./src/index.ts",
+      "types": "./src/index.ts",
+      "default": "./dist/index.js"
+    }
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
+    "build": "tsc -p tsconfig.json",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
+    "openapi:types": "openapi-typescript ../../apps/api/openapi.json -o src/openapi.gen.ts && prettier --write src/openapi.gen.ts",
     "clean": "rimraf dist .turbo *.tsbuildinfo"
   },
   "devDependencies": {
     "@repo/config": "workspace:*",
     "eslint": "^9.18.0",
+    "openapi-typescript": "^7.13.0",
     "typescript": "catalog:"
   }
 }
