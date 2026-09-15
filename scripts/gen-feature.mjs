@@ -123,12 +123,24 @@ for (const dest of [moduleDest, e2eDest]) {
   if (existsSync(dest)) fail(`${relative(root, dest)} already exists`);
 }
 let schema = readFileSync(schemaPath, 'utf8');
-if (new RegExp(`^(model|enum) (${n.Pascal}|${n.Pascal}Status) `, 'm').test(schema)) {
+// Compare parsed names rather than building regexes from the CLI argument.
+const declaredTypes = new Set(
+  schema
+    .split('\n')
+    .map((line) => /^(?:model|enum) (\w+) /.exec(line)?.[1])
+    .filter(Boolean),
+);
+if (declaredTypes.has(n.Pascal) || declaredTypes.has(`${n.Pascal}Status`)) {
   fail(`schema.prisma already defines ${n.Pascal} or ${n.Pascal}Status`);
 }
 const userModel = /(model User \{[\s\S]*?)(\n\n\s*@@map\("users"\))/;
 if (!userModel.test(schema)) fail('could not find the User model in schema.prisma');
-if (new RegExp(`^\\s+${n.camelPlural}\\s`, 'm').test(schema.match(userModel)[1])) {
+const userFields = schema
+  .match(userModel)[1]
+  .split('\n')
+  .slice(1)
+  .map((line) => line.trim().split(/\s+/)[0]);
+if (userFields.includes(n.camelPlural)) {
   fail(`the User model already has a "${n.camelPlural}" field`);
 }
 let appModule = readFileSync(appModulePath, 'utf8');
