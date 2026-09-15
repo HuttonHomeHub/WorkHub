@@ -45,10 +45,33 @@ interface Credentials {
   password: string;
 }
 
+/**
+ * A failed Better Auth call. Keeps the HTTP status and error code so the UI can
+ * tell wrong credentials (401) apart from rate limits (429) or a rejected
+ * request (e.g. 403 INVALID_ORIGIN) instead of blaming the user for all of them.
+ */
+export class AuthRequestError extends Error {
+  constructor(
+    message: string,
+    readonly status: number | undefined,
+    readonly code: string | undefined,
+  ) {
+    super(message);
+    this.name = 'AuthRequestError';
+  }
+}
+
+interface AuthClientError {
+  message?: string | undefined;
+  status?: number | undefined;
+  code?: string | undefined;
+}
+
 /** Throw Better Auth client errors as real errors so mutations surface them. */
-function unwrap<T extends { error: { message?: string | undefined } | null }>(result: T): T {
+function unwrap<T extends { error: AuthClientError | null }>(result: T): T {
   if (result.error) {
-    throw new Error(result.error.message ?? 'Authentication failed.');
+    const { message, status, code } = result.error;
+    throw new AuthRequestError(message ?? 'Authentication failed.', status, code);
   }
   return result;
 }
