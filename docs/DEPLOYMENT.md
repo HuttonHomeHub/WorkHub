@@ -100,6 +100,17 @@ flowchart LR
 - **One origin, one exposed port.** The web container serves the SPA and
   proxies `/api/*` to the API — no URLs are baked into the bundle, auth
   cookies stay first-party, and CORS is a non-issue in production.
+- **The port binds to `127.0.0.1` by default** (`WEB_BIND_ADDRESS`), because
+  Docker's published ports bypass host firewalls such as ufw. That suits a
+  reverse proxy running directly on the same host. Otherwise set
+  `WEB_BIND_ADDRESS` in `.env.production` deliberately:
+  - proxy on **another machine** — this host's LAN/VPN address the proxy can
+    reach (not `0.0.0.0` on an internet-facing host);
+  - proxy in a **container on this host** — the Docker bridge gateway (e.g.
+    `172.17.0.1`), or attach the proxy to the `workhub_default` network and
+    target `web:8080` directly.
+- **Container logs rotate** (`json-file`, 10 MB × 5 files per service), so
+  they can't fill the disk; ship them elsewhere if you need longer history.
 - Postgres is reachable only on the compose network (no host port). Its data
   lives in the Docker volume **`workhub-db-data`**, named explicitly so it
   doesn't depend on the compose project name. **Never rename it** without
