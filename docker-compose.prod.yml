@@ -61,6 +61,10 @@ services:
       CORS_ORIGINS: '${APP_ORIGIN:?set APP_ORIGIN, e.g. https://app.example.com}'
       BETTER_AUTH_SECRET: '${BETTER_AUTH_SECRET:?generate one with openssl rand -base64 32}'
       BETTER_AUTH_URL: ${APP_ORIGIN}
+      # Hops to skip in X-Forwarded-For so auth rate limits are per client.
+      # Default covers Docker networks (web nginx, a proxy on this host); add
+      # your reverse proxy's address if it runs elsewhere.
+      AUTH_TRUSTED_PROXIES: ${AUTH_TRUSTED_PROXIES:-172.16.0.0/12}
       LOG_LEVEL: ${LOG_LEVEL:-info}
 
   web:

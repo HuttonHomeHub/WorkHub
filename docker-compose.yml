@@ -62,6 +62,8 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-local-dev-only-secret-change-me}
       BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:8080}
+      # Skip the web nginx hop in X-Forwarded-For (per-client auth rate limits).
+      AUTH_TRUSTED_PROXIES: ${AUTH_TRUSTED_PROXIES:-172.16.0.0/12}
     ports:
       - '3000:3000'
 
