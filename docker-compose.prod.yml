@@ -1,0 +1,78 @@
+# Production stack — immutable images from GHCR behind YOUR reverse proxy.
+#
+# Usage (on the server):
+#   1. Create an env file (never commit it):  see ".env.example" → production block
+#   2. docker compose -f docker-compose.prod.yml --env-file .env.production up -d
+#   3. Point your reverse proxy (Caddy / Traefik / Nginx Proxy Manager / …) at
+#      http://<host>:${WEB_PORT} and terminate TLS there. Forward
+#      X-Forwarded-For / X-Forwarded-Proto — both the web nginx and the API
+#      honour them.
+#
+# Design (docs/DEPLOYMENT.md):
+#   - The ONLY exposed port is the web container's HTTP port. The SPA and the
+#     API share one origin: nginx serves the bundle and proxies /api/* to the
+#     api service, so auth cookies stay first-party and no URLs are baked in.
+#   - Postgres is reachable only on the internal network — no host port.
+#   - `migrate` applies pending Prisma migrations and exits; the API starts
+#     only after it succeeds. Images are pinned by tag: deploy = change
+#     IMAGE_TAG, `docker compose … pull && up -d`.
+
+name: blank-app
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-app}
+      POSTGRES_PASSWORD: '${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in the env file}'
+      POSTGRES_DB: ${POSTGRES_DB:-app}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-app} -d ${POSTGRES_DB:-app}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  migrate:
+    image: '${IMAGE_BASE:-ghcr.io/huttonhomehub/blank-app}/api:${IMAGE_TAG:?pin IMAGE_TAG to a released version}'
+    command: ['node_modules/.bin/prisma', 'migrate', 'deploy']
+    restart: 'no'
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-app}?schema=public
+
+  api:
+    image: ${IMAGE_BASE:-ghcr.io/huttonhomehub/blank-app}/api:${IMAGE_TAG}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-app}?schema=public
+      API_PORT: 3000
+      # Same-origin deployment: the public origin is the only trusted origin.
+      CORS_ORIGINS: '${APP_ORIGIN:?set APP_ORIGIN, e.g. https://app.example.com}'
+      BETTER_AUTH_SECRET: '${BETTER_AUTH_SECRET:?generate one with openssl rand -base64 32}'
+      BETTER_AUTH_URL: ${APP_ORIGIN}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+
+  web:
+    image: ${IMAGE_BASE:-ghcr.io/huttonhomehub/blank-app}/web:${IMAGE_TAG}
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      API_UPSTREAM: api:3000
+    ports:
+      # The single public-facing port — point your reverse proxy here.
+      - '${WEB_PORT:-8080}:8080'
+
+volumes:
+  db-data:

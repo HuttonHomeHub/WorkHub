@@ -1,0 +1,35 @@
+// Reference model sketch (TEMPLATE — not part of the live schema).
+// Copy into apps/api/prisma/schema.prisma and adapt for your entity, then run
+// `prisma migrate dev`. Follows docs/DATABASE.md: snake_case columns, UUID v7,
+// timestamptz, soft delete, auditing, optimistic-locking version, owner-scoped
+// indexes (ADR-0016).
+//
+// `ownerId` references `users.id`. When you adapt this for a real feature, add
+// the two-sided Prisma relation (a `ReferenceItem[]` back-relation on `User`
+// and `owner User @relation(...)` here) so the FK is enforced. The template
+// keeps the model standalone only so CI can materialise it without editing the
+// live `User` model (scripts/verify-template.sh appends this file verbatim).
+
+enum ReferenceItemStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+model ReferenceItem {
+  id          String              @id @default(uuid(7)) @db.Uuid
+  ownerId     String              @map("owner_id") @db.Uuid
+  name        String
+  description String?
+  status      ReferenceItemStatus @default(DRAFT)
+  version     Int                 @default(1)
+  createdAt   DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime            @updatedAt @map("updated_at") @db.Timestamptz(3)
+  createdBy   String?             @map("created_by") @db.Uuid
+  updatedBy   String?             @map("updated_by") @db.Uuid
+  deletedAt   DateTime?           @map("deleted_at") @db.Timestamptz(3)
+
+  @@index([ownerId])
+  @@index([ownerId, status])
+  @@map("reference_items")
+}

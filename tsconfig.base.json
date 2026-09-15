@@ -1,0 +1,5 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "display": "Blank App base configuration",
+  "extends": "./packages/config/tsconfig/base.json"
+}
