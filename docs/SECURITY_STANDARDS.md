@@ -48,6 +48,9 @@
 - **Validate all input at the boundary** with `class-validator` DTOs and a
   global `ValidationPipe` (`whitelist`, `forbidNonWhitelisted`, `transform`).
   Reject unknown fields; enforce types, ranges, lengths, and formats.
+- Rules the web also enforces (e.g. password and name length) come from
+  `@repo/types` and are **enforced by the API** too — client-side checks are UX
+  only (ADR-0017).
 - Validate config at startup (Zod) — fail fast on bad config.
 - **Output encoding / XSS:** the API returns JSON (no HTML rendering); the SPA
   escapes by default and must never inject unsanitised HTML
@@ -63,13 +66,22 @@
 ## CSRF
 
 - Cookie-based sessions ⇒ **CSRF protection on all state-changing requests**
-  (Better Auth CSRF tokens + same-site cookies). Safe methods (GET/HEAD) are
-  side-effect-free.
+  (Better Auth checks the `Origin` of state-changing requests against the trusted
+  origins, plus same-site cookies). Safe methods (GET/HEAD) are side-effect-free.
 
 ## Rate limiting & abuse protection
 
-- **Global rate limiting** (`@nestjs/throttler`), with **stricter limits on
-  auth and other sensitive endpoints**. Return **429** with `Retry-After`.
+- **Two layers, both on by default.** The global Nest throttler
+  (`@nestjs/throttler`, `RATE_LIMIT_*`) covers the Nest routes. `/api/auth/*` is
+  mounted outside the Nest router, so **Better Auth's limiter** covers it, with
+  **stricter limits on sign-in/sign-up** (on in production;
+  `AUTH_RATE_LIMIT_ENABLED` forces it either way). Both return **429** with a
+  retry-after header.
+- **Limits must be per client.** Behind proxies, `AUTH_TRUSTED_PROXIES` must list
+  the proxy hops (the compose files default to the Docker network range);
+  otherwise no client IP can be resolved and every client shares one bucket.
+  Counters live in memory, i.e. per API instance — several instances need
+  shared storage (see [`TECH_DEBT.md`](TECH_DEBT.md)).
 - Guard against enumeration (uniform responses/timing on auth), and cap payload
   sizes and pagination limits server-side.
 

@@ -9,7 +9,7 @@ export default mergeConfig(
     test: {
       environment: 'jsdom',
       globals: true,
-      // No app tests exist yet (foundation stage); don't fail the suite.
+      // Lets a filtered run pass when it matches no files.
       passWithNoTests: true,
       setupFiles: ['./src/test/setup.ts'],
       include: ['src/**/*.{test,spec}.{ts,tsx}'],

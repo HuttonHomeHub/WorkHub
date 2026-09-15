@@ -10,18 +10,12 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import {
-  ApiCookieAuth,
-  ApiCreatedResponse,
-  ApiNoContentResponse,
-  ApiOkResponse,
-  ApiOperation,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiCookieAuth, ApiNoContentResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { Principal } from '../../common/auth/principal';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Paginated } from '../../common/dto/paginated';
+import { ApiDataResponse, ApiPaginatedResponse } from '../../common/openapi/api-responses';
 import { ParseUuidPipe } from '../../common/validation/uuid';
 
 import { CreateReferenceItemDto } from './dto/create-reference-item.dto';
@@ -31,11 +25,12 @@ import { UpdateReferenceItemDto } from './dto/update-reference-item.dto';
 import { ReferenceService } from './reference.service';
 
 /**
- * Reference feature HTTP surface — the controller template. Thin: it validates
- * input (DTOs + global pipe), delegates to the service, maps entities to safe
- * response DTOs, and sets status codes. Authentication is global (deny by
- * default); ownership authorisation lives in the service (ADR-0016).
- * Versioned under `/api/v1` (see docs/API.md).
+ * Reference items HTTP surface. Thin: it validates input (DTOs + global pipe),
+ * delegates to the service, maps entities to safe response DTOs, and sets
+ * status codes. Authentication is global (deny by default); ownership
+ * authorisation lives in the service (ADR-0016). Responses are documented in
+ * the `{ data, meta }` envelope the interceptor adds (ADR-0017). Versioned
+ * under `/api/v1` (see docs/API.md).
  */
 @ApiTags('reference')
 @ApiCookieAuth()
@@ -46,7 +41,7 @@ export class ReferenceController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a reference item (owned by the caller)' })
-  @ApiCreatedResponse({ type: ReferenceItemResponseDto })
+  @ApiDataResponse(ReferenceItemResponseDto, HttpStatus.CREATED)
   async create(
     @CurrentUser() user: Principal,
     @Body() dto: CreateReferenceItemDto,
@@ -56,7 +51,7 @@ export class ReferenceController {
 
   @Get()
   @ApiOperation({ summary: "List the caller's reference items (cursor-paginated)" })
-  @ApiOkResponse({ type: ReferenceItemResponseDto, isArray: true })
+  @ApiPaginatedResponse(ReferenceItemResponseDto)
   async list(
     @CurrentUser() user: Principal,
     @Query() query: ListReferenceItemsQueryDto,
@@ -70,7 +65,7 @@ export class ReferenceController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Get one of the caller’s reference items by id' })
-  @ApiOkResponse({ type: ReferenceItemResponseDto })
+  @ApiDataResponse(ReferenceItemResponseDto)
   async getById(
     @CurrentUser() user: Principal,
     @Param('id', ParseUuidPipe) id: string,
@@ -80,7 +75,7 @@ export class ReferenceController {
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update a reference item (optimistic locking)' })
-  @ApiOkResponse({ type: ReferenceItemResponseDto })
+  @ApiDataResponse(ReferenceItemResponseDto)
   async update(
     @CurrentUser() user: Principal,
     @Param('id', ParseUuidPipe) id: string,

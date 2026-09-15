@@ -15,7 +15,7 @@ permissions:
   contents: read
 
 env:
-  NODE_VERSION: '22'
+  NODE_VERSION: '24'
 
 jobs:
   quality:
@@ -42,6 +42,11 @@ jobs:
       - name: Format check
         run: pnpm format:check
 
+      # Broken relative links and superseded terms fail the build, so the docs
+      # stay single-source (CLAUDE.md §6).
+      - name: Docs check
+        run: pnpm docs:check
+
       - name: Lint
         run: pnpm lint
 
@@ -53,6 +58,13 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+      # The committed OpenAPI contract and the client types generated from it
+      # must match the code (ADR-0017). Run `pnpm contract:generate` to fix.
+      - name: Check the API contract is up to date
+        run: |
+          pnpm contract:generate
+          git diff --exit-code -- apps/api/openapi.json packages/types/src/openapi.gen.ts
 
   template:
     name: Verify feature template
@@ -72,8 +84,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # Materialise, type-check, and unit-test the canonical reference template
-      # so it can never silently rot (see docs/REFERENCE_FEATURE.md, ADR-0015).
+      # Generate a feature from the canonical reference template with
+      # `pnpm gen:feature`, then type-check, lint, and unit-test it, so neither
+      # the template nor the generator can silently rot (ADR-0015).
       - name: Verify reference template
         run: bash scripts/verify-template.sh
 
@@ -124,6 +137,11 @@ jobs:
 
       - name: Run end-to-end tests
         run: pnpm test:e2e
+
+      # Runs after the suites above: it pushes a throwaway table into this
+      # disposable database and drops it again when done.
+      - name: Run the generated feature's API e2e tests
+        run: bash scripts/verify-template.sh --e2e
 
       - name: Upload Playwright report
         if: ${{ !cancelled() }}

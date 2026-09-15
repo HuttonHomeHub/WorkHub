@@ -44,6 +44,19 @@ export class AppConfigService {
       .filter(Boolean);
   }
 
+  /** `undefined` defers to Better Auth's default (enabled in production). */
+  get authRateLimitEnabled(): boolean | undefined {
+    return this.config.get('AUTH_RATE_LIMIT_ENABLED', { infer: true });
+  }
+
+  get authTrustedProxies(): string[] {
+    return this.config
+      .get('AUTH_TRUSTED_PROXIES', { infer: true })
+      .split(',')
+      .map((proxy) => proxy.trim())
+      .filter(Boolean);
+  }
+
   get rateLimit(): { ttlMs: number; limit: number } {
     return {
       ttlMs: this.config.get('RATE_LIMIT_TTL', { infer: true }) * 1000,

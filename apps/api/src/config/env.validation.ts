@@ -22,6 +22,21 @@ export const envSchema = z
     /** Rate limiting: window (seconds) and max requests per window. */
     RATE_LIMIT_TTL: z.coerce.number().int().positive().default(60),
     RATE_LIMIT_LIMIT: z.coerce.number().int().positive().default(100),
+    /**
+     * Better Auth's own rate limiter for /api/auth/* (those routes bypass the
+     * Nest throttler). Unset = Better Auth's default: on in production only.
+     */
+    AUTH_RATE_LIMIT_ENABLED: z
+      .enum(['true', 'false'])
+      .optional()
+      .transform((value) => (value === undefined ? undefined : value === 'true')),
+    /**
+     * Comma-separated reverse-proxy IPs/CIDRs whose X-Forwarded-For hops are
+     * skipped when resolving the client IP. Without it, a multi-hop chain
+     * (your proxy → web nginx → api) resolves to no IP and every client
+     * shares one auth rate-limit bucket.
+     */
+    AUTH_TRUSTED_PROXIES: z.string().default(''),
   })
   .superRefine((env, ctx) => {
     // Never allow the insecure development secret in production.

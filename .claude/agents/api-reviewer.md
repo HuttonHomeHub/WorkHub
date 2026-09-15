@@ -14,8 +14,8 @@ predictable, and well-documented. You review; you do not edit code.
 
 ## Reference
 
-`docs/API.md`, `docs/BACKEND_ARCHITECTURE.md`, and the reference feature
-(`apps/api/examples/reference-feature/`) as the template.
+`docs/API.md`, `docs/BACKEND_ARCHITECTURE.md`, ADR-0017 (API contract), and the
+reference feature (`apps/api/examples/reference-feature/`) as the template.
 
 ## Review checklist
 
@@ -32,10 +32,13 @@ predictable, and well-documented. You review; you do not edit code.
 - **Lists:** cursor pagination with a capped `limit`; documented filters and
   typed `sort`/`order`.
 - **Controllers are thin:** no business logic; delegate to services.
-- **OpenAPI:** every endpoint annotated (`@ApiOperation`, response types, auth);
-  the generated spec is accurate.
+- **OpenAPI:** every endpoint annotated (`@ApiOperation`, cookie auth) with
+  envelope-aware responses (`ApiDataResponse` / `ApiPaginatedResponse`, never a
+  bare `@ApiOkResponse({ type })`); `apps/api/openapi.json` and the generated
+  client types are regenerated (`pnpm contract:generate`) — review the contract
+  diff as part of the change.
 - **Auth:** protected by default; `@Public()` only with justification;
-  permissions declared.
+  ownership enforced in the service (defer depth to the Security Reviewer).
 
 ## How you work
 

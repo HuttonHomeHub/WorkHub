@@ -54,13 +54,15 @@ function unwrap<T extends { error: { message?: string | undefined } | null }>(re
 }
 
 /**
- * Auth transitions must DROP the cached session, not merely invalidate it:
- * route guards use `ensureQueryData`, which returns any cached value (even a
- * stale `null`) — a sign-in followed by navigation would otherwise still see
- * "no session" and bounce back to the sign-in page.
+ * Auth transitions DROP every cached query, not merely invalidate the session:
+ * - route guards use `ensureQueryData`, which returns any cached value (even a
+ *   stale `null`) — a sign-in followed by navigation would otherwise still see
+ *   "no session" and bounce back to the sign-in page;
+ * - all other server state is per-user (ADR-0016), so data cached for one
+ *   account must never be shown after switching to another.
  */
 function dropSession(queryClient: ReturnType<typeof useQueryClient>): void {
-  queryClient.removeQueries({ queryKey: authKeys.session() });
+  queryClient.removeQueries();
 }
 
 export function useSignIn() {

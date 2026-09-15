@@ -23,11 +23,10 @@ baseline. Anything that deviates from the base stack/architecture needs an ADR.
 - **Owner(s):** <name(s)>
 - **Date:** <YYYY-MM-DD>
 - **Version:** 0.1
-- **Related:** [`CLAUDE.md`](../CLAUDE.md) · [`docs/PROCESS.md`](PROCESS.md) ·
-  [`docs/ROADMAP.md`](ROADMAP.md) · [`docs/adr/`](adr/)
+- **Related:** `CLAUDE.md` · `docs/PROCESS.md` · `docs/ROADMAP.md` · `docs/adr/`
 
 > This is product-level context. Individual features go through
-> [`docs/PROCESS.md`](PROCESS.md) (understand → design → plan → approve → build),
+> `docs/PROCESS.md` (understand → design → plan → approve → build),
 > produced by the **feature-analyst** agent. Keep this brief current as a living,
 > versioned document.
 
@@ -57,16 +56,16 @@ baseline. Anything that deviates from the base stack/architecture needs an ADR.
 
 ## 5. Tenancy & Roles
 
-<!-- THE most architecture-shaping decision on this base. The template assumes
-     MULTI-TENANT: users belong to organisations; resources are
-     organisation-scoped; access is deny-by-default RBAC + resource scoping
-     (ADR-0012). If your app is single-owner (no organisations), say so — the
-     RBAC model then simplifies to owner-based access and that change is
-     recorded in an ADR (see CLAUDE.md §1). -->
+<!-- THE most architecture-shaping decision on this base. The base assumes
+     INDIVIDUAL ACCOUNTS: open signup, every user owns their own data, and there
+     are no organisations, roles, sharing, or admin (owner-based access,
+     ADR-0016). If your app needs teams/workspaces, roles, sharing between
+     users, or an admin, say so here — that supersedes ADR-0016 and needs a new
+     ADR before any feature is built (see CLAUDE.md §1). -->
 
-- **Tenancy model:** multi-tenant (organisations) | single-owner | other
-- **Roles & permissions:** <role → what it can do>
-- **Sharing/invitation model (if any):**
+- **Tenancy model:** individual accounts (base default) | teams / organisations (needs ADR) | other
+- **Roles & permissions (if any — needs ADR):** <role → what it can do>
+- **Sharing/invitation model (if any — needs ADR):**
 
 ## 6. Problem Statement
 
@@ -95,13 +94,13 @@ baseline. Anything that deviates from the base stack/architecture needs an ADR.
 
 <!-- The key nouns and their relationships — a rough data-model sketch (a bullet
      list or a small Mermaid ERD). Drives the database-architect agent and which
-     copies of the reference-feature template you make. Snake_case DB columns,
+     features you generate (`pnpm gen:feature`). Snake_case DB columns,
      UUID v7, timestamptz, soft delete + audit + optimistic locking come from
      the base (docs/DATABASE.md) — you don't need to restate those here. -->
 
 ```mermaid
 erDiagram
-  ORGANIZATION ||--o{ EXAMPLE_ENTITY : has
+  USER ||--o{ EXAMPLE_ENTITY : owns
 ```
 
 ## 10. User Journeys
@@ -127,7 +126,7 @@ erDiagram
 ## 13. Security, Privacy & Compliance (app-specific)
 
 <!-- Baseline is docs/SECURITY_STANDARDS.md (deny-by-default authz, validated
-     input, secrets via env, RBAC + scoping). Capture here:
+     input, secrets via env, owner-based access). Capture here:
      - Data sensitivity / PII classification
      - Compliance/regulatory (e.g. GDPR, data residency, retention periods)
      - Encryption beyond the baseline, audit-logging specifics
@@ -153,10 +152,11 @@ erDiagram
 
 ## 16. Deployment
 
-<!-- The base ships Docker + GitHub Actions + GHCR images; the hosting platform
-     is deliberately undecided (docs/TECH_DEBT.md #5). Capture here the chosen
-     target and constraints: hosting environment, supported browsers/devices,
-     upgrade/backup/recovery strategy, environments (dev/staging/prod). -->
+<!-- The base ships Docker + GitHub Actions + GHCR images, and its reference
+     deployment is self-hosted Docker Compose behind your own reverse proxy
+     (docs/DEPLOYMENT.md); the images stay platform-neutral. Capture here the
+     chosen target and constraints: hosting environment, supported
+     browsers/devices, upgrade/backup/recovery strategy, environments. -->
 
 ## 17. Risks
 
@@ -189,16 +189,15 @@ erDiagram
 
 ## 23. Related Documentation
 
-- Operating manual: [`CLAUDE.md`](../CLAUDE.md)
-- Delivery process: [`docs/PROCESS.md`](PROCESS.md) ·
-  templates: [`feature-spec.md`](feature-spec.md),
-  [`implementation-plan.md`](implementation-plan.md)
-- Architecture: [`docs/ARCHITECTURE.md`](ARCHITECTURE.md),
-  [`docs/BACKEND_ARCHITECTURE.md`](BACKEND_ARCHITECTURE.md),
-  [`docs/FRONTEND_ARCHITECTURE.md`](FRONTEND_ARCHITECTURE.md)
-- Standards: [`docs/DATABASE.md`](DATABASE.md),
-  [`docs/SECURITY_STANDARDS.md`](SECURITY_STANDARDS.md),
-  [`docs/PERFORMANCE.md`](PERFORMANCE.md),
-  [`docs/DESIGN_SYSTEM.md`](DESIGN_SYSTEM.md), [`docs/API.md`](API.md)
-- Decisions: [`docs/adr/`](adr/) · [`docs/DECISIONS.md`](DECISIONS.md)
-- Direction: [`docs/ROADMAP.md`](ROADMAP.md), [`docs/BACKLOG.md`](BACKLOG.md)
+<!-- Paths are repo-relative (not links) so they stay correct wherever this
+     brief is copied. -->
+
+- Operating manual: `CLAUDE.md`
+- Delivery process: `docs/PROCESS.md` · templates: `docs/templates/feature-spec.md`,
+  `docs/templates/implementation-plan.md`
+- Architecture: `docs/ARCHITECTURE.md`, `docs/BACKEND_ARCHITECTURE.md`,
+  `docs/FRONTEND_ARCHITECTURE.md`
+- Standards: `docs/DATABASE.md`, `docs/SECURITY_STANDARDS.md`,
+  `docs/PERFORMANCE.md`, `docs/DESIGN_SYSTEM.md`, `docs/API.md`
+- Decisions: `docs/adr/` · `docs/DECISIONS.md`
+- Direction: `docs/ROADMAP.md`, `docs/BACKLOG.md`

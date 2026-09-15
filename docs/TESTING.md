@@ -42,16 +42,18 @@ number of high-value end-to-end journeys.
 
 ## Backend unit tests
 
-- Test services in isolation with a **mocked Prisma** (no database): cover happy
-  paths and failure modes — authorisation denied, not-found, conflict /
-  optimistic-lock. See `reference.service.spec.ts` as the template.
+- Test services in isolation with the **repository mocked** (no database): cover
+  happy paths and failure modes — ownership denied, not-found, conflict /
+  optimistic-lock. Template:
+  `apps/api/examples/reference-feature/module/reference.service.spec.ts`.
 
 ## Backend integration / API tests
 
 - Boot the **real Nest app** (global pipe, filter, interceptor, guards) and
   exercise endpoints via **Supertest**, asserting status codes and the standard
   `{ data, meta }` / `{ error }` envelopes. Template:
-  `apps/api/test/reference.e2e-spec.ts`.
+  `apps/api/examples/reference-feature/reference.e2e-spec.ts` (`pnpm gen:feature`
+  places it in `apps/api/test/`).
 - **Auth seam:** override `AuthContextService` with a test principal (Nest's
   `overrideProvider`) — production auth stays deny-by-default.
 - **Database:** run against a **real PostgreSQL** (a disposable instance locally,
@@ -76,16 +78,22 @@ pnpm test:e2e       # all end-to-end tests
 pnpm --filter @repo/api test         # API unit tests only
 pnpm --filter @repo/api test:e2e     # API HTTP e2e (Supertest)
 pnpm --filter @repo/web test:watch   # web unit tests in watch mode
+bash scripts/verify-template.sh --e2e  # generated feature, incl. its API e2e (needs DATABASE_URL)
 ```
 
 ## CI
 
-`pnpm test` runs in the **quality** job (with the Prisma client generated), and
-`pnpm test:e2e` runs in the **e2e** job — which provisions a Postgres service,
-generates the Prisma client, and applies migrations (`prisma migrate deploy`)
-before running — in [`.github/workflows/ci.yml`](../.github/workflows/ci.yml).
-The API e2e suite runs there against real Postgres; Playwright browsers are added
-when web e2e specs land (roadmap M1). All must pass before merge.
+[`.github/workflows/ci.yml`](../.github/workflows/ci.yml) runs three jobs; all
+must pass before merge:
+
+- **quality** — format, lint, typecheck, unit tests (`pnpm test`), build, the
+  API-contract drift check (ADR-0017), and the docs check (`pnpm docs:check`).
+- **template** — `scripts/verify-template.sh`: generates a feature from the
+  reference template, then type-checks, lints, and unit-tests it.
+- **e2e** — a Postgres service with migrations applied, then `pnpm test:e2e`
+  (the API Supertest suites and the Playwright journeys on chromium, with axe
+  checks) and `scripts/verify-template.sh --e2e` (the generated feature's API
+  tests).
 
 ## Definition of done (testing)
 

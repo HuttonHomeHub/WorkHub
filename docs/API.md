@@ -43,8 +43,8 @@ A single, predictable error shape (`ApiError` in `@repo/types`):
 // 4xx / 5xx
 {
   "error": {
-    "code": "BILL_NOT_FOUND",
-    "message": "No item exists with that id.",
+    "code": "NOT_FOUND",
+    "message": "Item not found.",
     "details": null,
   },
 }
@@ -57,19 +57,19 @@ A single, predictable error shape (`ApiError` in `@repo/types`):
 
 ### Status codes
 
-| Code | Use                                   |
-| ---- | ------------------------------------- |
-| 200  | Successful read/update                |
-| 201  | Resource created (include `Location`) |
-| 204  | Success, no body (e.g. delete)        |
-| 400  | Malformed request                     |
-| 401  | Not authenticated                     |
-| 403  | Authenticated but not authorised      |
-| 404  | Resource not found                    |
-| 409  | Conflict (e.g. duplicate)             |
-| 422  | Validation failed                     |
-| 429  | Rate limited                          |
-| 500  | Unexpected server error               |
+| Code | Use                                     |
+| ---- | --------------------------------------- |
+| 200  | Successful read/update                  |
+| 201  | Resource created (body is the resource) |
+| 204  | Success, no body (e.g. delete)          |
+| 400  | Malformed request                       |
+| 401  | Not authenticated                       |
+| 403  | Authenticated but not authorised        |
+| 404  | Resource not found                      |
+| 409  | Conflict (e.g. duplicate)               |
+| 422  | Validation failed                       |
+| 429  | Rate limited                            |
+| 500  | Unexpected server error                 |
 
 ## Pagination, filtering, sorting
 
@@ -96,23 +96,33 @@ A single, predictable error shape (`ApiError` in `@repo/types`):
   envelope.
 - State-changing requests require CSRF protection (Better Auth validates the
   Origin header against the trusted origins).
+- `/api/auth/*` is mounted outside the Nest router, so Better Auth's own limiter
+  rate-limits it (stricter on sign-in/sign-up) — see
+  [`SECURITY_STANDARDS.md` → Rate limiting](SECURITY_STANDARDS.md#rate-limiting--abuse-protection).
 - Protected routes are guarded server-side; `401` as per the table above.
-  Note: a resource owned by another user yields **404**, not 403
-  (anti-enumeration, ADR-0016).
+  A resource owned by another user yields **404**, not 403 — see
+  [`SECURITY_STANDARDS.md` → Authorisation](SECURITY_STANDARDS.md#authorisation--ownership-adr-0016).
 
-## OpenAPI / docs
+## OpenAPI contract (ADR-0017)
 
-- The spec is generated from decorators (`@nestjs/swagger`) and served at
-  `/api/docs` in non-production environments.
+- The spec is generated from decorators (`@nestjs/swagger`); Swagger UI is served
+  at `/api/docs` in non-production environments.
+- Document success responses with `ApiDataResponse(Dto)` /
+  `ApiPaginatedResponse(Dto)` (`apps/api/src/common/openapi/api-responses.ts`) so
+  the spec includes the envelope — never a bare `@ApiOkResponse({ type })`.
+- The contract is committed as `apps/api/openapi.json`. `pnpm contract:generate`
+  regenerates it and the client types in `@repo/types` that the web's
+  `apiClient` is typed by; CI fails if either is out of date. Treat the
+  contract diff as part of the review.
 - Every endpoint documents its request/response schemas, status codes, and auth
-  requirement. Treat the generated spec as part of the review.
+  requirement.
 
 ## Conventions checklist (per endpoint)
 
 - [ ] Correct verb, plural resource, versioned path
 - [ ] DTO validation with explicit types
 - [ ] Response uses the standard envelope; errors use `ApiError`
-- [ ] Auth guard applied (or explicitly public)
+- [ ] Authenticated (or explicitly public); ownership enforced in the service
 - [ ] Pagination for lists; indexes for filter/sort columns
-- [ ] OpenAPI annotations complete
+- [ ] Envelope-aware OpenAPI decorators; contract regenerated (`pnpm contract:generate`)
 - [ ] Tests: unit (service) + e2e (Supertest)

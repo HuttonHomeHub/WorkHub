@@ -43,7 +43,9 @@ export default defineConfig({
     : {
         webServer: [
           {
-            command: 'pnpm --filter @repo/api dev',
+            // Via Turbo so workspace packages the API loads at runtime
+            // (@repo/types, ADR-0017) are built first.
+            command: 'pnpm exec turbo run dev --filter=@repo/api',
             url: 'http://localhost:3000/health',
             reuseExistingServer: !process.env.CI,
             timeout: 120_000,

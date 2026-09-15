@@ -5,6 +5,7 @@
 **/.next
 **/.turbo
 **/coverage
+**/*.tsbuildinfo
 **/playwright-report
 **/test-results
 **/.git

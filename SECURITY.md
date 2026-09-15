@@ -17,7 +17,7 @@ security fixes. This table will be maintained as versions are released.
 **Please do not open a public issue for security vulnerabilities.**
 
 Report privately via GitHub's
-[**Report a vulnerability**](https://github.com/HuttonHomeHub/blank-app/security/advisories/new)
+[**Report a vulnerability**](https://github.com/HuttonHomeHub/WorkHub/security/advisories/new)
 (Security → Advisories). If you cannot use that channel, contact a maintainer
 directly.
 

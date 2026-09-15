@@ -33,8 +33,8 @@ Spec / plan:
 
 - [ ] **Code** implemented to the approved design/architecture
 - [ ] **Tests** completed (unit + integration/API + e2e/a11y as applicable; coverage not regressed)
-- [ ] **Documentation** updated (`docs/`, `README`, `CLAUDE.md`, ADRs)
-- [ ] **Security** reviewed (authN/Z, permission + resource scope, validation, secrets)
+- [ ] **Documentation** updated (`docs/`, `README`, `CLAUDE.md`, ADRs; API contract regenerated with `pnpm contract:generate` if endpoints changed)
+- [ ] **Security** reviewed (authentication, ownership checks / IDOR, validation, secrets)
 - [ ] **Performance** considered (queries/N+1, pagination, caching/async where justified)
 - [ ] **Accessibility** considered (WCAG 2.2 AA for UI changes)
 - [ ] **Docker build** succeeds (if runtime/deps changed)

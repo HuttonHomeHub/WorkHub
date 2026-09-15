@@ -66,4 +66,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   equivalents, and reframed domain assumptions (e.g. money-as-minor-units) as
   conditional guidance. See `docs/DECISIONS.md`.
 
-[Unreleased]: https://github.com/HuttonHomeHub/blank-app/commits/main
+[Unreleased]: https://github.com/HuttonHomeHub/WorkHub/commits/main

@@ -2,15 +2,17 @@
 
 The **canonical feature template** for the Blank App API. `ReferenceItem` is not a
 business entity — it demonstrates every backend standard in one small,
-fully-tested feature. See [`docs/REFERENCE_FEATURE.md`](../../../../../docs/REFERENCE_FEATURE.md)
-for the full standard-by-standard map.
+fully-tested feature. Generate a real feature from it with
+`pnpm gen:feature <entity>`; see
+[`docs/REFERENCE_FEATURE.md`](../../../../../docs/REFERENCE_FEATURE.md).
+(This README is not copied by the generator.)
 
 ## Layout
 
 ```text
 module/
 ├── reference.module.ts        # DI wiring: controller → service → repository
-├── reference.controller.ts    # HTTP surface (thin): DTOs, status codes
+├── reference.controller.ts    # HTTP surface (thin): DTOs, status codes, OpenAPI envelope
 ├── reference.service.ts       # Business logic: ownership authz, locking, logging
 ├── reference.repository.ts    # Data access: soft-delete filter, optimistic lock
 ├── reference.service.spec.ts  # Unit tests (repository mocked)
@@ -22,9 +24,8 @@ module/
 ```
 
 The e2e test lives alongside this module at
-[`../reference.e2e-spec.ts`](../reference.e2e-spec.ts). This is a **non-shipping
-template** (ADR-0014) — copy `module/` into `src/modules/<feature>/` to build a
-real feature; see the [parent README](../README.md).
+[`../reference.e2e-spec.ts`](../reference.e2e-spec.ts); the generator places it
+in `apps/api/test/`. See the [parent README](../README.md).
 
 ## Endpoints (`/api/v1/reference-items`)
 
@@ -39,6 +40,3 @@ real feature; see the [parent README](../README.md).
 All routes require an authenticated session (deny by default). Ownership is
 checked in the service on the loaded row (ADR-0016): another user's item yields
 the **same 404** as a missing one, so ids cannot be probed.
-
-> **Delete this module** once real features make it redundant — it exists only
-> to teach the patterns.

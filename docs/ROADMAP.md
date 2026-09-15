@@ -29,10 +29,17 @@ end-to-end (Better Auth: open signup, sessions, owner-based access — ADR-0016)
 same-origin /api proxying; production compose with a migration step; CI runs
 the full `pnpm build` and the Playwright auth journey (with axe a11y checks).
 
+### ✅ M2 — Base tidy-up (done)
+
+Node 24 LTS and a dev container; per-client rate limiting of the auth routes;
+a buildable api image; shared contracts with a generated, typed API client
+(ADR-0017); `pnpm gen:feature` with CI verification including API e2e; docs made
+single-source and guarded by `pnpm docs:check`.
+
 ### 🔜 When you start an application
 
-- Build the first real feature from the reference template
-  (`docs/REFERENCE_FEATURE.md`) — it writes the first Prisma model + migration.
+- Build the first real feature with `pnpm gen:feature`
+  (`docs/REFERENCE_FEATURE.md`) — it adds the first domain model + migration.
 - Wire observability (OpenTelemetry), and add Redis / object storage only when a
   job, hot cache path, or file-upload feature needs them (ADR-0009/0010/0011).
 

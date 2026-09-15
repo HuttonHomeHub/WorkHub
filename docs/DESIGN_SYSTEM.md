@@ -1,6 +1,6 @@
 # Design System
 
-> The single source of truth for Blank App' visual language and component
+> The single source of truth for Blank App's visual language and component
 > standards. The token _implementation_ lives in
 > [`apps/web/src/styles/globals.css`](../apps/web/src/styles/globals.css); this
 > document is the spec and rationale. **No one-off component styling may ever
@@ -93,7 +93,7 @@ utilities (e.g. `max-w-screen-xl`) rather than fixed pixel widths.
 ### Border radius
 
 Derived from one base (`--radius`, 0.625rem): `radius-sm`, `radius-md`,
-`radius-lg`, `radius-xl`. Inputs/buttons use `md`; cards/dialogs use `lg`;
+`radius-lg`, `radius-xl`. Inputs/buttons use `md`; dialogs use `lg`; cards use `xl`;
 pills/avatars use `full`.
 
 ### Elevation (shadows)
@@ -173,8 +173,8 @@ and reused. Each must ship: typed props, all interaction states
 screen-reader support, and a test. Detailed authoring rules are in
 [`COMPONENT_LIBRARY.md`](COMPONENT_LIBRARY.md).
 
-- **Buttons** — variants `primary | secondary | outline | ghost | destructive |
-link`; sizes `sm | md | lg | icon`. Show pending state (spinner + disabled +
+- **Buttons** — variants `default` (primary) | `secondary` | `outline` | `ghost` |
+  `destructive` | `link`; sizes `sm | default | lg | icon`. Show pending state (spinner + disabled +
   `aria-busy`); icon buttons require `aria-label`. One primary action per view.
 - **Forms & inputs** — label, optional description, error, and required
   indicator standardised via the `Form` primitive (ADR-0007). Consistent field
@@ -185,7 +185,7 @@ link`; sizes `sm | md | lg | icon`. Show pending state (spinner + disabled +
   tabular numerals), loading (skeleton rows), empty, and error states. Semantic
   `<table>` markup with scoped headers. Responsive: horizontal scroll in a
   bordered container; never break the page layout.
-- **Cards** — `card` surface, `radius-lg`, `shadow-sm`, standard padding;
+- **Cards** — `card` surface, `radius-xl`, `shadow-sm`, standard padding;
   slots for header/title, content, footer/actions.
 - **Navigation** — top-level via the sidebar; consistent active/hover states
   from tokens; current item marked `aria-current="page"`.

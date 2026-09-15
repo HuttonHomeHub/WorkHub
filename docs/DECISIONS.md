@@ -10,6 +10,30 @@ get an ADR instead (and may be linked from here).
 
 ---
 
+### 2026-09-15 — Tidy the base: Node 24, generator, shared contracts, single-source docs
+
+**Decision.** Keep the repository a domain-neutral base but point its
+placeholders at `HuttonHomeHub/WorkHub`. Move to **Node 24 LTS** (Node 22 is in
+maintenance) and add a **dev container**. Rate-limit `/api/auth/*` per client via
+Better Auth with `AUTH_TRUSTED_PROXIES`. Fix the api image, which pnpm 10's
+`deploy` had broken. Adopt **shared contracts and a generated API client**
+(ADR-0017). Replace copy-and-adapt with a **feature generator**
+(`pnpm gen:feature`), which CI verifies including its API e2e test — the
+alternative ADR-0015 deferred. Make each rule **single-source** in the docs,
+guarded by `pnpm docs:check`. The earlier "defer hosting-platform choice" entry
+is resolved: the reference deployment is self-hosted Compose (2026-07-12).
+
+**Why.** An onboarding review found docs that contradicted ADR-0016 in a dozen
+places, an auth rate limit that shared one bucket across all clients in
+production, an api image that could not be built, and the only cross-boundary
+validation rule duplicated by hand.
+
+**Consequences.** `@repo/types` has a build step; API changes need
+`pnpm contract:generate`; the template must keep its names in the generator's
+rename table. Superseded terms get added to `scripts/check-docs.mjs`.
+
+---
+
 ### 2026-07-12 — Individual accounts, walking skeleton, and self-hosted deployment
 
 **Decision.** Shape the base for **multiple individual user accounts** — open

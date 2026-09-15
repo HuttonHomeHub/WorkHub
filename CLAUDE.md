@@ -47,7 +47,7 @@ performance**. Concretely:
 | Concern        | Choice                                              |
 | -------------- | --------------------------------------------------- |
 | Monorepo       | Turborepo + pnpm workspaces                         |
-| Language       | TypeScript (strict) on Node.js 22 LTS               |
+| Language       | TypeScript (strict) on Node.js 24 LTS               |
 | Frontend       | React 19 + Vite                                     |
 | Styling / UI   | Tailwind CSS v4, shadcn/ui, Lucide icons            |
 | Backend        | NestJS 11                                           |
@@ -73,7 +73,8 @@ Blank App/
 │   ├── config/       # Shared ESLint + tsconfig presets (@repo/config)
 │   └── types/        # Shared cross-boundary types/DTOs (@repo/types)
 ├── docs/             # Architecture, guides, ADRs, roadmap, decisions
-├── scripts/          # Repo automation (bootstrap, etc.)
+├── scripts/          # Repo automation (setup, feature generator, checks)
+├── .devcontainer/    # Codespaces / dev container (Node 24 + Docker, runs setup)
 ├── .github/          # CI/CD workflows, issue/PR templates, CODEOWNERS
 ├── .changeset/       # Release/versioning state
 ├── CLAUDE.md         # ← you are here
@@ -106,11 +107,17 @@ Blank App/
 
 - Documentation lives in Markdown; diagrams use **Mermaid** (rendered by GitHub).
 - Every significant change updates the relevant doc(s). The reviewer checks this.
+- **State each rule once.** Every standard has one canonical document (e.g.
+  ownership rules in `docs/SECURITY_STANDARDS.md`, envelopes in `docs/API.md`,
+  schema rules in `docs/DATABASE.md`); other docs link to it instead of
+  restating it. `pnpm docs:check` (CI) fails on broken links and known-stale
+  terms — extend its list when a decision is superseded.
 - **Architectural decisions** are recorded as ADRs in [`docs/adr/`](docs/adr/)
   (see ADR-0001 for the process). Never delete an ADR — supersede it.
 - Keep `README.md` accurate as the front door; keep this file accurate as the
   operating manual; keep `docs/` as the deep reference.
-- Public API changes update [`docs/API.md`](docs/API.md) and the OpenAPI spec.
+- Public API changes update [`docs/API.md`](docs/API.md) and the committed OpenAPI
+  contract (`pnpm contract:generate`, ADR-0017).
 
 ## 7. Testing requirements
 
@@ -180,7 +187,8 @@ documents (keep them authoritative):
   bundle, splitting, error boundaries, telemetry, logging.
 
 Essentials: feature-first structure; server state in TanStack Query; URL state
-in the router (TanStack Router); minimal client state; forms via RHF + Zod;
+in the router (TanStack Router); minimal client state; API calls through the
+typed `apiClient` generated from the OpenAPI contract (ADR-0017); forms via RHF + Zod;
 styling via semantic tokens + Tailwind v4 + shadcn/ui + CVA. **Mobile-first,
 theme-aware (light/dark/system), and no one-off component styling — ever.**
 
@@ -206,9 +214,11 @@ Essentials: NestJS modular monolith; **thin controllers → services → Prisma*
 **deny-by-default** auth with **owner-based access** (ADR-0016 — services check
 `principal.owns(row)`; other users' rows 404); validated
 DTOs; standard `{ data, meta }` / `{ error }` envelopes; **soft deletes,
-auditing, optimistic locking**; structured logs with correlation IDs. When
-building a feature, copy the non-shipping reference template in
-`apps/api/examples/reference-feature/` (ADR-0014). **Security is on by default.**
+auditing, optimistic locking**; structured logs with correlation IDs; rules both
+apps enforce live in `@repo/types`. Generate features with
+`pnpm gen:feature <entity>` from the non-shipping reference template
+(`apps/api/examples/reference-feature/`, ADR-0014/0015) and regenerate the API
+contract with `pnpm contract:generate` (ADR-0017). **Security is on by default.**
 
 ## 13. Accessibility requirements
 
@@ -263,6 +273,7 @@ Recorded as ADRs in [`docs/adr/`](docs/adr/). Current set:
 - **ADR-0014** — Reference feature kept as a non-shipping template.
 - **ADR-0015** — Template-driven feature development (canonical standard).
 - **ADR-0016** — Owner-based access for individual accounts (supersedes 0012).
+- **ADR-0017** — Shared contracts and a generated API client.
 
 A lighter-weight running log of smaller decisions is in
 [`docs/DECISIONS.md`](docs/DECISIONS.md).
@@ -276,7 +287,9 @@ A lighter-weight running log of smaller decisions is in
   (`docs/TECH_DEBT.md`).
 - The reference deployment is **self-hosted Docker Compose behind the
   operator's reverse proxy** (`docker-compose.prod.yml`); the images remain
-  platform-neutral if that changes.
+  platform-neutral if that changes. Auth rate limits are per API instance and
+  need `AUTH_TRUSTED_PROXIES` to match the proxy hops
+  (`docs/SECURITY_STANDARDS.md`).
 - Single-currency, single-locale assumptions are **not** baked in — i18n/L10n is
   on the roadmap and code should avoid hard-coding currency/locale.
 
@@ -294,9 +307,9 @@ When operating in this repo, Claude Code should:
    follow the delivery process (§21, [`docs/PROCESS.md`](docs/PROCESS.md)):
    understand → design → plan → **get approval** → build. Use the
    **feature-analyst** agent to produce the spec + plan.
-2. **Build features from the reference template.** New features are created by
-   copying the canonical template (`apps/api/examples/reference-feature/`) and
-   adapting it — see [`docs/REFERENCE_FEATURE.md`](docs/REFERENCE_FEATURE.md).
+2. **Build features from the reference template.** Generate new backend features
+   with `pnpm gen:feature <entity>` (from `apps/api/examples/reference-feature/`)
+   and adapt them — see [`docs/REFERENCE_FEATURE.md`](docs/REFERENCE_FEATURE.md).
    **Do not diverge from its cross-cutting patterns** (layering
    controller→service→repository, deny-by-default auth + ownership checks,
    standard envelopes, DB standards, tests) **without a documented architectural
@@ -310,7 +323,8 @@ When operating in this repo, Claude Code should:
    you change architecture, standards, or process.
 6. **Never commit secrets**, disable TLS verification, or weaken security/a11y
    gates to make CI pass.
-7. **Run `pnpm lint && pnpm typecheck && pnpm test`** (as applicable) before
+7. **Run `pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm docs:check`**
+   (as applicable, plus `pnpm contract:generate` after API changes) before
    declaring work done, and report failures honestly.
 8. **Use Conventional Commits** and add a changeset for user-visible change.
    Meet the Feature Completion Criteria (§21) before calling work done.

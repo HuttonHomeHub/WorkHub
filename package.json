@@ -7,7 +7,7 @@
   "type": "module",
   "packageManager": "pnpm@10.4.1",
   "engines": {
-    "node": ">=22.0.0",
+    "node": ">=24.0.0",
     "pnpm": ">=10.0.0"
   },
   "scripts": {
@@ -20,6 +20,9 @@
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "test:e2e": "turbo run test:e2e",
+    "contract:generate": "pnpm --filter @repo/types build && pnpm --filter @repo/api openapi && pnpm --filter @repo/types openapi:types",
+    "gen:feature": "node scripts/gen-feature.mjs",
+    "docs:check": "node scripts/check-docs.mjs",
     "clean": "turbo run clean && rimraf node_modules .turbo",
     "prepare": "husky",
     "commit": "cz",

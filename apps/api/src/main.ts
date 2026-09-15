@@ -1,9 +1,10 @@
 import { NestFactory } from '@nestjs/core';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { SwaggerModule } from '@nestjs/swagger';
 import { Logger } from 'nestjs-pino';
 
 import { AppModule } from './app.module';
 import { configureApp } from './app.setup';
+import { createOpenApiDocument } from './common/openapi/document';
 import { AppConfigService } from './config/app-config.service';
 
 /**
@@ -24,17 +25,10 @@ async function bootstrap(): Promise<void> {
   // Drain in-flight work on SIGTERM/SIGINT.
   app.enableShutdownHooks();
 
-  // OpenAPI — served outside production only. Better Auth's own endpoints
-  // (/api/auth/*) are documented in docs/API.md.
+  // OpenAPI UI — served outside production only. The committed contract is
+  // apps/api/openapi.json (`pnpm contract:generate`, ADR-0017).
   if (!config.isProduction) {
-    const openapi = new DocumentBuilder()
-      .setTitle('Blank App API')
-      .setDescription('Blank App REST API')
-      .setVersion('1.0')
-      .addCookieAuth('better-auth.session_token')
-      .build();
-    const document = SwaggerModule.createDocument(app, openapi);
-    SwaggerModule.setup('api/docs', app, document);
+    SwaggerModule.setup('api/docs', app, createOpenApiDocument(app));
   }
 
   await app.listen(config.port);

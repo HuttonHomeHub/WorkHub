@@ -4,8 +4,8 @@
 
 **A production-grade monorepo starter for building applications.**
 
-[![CI](https://github.com/HuttonHomeHub/blank-app/actions/workflows/ci.yml/badge.svg)](https://github.com/HuttonHomeHub/blank-app/actions/workflows/ci.yml)
-[![CodeQL](https://github.com/HuttonHomeHub/blank-app/actions/workflows/codeql.yml/badge.svg)](https://github.com/HuttonHomeHub/blank-app/actions/workflows/codeql.yml)
+[![CI](https://github.com/HuttonHomeHub/WorkHub/actions/workflows/ci.yml/badge.svg)](https://github.com/HuttonHomeHub/WorkHub/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/HuttonHomeHub/WorkHub/actions/workflows/codeql.yml/badge.svg)](https://github.com/HuttonHomeHub/WorkHub/actions/workflows/codeql.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Conventional Commits](https://img.shields.io/badge/Commits-Conventional-fe5196.svg)](https://www.conventionalcommits.org)
 
@@ -25,14 +25,16 @@ features on day one instead of wiring up foundations.
 ### Using this as your base
 
 1. Fork/clone and rename the repo and the root `package.json` name.
-2. Replace the `HuttonHomeHub/blank-app` placeholders with your GitHub org/repo — they
-   appear in the README badges, [`CODEOWNERS`](.github/CODEOWNERS),
-   [`.changeset/config.json`](.changeset/config.json),
-   [`SECURITY.md`](SECURITY.md), and [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
+2. Replace the `HuttonHomeHub/WorkHub` repository references with your GitHub
+   org/repo — search for `HuttonHomeHub/WorkHub` and `huttonhomehub/workhub`
+   (GHCR image names are lower-case). They appear in the README badges,
+   [`CODEOWNERS`](.github/CODEOWNERS), [`.changeset/config.json`](.changeset/config.json),
+   [`SECURITY.md`](SECURITY.md), the issue-template config, the compose files, and
+   [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
 3. Optionally rename the `@repo/*` package scope to your own.
 4. Replace this README, `CLAUDE.md` §1, `docs/ROADMAP.md`, and `docs/BACKLOG.md`
    with your application's content.
-5. Build your first feature from the reference template
+5. Build your first feature with `pnpm gen:feature <entity>`
    ([`docs/REFERENCE_FEATURE.md`](docs/REFERENCE_FEATURE.md)) via the delivery
    process ([`docs/PROCESS.md`](docs/PROCESS.md)).
 
@@ -62,12 +64,14 @@ scripts/      Repository automation
 
 ## 🚀 Quick start
 
-**Prerequisites:** Node.js ≥ 22 (see [`.nvmrc`](.nvmrc)), pnpm ≥ 10 (via
-`corepack enable`), and Docker (for local PostgreSQL).
+**Prerequisites:** Node.js ≥ 24 (see [`.nvmrc`](.nvmrc)), pnpm ≥ 10 (via
+`corepack enable`), and Docker (for local PostgreSQL) — or open it in
+GitHub Codespaces / a dev container, which sets all of this up for you
+([`.devcontainer/`](.devcontainer/devcontainer.json)).
 
 ```bash
 # 1. Clone and enter
-git clone https://github.com/HuttonHomeHub/blank-app.git && cd blank-app
+git clone https://github.com/HuttonHomeHub/WorkHub.git && cd WorkHub
 
 # 2. Bootstrap (installs deps, creates .env, starts Postgres)
 ./scripts/setup.sh
@@ -94,16 +98,19 @@ covered in [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) and
 
 ## 🧑‍💻 Common commands
 
-| Command          | Description                             |
-| ---------------- | --------------------------------------- |
-| `pnpm dev`       | Run all apps in watch mode (Turborepo)  |
-| `pnpm build`     | Build all packages/apps                 |
-| `pnpm lint`      | Lint the whole workspace                |
-| `pnpm format`    | Format with Prettier                    |
-| `pnpm typecheck` | Type-check the whole workspace          |
-| `pnpm test`      | Run unit tests                          |
-| `pnpm test:e2e`  | Run end-to-end tests                    |
-| `pnpm changeset` | Record a versioned, user-visible change |
+| Command                     | Description                                    |
+| --------------------------- | ---------------------------------------------- |
+| `pnpm dev`                  | Run all apps in watch mode (Turborepo)         |
+| `pnpm build`                | Build all packages/apps                        |
+| `pnpm lint`                 | Lint the whole workspace                       |
+| `pnpm format`               | Format with Prettier                           |
+| `pnpm typecheck`            | Type-check the whole workspace                 |
+| `pnpm test`                 | Run unit tests                                 |
+| `pnpm test:e2e`             | Run end-to-end tests                           |
+| `pnpm changeset`            | Record a versioned, user-visible change        |
+| `pnpm gen:feature <entity>` | Generate a backend feature from the template   |
+| `pnpm contract:generate`    | Regenerate the OpenAPI contract + client types |
+| `pnpm docs:check`           | Check docs for broken links and stale terms    |
 
 ## 📚 Documentation
 

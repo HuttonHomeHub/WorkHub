@@ -36,7 +36,7 @@ services:
       retries: 5
 
   migrate:
-    image: '${IMAGE_BASE:-ghcr.io/huttonhomehub/blank-app}/api:${IMAGE_TAG:?pin IMAGE_TAG to a released version}'
+    image: '${IMAGE_BASE:-ghcr.io/huttonhomehub/workhub}/api:${IMAGE_TAG:?pin IMAGE_TAG to a released version}'
     command: ['node_modules/.bin/prisma', 'migrate', 'deploy']
     restart: 'no'
     depends_on:
@@ -46,7 +46,7 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-app}?schema=public
 
   api:
-    image: ${IMAGE_BASE:-ghcr.io/huttonhomehub/blank-app}/api:${IMAGE_TAG}
+    image: ${IMAGE_BASE:-ghcr.io/huttonhomehub/workhub}/api:${IMAGE_TAG}
     restart: unless-stopped
     depends_on:
       db:
@@ -61,10 +61,14 @@ services:
       CORS_ORIGINS: '${APP_ORIGIN:?set APP_ORIGIN, e.g. https://app.example.com}'
       BETTER_AUTH_SECRET: '${BETTER_AUTH_SECRET:?generate one with openssl rand -base64 32}'
       BETTER_AUTH_URL: ${APP_ORIGIN}
+      # Hops to skip in X-Forwarded-For so auth rate limits are per client.
+      # Default covers Docker networks (web nginx, a proxy on this host); add
+      # your reverse proxy's address if it runs elsewhere.
+      AUTH_TRUSTED_PROXIES: ${AUTH_TRUSTED_PROXIES:-172.16.0.0/12}
       LOG_LEVEL: ${LOG_LEVEL:-info}
 
   web:
-    image: ${IMAGE_BASE:-ghcr.io/huttonhomehub/blank-app}/web:${IMAGE_TAG}
+    image: ${IMAGE_BASE:-ghcr.io/huttonhomehub/workhub}/web:${IMAGE_TAG}
     restart: unless-stopped
     depends_on:
       - api

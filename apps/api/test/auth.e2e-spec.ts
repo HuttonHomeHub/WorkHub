@@ -1,5 +1,6 @@
 import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
+import { PASSWORD_MIN_LENGTH, USER_NAME_MAX_LENGTH } from '@repo/types';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
@@ -116,5 +117,26 @@ describe.skipIf(!hasDatabase)('Authentication (e2e)', () => {
       .post('/api/auth/sign-in/email')
       .send({ email, password: 'wrong-password-123' })
       .expect(401);
+  });
+
+  // Shared rules (@repo/types, ADR-0017) are enforced by the API, not only the web form.
+  it('rejects a sign-up whose name breaks the shared length rule (400)', async () => {
+    const tooLong = 'x'.repeat(USER_NAME_MAX_LENGTH + 1);
+    await request(app.getHttpServer())
+      .post('/api/auth/sign-up/email')
+      .send({ email: 'auth-e2e-long-name@example.com', password, name: tooLong })
+      .expect(400);
+    expect(await prisma.user.count({ where: { email: 'auth-e2e-long-name@example.com' } })).toBe(0);
+  });
+
+  it('rejects a password shorter than the shared minimum (400)', async () => {
+    await request(app.getHttpServer())
+      .post('/api/auth/sign-up/email')
+      .send({
+        email: 'auth-e2e-short-password@example.com',
+        password: 'x'.repeat(PASSWORD_MIN_LENGTH - 1),
+        name: 'Short',
+      })
+      .expect(400);
   });
 });

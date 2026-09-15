@@ -11,7 +11,7 @@ info() { printf '\033[1;34m==>\033[0m %s\n' "$1"; }
 warn() { printf '\033[1;33m warn:\033[0m %s\n' "$1"; }
 
 # 1. Node version check ------------------------------------------------------
-required_major=22
+required_major=24
 if command -v node >/dev/null 2>&1; then
   current_major="$(node -p 'process.versions.node.split(".")[0]')"
   if [ "$current_major" -lt "$required_major" ]; then
@@ -47,6 +47,9 @@ else
 fi
 
 # 6. Database schema ----------------------------------------------------------
+info "Building shared packages (@repo/types, ADR-0017)"
+pnpm --filter @repo/types build
+
 info "Generating the Prisma client and applying migrations"
 pnpm --filter @repo/api prisma:generate
 if pnpm --filter @repo/api prisma:deploy; then

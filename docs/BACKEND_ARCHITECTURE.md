@@ -5,8 +5,10 @@
 > Prisma, guards, filters, interceptors, health, bootstrap) is live in
 > `apps/api/src/`; the **feature** patterns are demonstrated by the non-shipping
 > template in [`apps/api/examples/reference-feature/`](../apps/api/examples/reference-feature/)
-> (ADR-0014). Backed by ADRs [0008](adr/0008-backend-modular-monolith.md)–[0014](adr/0014-reference-feature-as-non-shipping-template.md)
-> and [0003](adr/0003-authentication-with-better-auth.md).
+> (ADR-0014). Backed by ADRs [0008](adr/0008-backend-modular-monolith.md)–[0014](adr/0014-reference-feature-as-non-shipping-template.md),
+> [0003](adr/0003-authentication-with-better-auth.md),
+> [0016](adr/0016-owner-based-access-individual-accounts.md), and
+> [0017](adr/0017-shared-contracts-and-generated-api-client.md).
 
 ## Guiding principles
 
@@ -73,6 +75,15 @@ flowchart TD
 - **Environment/config validation** with **Zod** at startup — the app refuses to
   boot with invalid configuration (fail fast).
 - Validate at the boundary; services may assume validated input.
+- **Rules the web also enforces** (e.g. password and name length) come from
+  `@repo/types` and are enforced by the API too (ADR-0017).
+
+## API contract (ADR-0017)
+
+- Controllers document responses with the envelope-aware decorators; the
+  committed `apps/api/openapi.json` and the web's client types are regenerated
+  with `pnpm contract:generate` and drift-checked in CI. Conventions:
+  [`API.md`](API.md).
 
 ## Error handling
 
@@ -81,7 +92,8 @@ flowchart TD
   `details`. **No stack traces or internals** ever reach the client.
 - **Domain errors** are typed exceptions (e.g. `NotFoundError`,
   `ConflictError`) mapped to the right HTTP status; **Prisma errors** are mapped
-  (unique violation → 409, not-found → 404) by a dedicated filter.
+  (unique violation → 409, not-found → 404) by the same global
+  `AllExceptionsFilter`.
 - **4xx = expected** (logged at `warn`/`info`); **5xx = incidents** (logged at
   `error` with correlation ID and reported to telemetry).
 - Never swallow errors; fail loud in dev, degrade gracefully in prod.
@@ -125,16 +137,16 @@ flowchart TD
   global authentication guard resolves the **principal** from the session via an
   `AuthContextService` seam; unauthenticated requests get **401**. Tokens are
   never exposed to client JS. State-changing requests are CSRF-protected.
+  `/api/auth/*` is Better Auth's own handler, mounted before the Nest router in
+  `app.setup.ts`; its rate limiting is Better Auth's
+  ([`SECURITY_STANDARDS.md`](SECURITY_STANDARDS.md#rate-limiting--abuse-protection)).
 
 ## Authorisation (ADR-0016)
 
-- **Owner-based access**, **deny-by-default**. Accounts are individual (no
-  organisations or roles); every domain resource carries an `owner_id`.
-  Services are the authorisation layer: creates derive `ownerId` from the
-  session principal (never client input), lists are scoped
-  `WHERE owner_id = principal.userId`, and reads/updates/deletes load the row
-  and check `principal.owns(row)` (anti-IDOR). A row owned by someone else
-  returns the **same 404** as a missing row so ids cannot be probed.
+- **Owner-based access**, **deny-by-default**; services are the authorisation
+  layer. The rules (creates, lists, loaded rows, same-404) are defined once in
+  [`SECURITY_STANDARDS.md` → Authorisation](SECURITY_STANDARDS.md#authorisation--ownership-adr-0016)
+  and demonstrated by `findOwnedOrThrow` in the reference template.
   `@Public()` opts an endpoint out of authentication.
 
 ## Observability (ADR-0013)

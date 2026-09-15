@@ -1,6 +1,6 @@
-import type { PageMeta } from '@repo/types';
 import { Injectable } from '@nestjs/common';
 import { Prisma, type ReferenceItem } from '@prisma/client';
+import type { PageMeta } from '@repo/types';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 
 import type { Principal } from '../../common/auth/principal';
@@ -12,7 +12,7 @@ import type { UpdateReferenceItemDto } from './dto/update-reference-item.dto';
 import { ReferenceRepository } from './reference.repository';
 
 /**
- * Reference service — the **business-logic layer** template. It orchestrates the
+ * Reference items service — the **business-logic layer**. It orchestrates the
  * use case: authorise, apply rules, delegate persistence to the repository, and
  * log. It contains NO HTTP concerns (that's the controller) and NO raw Prisma
  * queries (that's the repository). Demonstrates owner-scoped authorisation
@@ -27,7 +27,9 @@ export class ReferenceService {
   ) {}
 
   async create(principal: Principal, dto: CreateReferenceItemDto): Promise<ReferenceItem> {
-    const data: Prisma.ReferenceItemCreateInput = {
+    // "Unchecked" input takes the owner_id column directly (the checked variant
+    // would require `owner: { connect }` because of the User relation).
+    const data: Prisma.ReferenceItemUncheckedCreateInput = {
       // The owner is ALWAYS the authenticated principal — never client input.
       ownerId: principal.userId,
       name: dto.name,
