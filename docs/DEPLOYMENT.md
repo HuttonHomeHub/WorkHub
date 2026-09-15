@@ -12,9 +12,9 @@ flowchart TD
   B --> C{Pending changesets?}
   C -- yes --> D[Open/update 'Version Packages' PR]
   D --> E[Maintainer merges version PR]
-  E --> F[Versions bumped + CHANGELOG updated + tag vX.Y.Z]
-  F --> G[docker-publish workflow on tag]
-  G --> H[Images pushed to ghcr.io with SemVer + sha tags]
+  E --> F[Versions bumped + CHANGELOG updated + tags @repo/api@X.Y.Z, @repo/web@X.Y.Z]
+  F --> G[docker-publish workflow on each app tag]
+  G --> H[Images pushed to ghcr.io as X.Y.Z, X.Y + sha]
   H --> I[Promote images through environments]
   C -- no --> J[No release]
 ```
@@ -24,18 +24,29 @@ flowchart TD
 - **Semantic Versioning**, driven by **Changesets**. Contributors add a
   changeset (`pnpm changeset`) for user-visible changes.
 - The [`release`](../.github/workflows/release.yml) workflow maintains a
-  "Version Packages" PR. Merging it bumps versions, writes `CHANGELOG.md`
-  entries, and creates a `vX.Y.Z` tag.
+  "Version Packages" PR (it needs the repo setting _Allow GitHub Actions to
+  create and approve pull requests_). Merging it bumps versions, writes
+  `CHANGELOG.md` entries, and creates one git tag per released package, e.g.
+  `@repo/api@0.2.0` and `@repo/web@0.2.0`.
+- `.changeset/config.json` keeps this working: `privatePackages` makes
+  Changesets version and tag our packages (all `private`; Changesets 3 skips
+  them otherwise), and `fixed` releases `@repo/api`, `@repo/web`, and
+  `@repo/types` at one shared version, so a single `IMAGE_TAG` names matching
+  `api` and `web` images. Don't remove either without changing the image
+  workflow.
 
 ## Container images
 
-- Built by [`docker-publish.yml`](../.github/workflows/docker-publish.yml) on
-  version tags (and manually via `workflow_dispatch`).
+- Built by [`docker-publish.yml`](../.github/workflows/docker-publish.yml) when
+  a release tag is pushed — `@repo/api@X.Y.Z` builds the `api` image,
+  `@repo/web@X.Y.Z` the `web` image — or manually via `workflow_dispatch`
+  (both images, tagged by commit sha only).
 - Published to **GitHub Container Registry**:
   - `ghcr.io/huttonhomehub/workhub/api`
   - `ghcr.io/huttonhomehub/workhub/web`
-- Tags: full SemVer, `major.minor`, and commit `sha`. Images include an **SBOM**
-  and **build provenance**.
+- Tags: full version (`0.2.0`), `major.minor` (`0.2`), and commit `sha` — no
+  `v` prefix, so set `IMAGE_TAG=0.2.0`. Images include an **SBOM** and **build
+  provenance**.
 - Images are **immutable**: the same artifact is promoted across environments;
   we never rebuild per environment.
 
