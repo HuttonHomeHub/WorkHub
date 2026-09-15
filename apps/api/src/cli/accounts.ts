@@ -16,11 +16,10 @@ export interface AccountAuthContext {
       email: string,
       options?: { includeAccounts: boolean },
     ) => Promise<{ user: { id: string }; accounts: { providerId: string }[] } | null>;
-    createUser: (user: {
-      email: string;
-      name: string;
-      emailVerified: boolean;
-    }) => Promise<{ id: string }>;
+    createUser: (
+      user: { email: string; name: string; emailVerified: boolean },
+      source: { method: 'email-password' },
+    ) => Promise<{ id: string }>;
     linkAccount: (account: {
       userId: string;
       providerId: string;
@@ -84,7 +83,11 @@ export async function createAccount(
 
   // Hash first so a hashing failure can't leave a user without credentials.
   const hash = await ctx.password.hash(input.password);
-  const user = await ctx.internalAdapter.createUser({ email, name, emailVerified: false });
+  // The same provisioning source Better Auth's own email/password sign-up passes.
+  const user = await ctx.internalAdapter.createUser(
+    { email, name, emailVerified: false },
+    { method: 'email-password' },
+  );
   await ctx.internalAdapter.linkAccount({
     userId: user.id,
     providerId: CREDENTIAL_PROVIDER,

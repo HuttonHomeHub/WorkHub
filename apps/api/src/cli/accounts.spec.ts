@@ -41,11 +41,10 @@ describe('accounts', () => {
       });
 
       expect(result).toEqual({ userId: USER_ID });
-      expect(internalAdapter.createUser).toHaveBeenCalledWith({
-        email: 'owner@example.com',
-        name: 'Owner',
-        emailVerified: false,
-      });
+      expect(internalAdapter.createUser).toHaveBeenCalledWith(
+        { email: 'owner@example.com', name: 'Owner', emailVerified: false },
+        { method: 'email-password' },
+      );
       expect(internalAdapter.linkAccount).toHaveBeenCalledWith({
         userId: USER_ID,
         providerId: 'credential',
