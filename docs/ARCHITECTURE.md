@@ -49,8 +49,10 @@ graph LR
 
 ### `packages/types` — shared contracts
 
-- Framework-free TypeScript types/DTO shapes shared by web and api. The single
-  source of truth for cross-boundary shapes.
+- The contract package (ADR-0017): response envelopes, the API types generated
+  from the committed OpenAPI contract, and small rules both apps enforce (e.g.
+  password length). The single source of truth for cross-boundary shapes and
+  rules. Built to `dist/` for Node; the web reads its source.
 
 ### `packages/config` — shared tooling
 
@@ -113,6 +115,7 @@ sequenceDiagram
 - Authorisation is **owner-based** (ADR-0016): accounts are individual, every
   domain resource carries an `owner_id`, and services check ownership on the
   loaded row. Enforced in the API; the client never makes trust decisions.
+  Rules: [`SECURITY_STANDARDS.md` → Authorisation](SECURITY_STANDARDS.md#authorisation--ownership-adr-0016).
 
 ## 7. Configuration
 
@@ -120,18 +123,20 @@ sequenceDiagram
   `@nestjs/config` in the API). See [`.env.example`](../.env.example).
 - No environment-specific values are hard-coded; no secrets in the repo.
 
-## 8. Observability (planned)
+## 8. Observability
 
-- Structured JSON logs with request correlation IDs.
-- Health endpoints (`/health` liveness/readiness via `@nestjs/terminus`).
-- Metrics/tracing to be selected on the roadmap (see [ROADMAP.md](ROADMAP.md)).
+- Structured JSON logs (Pino) with request correlation IDs — implemented.
+- Health endpoints (`/health` liveness, `/health/ready` readiness via
+  `@nestjs/terminus`) — implemented.
+- Metrics and tracing via OpenTelemetry — planned (ADR-0013,
+  [OBSERVABILITY.md](OBSERVABILITY.md)).
 
 ## 9. Deployment topology
 
 Two immutable images (`web`, `api`) published to GHCR and promoted through
-environments. See [DEPLOYMENT.md](DEPLOYMENT.md). The concrete hosting platform
-is an open decision (see [TECH_DEBT.md](TECH_DEBT.md)); the container-first
-foundation keeps it portable.
+environments. The reference deployment is self-hosted Docker Compose behind the
+operator's reverse proxy (`docker-compose.prod.yml`, [DEPLOYMENT.md](DEPLOYMENT.md));
+the container-first foundation keeps other platforms open.
 
 ## 10. Cross-cutting principles
 

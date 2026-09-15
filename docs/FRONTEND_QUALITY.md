@@ -39,8 +39,8 @@ Targets (align with `CLAUDE.md` §15; re-baseline with real data):
 ## Bundle size
 
 - **Budgets:** initial (critical-path) JS ≤ ~200KB gzipped; per lazy route chunk
-  ≤ ~150KB gzipped. Budgets are advisory now and become CI-enforced with the
-  walking skeleton (roadmap M1).
+  ≤ ~150KB gzipped. Budgets are advisory until the bundle-budget CI check lands
+  (see [`BACKLOG.md`](BACKLOG.md)).
 - Prefer platform APIs and small libraries; **justify every new dependency**
   (size, maintenance, tree-shakeability) in the PR.
 - Import icons and utilities by name (tree-shakeable); never import whole
@@ -70,8 +70,8 @@ Targets (align with `CLAUDE.md` §15; re-baseline with real data):
 
 ## Telemetry
 
-- A thin **telemetry facade** (`lib/telemetry.ts`) wraps whatever backend we
-  choose, so product code depends on our API, not a vendor SDK.
+- A thin **telemetry facade** (`lib/telemetry.ts`, not yet implemented — see
+  [`TECH_DEBT.md`](TECH_DEBT.md)) wraps whatever backend we choose, so product code depends on our API, not a vendor SDK.
 - Capture: unhandled errors + error-boundary reports, route/page views, Core Web
   Vitals, and key funnel/interaction events — **named consistently**.
 - **Privacy first:** no PII or sensitive values in telemetry payloads; respect
@@ -82,7 +82,7 @@ Targets (align with `CLAUDE.md` §15; re-baseline with real data):
 ## Logging
 
 - Client logging goes through a small logger (not scattered `console.*`).
-  `console.log` is disallowed by lint; `warn`/`error` are permitted
+  `console.log` is flagged by lint (`no-console`); `warn`/`error` are permitted
   deliberately.
 - **Levels:** `error` (report), `warn` (recoverable/degraded), `debug`
   (dev-only, stripped in production builds).

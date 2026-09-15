@@ -64,6 +64,18 @@ pnpm --filter @repo/api prisma:studio     # browse data
 Migrations are committed. Any schema change is reviewed and, where feasible,
 backward-compatible (expand/contract).
 
+## Building a feature
+
+```bash
+pnpm gen:feature time-entry   # backend module + tests + model from the template
+pnpm --filter @repo/api prisma:migrate --name add_time_entries
+pnpm contract:generate        # regenerate apps/api/openapi.json + client types
+```
+
+See [`REFERENCE_FEATURE.md`](REFERENCE_FEATURE.md). After any endpoint change,
+run `pnpm contract:generate` and commit the result — CI fails on drift
+(ADR-0017).
+
 ## Everyday commands
 
 | Command                             | Description                              |
@@ -75,6 +87,9 @@ backward-compatible (expand/contract).
 | `pnpm build`                        | Build everything                         |
 | `pnpm commit`                       | Guided Conventional Commit               |
 | `pnpm changeset`                    | Record a user-visible change for release |
+| `pnpm gen:feature <entity>`         | Generate a backend feature (template)    |
+| `pnpm contract:generate`            | Regenerate the API contract + types      |
+| `pnpm docs:check`                   | Check docs for broken links/stale terms  |
 | `pnpm clean`                        | Remove build output and caches           |
 
 ## Monorepo notes
@@ -110,3 +125,6 @@ pre-wired. Any editor that respects [`.editorconfig`](../.editorconfig) works.
 - **Port already in use:** stop the process on 5173/3000/5432 or adjust ports
   in `.env` / compose.
 - **Stale build issues:** `pnpm clean && pnpm install`.
+- **`Cannot find module '@repo/types/dist/…'`** when running an API script
+  directly: build the shared package first, `pnpm --filter @repo/types build`
+  (Turborepo tasks do this automatically).

@@ -34,7 +34,7 @@ features on day one instead of wiring up foundations.
 3. Optionally rename the `@repo/*` package scope to your own.
 4. Replace this README, `CLAUDE.md` §1, `docs/ROADMAP.md`, and `docs/BACKLOG.md`
    with your application's content.
-5. Build your first feature from the reference template
+5. Build your first feature with `pnpm gen:feature <entity>`
    ([`docs/REFERENCE_FEATURE.md`](docs/REFERENCE_FEATURE.md)) via the delivery
    process ([`docs/PROCESS.md`](docs/PROCESS.md)).
 
@@ -98,16 +98,19 @@ covered in [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) and
 
 ## 🧑‍💻 Common commands
 
-| Command          | Description                             |
-| ---------------- | --------------------------------------- |
-| `pnpm dev`       | Run all apps in watch mode (Turborepo)  |
-| `pnpm build`     | Build all packages/apps                 |
-| `pnpm lint`      | Lint the whole workspace                |
-| `pnpm format`    | Format with Prettier                    |
-| `pnpm typecheck` | Type-check the whole workspace          |
-| `pnpm test`      | Run unit tests                          |
-| `pnpm test:e2e`  | Run end-to-end tests                    |
-| `pnpm changeset` | Record a versioned, user-visible change |
+| Command                     | Description                                    |
+| --------------------------- | ---------------------------------------------- |
+| `pnpm dev`                  | Run all apps in watch mode (Turborepo)         |
+| `pnpm build`                | Build all packages/apps                        |
+| `pnpm lint`                 | Lint the whole workspace                       |
+| `pnpm format`               | Format with Prettier                           |
+| `pnpm typecheck`            | Type-check the whole workspace                 |
+| `pnpm test`                 | Run unit tests                                 |
+| `pnpm test:e2e`             | Run end-to-end tests                           |
+| `pnpm changeset`            | Record a versioned, user-visible change        |
+| `pnpm gen:feature <entity>` | Generate a backend feature from the template   |
+| `pnpm contract:generate`    | Regenerate the OpenAPI contract + client types |
+| `pnpm docs:check`           | Check docs for broken links and stale terms    |
 
 ## 📚 Documentation
 

@@ -19,11 +19,12 @@
 
 ## Correlation IDs
 
-- A **correlation ID** is generated per request (or taken from an inbound
-  `x-request-id`/`traceparent`), attached to the request-scoped logger, and
-  returned in the response header.
-- It is **propagated** to background jobs (BullMQ) and outbound calls, so a
-  single user action is traceable end-to-end across HTTP → worker → DB.
+- A **correlation ID** is taken from an inbound `x-correlation-id` header (or
+  generated), attached to the request-scoped logger, and returned in the
+  `x-correlation-id` response header. W3C `traceparent` support arrives with
+  OpenTelemetry tracing (ADR-0013).
+- It is to be **propagated** to background jobs (BullMQ) and outbound calls as
+  those land, so a single user action is traceable across HTTP → worker → DB.
 
 ## Health & readiness
 

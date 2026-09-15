@@ -4,8 +4,8 @@ The Blank App web client: **React 19 + TypeScript + Vite**, styled with **Tailwi
 and **shadcn/ui** components, using **Lucide** icons.
 
 > **Status:** walking skeleton. The app entry, providers, router, auth feature
-> (open signup / sign-in / sign-out with a protected shell), and base
-> primitives are live. The **architecture** is defined in
+> (open signup / sign-in / sign-out with a protected shell), the typed API
+> client (`GET /api/v1/me` on the home page), and base primitives are live. The **architecture** is defined in
 > [`docs/FRONTEND_ARCHITECTURE.md`](../../docs/FRONTEND_ARCHITECTURE.md), the
 > **design system** in [`docs/DESIGN_SYSTEM.md`](../../docs/DESIGN_SYSTEM.md)
 > (tokens implemented in [`src/styles/globals.css`](src/styles/globals.css)),
@@ -19,12 +19,11 @@ src/
   main.tsx          # App entry: providers + router mount
   app/              # App-wide composition (providers, router)
   routes/           # File-based routes (TanStack Router)
-  features/         # Feature modules (components, api, hooks, schemas)
+  features/         # Feature modules: auth, account (components, api, hooks, schemas)
   components/ui/     # Design-system primitives (shadcn/ui, owned as source)
-  components/layout/ # App shell: sidebar, header, page scaffolds
-  hooks/            # Shared React hooks
-  lib/              # API client, query client, cn(), telemetry
-  config/           # Typed runtime config (VITE_* access)
+  components/layout/ # App shell: header, page scaffolds
+  hooks/            # Shared React hooks (useTheme)
+  lib/              # Typed API client (ADR-0017), query client, cn()
   styles/           # globals.css — design tokens (source of truth)
   test/             # Test setup and utilities
 e2e/                # Playwright end-to-end specs

@@ -74,17 +74,17 @@ Convert the idea into structured, testable requirements:
 
 Assess impact **before** designing the solution, across the whole system:
 
-| Area               | Ask                                                                               |
-| ------------------ | --------------------------------------------------------------------------------- |
-| **Frontend**       | New/changed routes, components, state, forms? (docs/FRONTEND_ARCHITECTURE.md)     |
-| **Backend**        | New/changed modules, services, endpoints? (docs/BACKEND_ARCHITECTURE.md)          |
-| **Database**       | New models, migrations, indexes, constraints? (docs/DATABASE.md)                  |
-| **API**            | New endpoints, versioning, contracts, OpenAPI? (docs/API.md)                      |
-| **Security**       | AuthN/Z, permissions + scope, input, secrets, audit? (docs/SECURITY_STANDARDS.md) |
-| **Performance**    | Query cost, N+1, caching, async/jobs, pagination? (docs/PERFORMANCE.md)           |
-| **Infrastructure** | New services (Redis, storage), env/secrets, CI, containers?                       |
-| **Testing**        | Unit, API/integration, e2e, a11y — what proves it? (docs/TESTING.md)              |
-| **Observability**  | New logs/metrics/traces, health impact? (docs/OBSERVABILITY.md)                   |
+| Area               | Ask                                                                              |
+| ------------------ | -------------------------------------------------------------------------------- |
+| **Frontend**       | New/changed routes, components, state, forms? (docs/FRONTEND_ARCHITECTURE.md)    |
+| **Backend**        | New/changed modules, services, endpoints? (docs/BACKEND_ARCHITECTURE.md)         |
+| **Database**       | New models, migrations, indexes, constraints? (docs/DATABASE.md)                 |
+| **API**            | New endpoints, versioning, contract regenerated? (docs/API.md, ADR-0017)         |
+| **Security**       | AuthN, ownership (ADR-0016), input, secrets, audit? (docs/SECURITY_STANDARDS.md) |
+| **Performance**    | Query cost, N+1, caching, async/jobs, pagination? (docs/PERFORMANCE.md)          |
+| **Infrastructure** | New services (Redis, storage), env/secrets, CI, containers?                      |
+| **Testing**        | Unit, API/integration, e2e, a11y — what proves it? (docs/TESTING.md)             |
+| **Observability**  | New logs/metrics/traces, health impact? (docs/OBSERVABILITY.md)                  |
 
 Then list **dependencies**: prerequisites, affected features, third parties,
 and anything that must land first.
@@ -154,9 +154,9 @@ Every implementation must:
 - **Update documentation** touched by the change (docs/, READMEs).
 - **Update relevant ADRs**; add a new ADR for architectural change.
 - **Update `CLAUDE.md`** if project knowledge/standards change.
-- **Build from the reference template.** New features are created by copying the
-  canonical template (`docs/REFERENCE_FEATURE.md`,
-  `apps/api/examples/reference-feature/`); diverging from its cross-cutting
+- **Build from the reference template.** New backend features are generated from
+  the canonical template with `pnpm gen:feature <entity>`
+  (`docs/REFERENCE_FEATURE.md`); diverging from its cross-cutting
   patterns requires a documented ADR (ADR-0015). Use the specialised **agents**
   to design and review (see below).
 

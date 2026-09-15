@@ -16,12 +16,14 @@ game coverage.
 ## Reference
 
 `docs/TESTING.md`, `docs/FRONTEND_QUALITY.md`, and the reference feature's tests
-(`reference.service.spec.ts`, `test/reference.e2e-spec.ts`) as templates.
+as templates (`apps/api/examples/reference-feature/module/reference.service.spec.ts`
+and `apps/api/examples/reference-feature/reference.e2e-spec.ts`; `pnpm gen:feature`
+places them in the module and in `apps/api/test/`).
 
 ## What you do
 
 - **Unit** (Vitest): pure logic and services with dependencies mocked
-  (e.g. Prisma). Cover happy paths, edge cases, and failure modes (authz denied,
+  (e.g. the repository). Cover happy paths, edge cases, and failure modes (authz denied,
   not-found, conflict/optimistic-lock).
 - **Integration / API** (Supertest + real Postgres): boot the Nest app, exercise
   endpoints end-to-end, assert status codes and the response/error envelope;

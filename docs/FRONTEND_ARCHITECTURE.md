@@ -55,8 +55,8 @@ apps/web/src/
 │   ├── api/                #   Typed API client, fetch wrapper, error mapping
 │   ├── query/              #   Query client factory, key helpers, defaults
 │   ├── utils.ts            #   cn() and small pure helpers
-│   └── telemetry.ts        #   Logging / telemetry facade
-├── config/                 # Runtime config (env access, constants)
+│   └── telemetry.ts        #   Logging / telemetry facade (planned)
+├── config/                 # Runtime config (env access, constants) (planned)
 ├── styles/                 # globals.css (design tokens) + any base styles
 └── test/                   # Test setup and utilities
 e2e/                        # Playwright specs
@@ -75,7 +75,7 @@ Three tiers (details in [`COMPONENT_LIBRARY.md`](COMPONENT_LIBRARY.md)):
 1. **Primitives** (`components/ui/`) — design-system building blocks (Button,
    Input, Dialog…). Accessible, themeable, no business logic. Owned as source.
 2. **Composites / layout** (`components/layout/`, feature `components/`) —
-   assemble primitives into meaningful UI (PageHeader, DataTable, BillCard).
+   assemble primitives into meaningful UI (PageHeader, DataTable, ItemCard).
 3. **Route/page components** (`routes/`) — compose data + composites for a
    screen; contain no reusable logic.
 
@@ -103,7 +103,7 @@ and components. Deleting a feature should mean deleting one folder.
 **All server data goes through TanStack Query.** Components never fetch in
 `useEffect` or store server data in `useState`.
 
-- **Query hooks** live in each feature's `api/` folder (e.g. `useBills()`),
+- **Query hooks** live in each feature's `api/` folder (e.g. `useMe()`),
   wrapping a typed API client. UI imports hooks, not `fetch`.
 - **Query keys** use a per-feature factory for consistency and safe
   invalidation:
@@ -125,11 +125,12 @@ and components. Deleting a feature should mean deleting one folder.
   they roll back and surface a toast (see error handling).
 - **Prefetching** via route loaders warms the cache before render for a snappy
   perceived experience.
-- **The API client** is a thin typed wrapper over `fetch` in `lib/api/`. It
-  attaches credentials (cookies), sets headers, parses the standard response
-  envelope, and maps errors to a typed `ApiError` (from `@repo/types`). A
-  typed client generated from the API's OpenAPI spec (e.g. `openapi-typescript`)
-  is the intended evolution once endpoints exist.
+- **The API client** (`lib/api/client.ts`, ADR-0017) is an `openapi-fetch`
+  client typed by the `paths` generated from the API's committed OpenAPI
+  contract, so paths, params, bodies, and responses are compile-checked. It
+  sends same-origin cookies, turns non-2xx responses into `ApiRequestError`
+  (carrying the standard error envelope), and `unwrap()` returns the payload
+  from `{ data }`. Example: `features/account/api/me.ts`.
 
 ## Form handling (ADR-0007)
 
@@ -153,8 +154,9 @@ flowchart TD
   B -->|Route load/guard| I[Router errorComponent]
 ```
 
-- **Error boundaries** wrap the app root and each route segment; they show a
-  friendly fallback with a retry and report to telemetry. See
+- **Error boundaries** wrap the app root (implemented) and each route segment
+  (planned); they show a friendly fallback with a retry and report to telemetry
+  once the facade exists ([`TECH_DEBT.md`](TECH_DEBT.md)). See
   [`FRONTEND_QUALITY.md`](FRONTEND_QUALITY.md).
 - **Query errors** render inline (empty/error states) with a retry; mutation
   errors also raise a toast. 4xx are treated as expected domain outcomes and
@@ -186,7 +188,7 @@ sequenceDiagram
   participant Q as TanStack Query (session)
   participant A as API (Better Auth)
 
-  U->>R: Navigate to /app/*
+  U->>R: Navigate to a protected route (_authed layout)
   R->>Q: ensure session (beforeLoad)
   Q->>A: GET /api/auth/get-session (cookie)
   alt Authenticated
@@ -199,7 +201,8 @@ sequenceDiagram
 ```
 
 - A `useSession()` query is the single source of truth for auth state.
-- Sign-in/out are mutations that invalidate the session query.
+- Sign-in, sign-up, and sign-out are mutations that drop every cached query —
+  all server state is per-user (ADR-0016), so nothing survives an account switch.
 - Guards live on layout routes; components read `useSession()` for conditional
   UI but never make the trust decision (the API always re-checks).
 

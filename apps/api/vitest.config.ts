@@ -10,7 +10,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    // No app tests exist yet (foundation stage); don't fail the suite.
+    // Lets a filtered run (e.g. a single module) pass when it matches no files.
     passWithNoTests: true,
     include: ['src/**/*.spec.ts'],
     root: '.',

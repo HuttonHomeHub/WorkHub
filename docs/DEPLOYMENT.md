@@ -76,6 +76,9 @@ flowchart LR
   `docker compose -f docker-compose.prod.yml --env-file .env.production pull && … up -d`.
 - Your proxy must forward `X-Forwarded-For`/`X-Forwarded-Proto`; both the web
   nginx and the API honour them (`trust proxy`).
+- `AUTH_TRUSTED_PROXIES` (default `172.16.0.0/12`, the Docker networks) tells the
+  API which `X-Forwarded-For` hops to skip, so auth rate limits apply per client.
+  If your reverse proxy runs on a different host, add its address.
 
 ## Database migrations
 

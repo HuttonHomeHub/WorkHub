@@ -41,7 +41,11 @@ pnpm format:check
 pnpm lint
 pnpm typecheck
 pnpm test
+pnpm docs:check
 ```
+
+If you changed an API endpoint, also run `pnpm contract:generate` and commit the
+updated contract.
 
 Git hooks (Husky) run `lint-staged` and commitlint automatically, but running
 the full suite yourself avoids CI round-trips.

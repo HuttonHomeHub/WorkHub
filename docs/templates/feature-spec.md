@@ -21,7 +21,8 @@ in. Delete guidance comments. NO application code is written at this stage.
 
 ### Users
 
-<Roles/personas and what each needs. Map roles to organisation roles where relevant.>
+<Personas and what each needs. Accounts are individual (ADR-0016): say which data
+each user owns and whether anything must be visible to other users.>
 
 ### Primary use cases
 
@@ -68,22 +69,25 @@ _(repeat per story)_
 
 <Empty / max / concurrent / partial / boundary conditions and expected behaviour.>
 
-### Permissions
+### Access
 
-<Who may do what. Map to RBAC + resource scope (ADR-0012): which permission,
-which organisation scope, deny-by-default.>
+<Who may do what. The default is owner-based access (ADR-0016, rules in
+docs/SECURITY_STANDARDS.md → Authorisation): users act only on resources they
+own. If the feature needs sharing, teams, roles, or an admin, flag it as a
+CRITICAL question — that supersedes ADR-0016 and needs an ADR first.>
 
 ### Validation rules
 
-<Field and domain rules. Types, ranges, lengths, formats. Note which are shared
-client↔server (Zod / class-validator). Money = integer minor units + currency.>
+<Field and domain rules. Types, ranges, lengths, formats. Rules the web and API
+must both enforce go in @repo/types (ADR-0017). Money = integer minor units +
+currency.>
 
 ### Error scenarios
 
-| Scenario                            | Detection         | User-facing result         | Status |
-| ----------------------------------- | ----------------- | -------------------------- | ------ |
-| <e.g. not a member of organisation> | authz check       | friendly forbidden message | 403    |
-| <e.g. duplicate name>               | unique constraint | inline error               | 409    |
+| Scenario                              | Detection         | User-facing result      | Status |
+| ------------------------------------- | ----------------- | ----------------------- | ------ |
+| <e.g. resource owned by another user> | ownership check   | same "not found" as 404 | 404    |
+| <e.g. duplicate name>                 | unique constraint | inline error            | 409    |
 
 ## 3. Technical analysis
 

@@ -11,9 +11,8 @@
  *  - Colour is authored in OKLCH for perceptual uniformity and predictable
  *    light/dark pairs.
  *
- * This file is the design-system implementation. It is wired into the app by
- * the web entry point (`src/main.tsx`), which lands with the walking skeleton
- * (roadmap M1); until then it stands as the canonical token definition.
+ * This file is the design-system implementation, imported once by the web
+ * entry point (`src/main.tsx`).
  */
 
 @import 'tailwindcss';
