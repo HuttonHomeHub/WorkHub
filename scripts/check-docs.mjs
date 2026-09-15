@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // ---------------------------------------------------------------------------
-// Docs guard (CLAUDE.md §6 — state each rule once). Fails on:
+// Docs guard (CLAUDE.md §9 — state each rule once). Fails on:
 //   1. relative Markdown links whose target file or directory does not exist;
 //   2. known-stale terms that signal drift from the current architecture.
 //
@@ -24,6 +24,8 @@ const SKIP_DIRS = new Set([
   '.turbo',
   'playwright-report',
   'test-results',
+  // Claude Code's git worktrees (.claude/worktrees/) are other checkouts.
+  'worktrees',
 ]);
 
 // Historical records legitimately describe superseded decisions.
@@ -58,6 +60,12 @@ const STALE_TERMS = [
     /\bvX\.Y\.Z\b|IMAGE_TAG=v\d/,
     'releases are tagged @repo/<app>@X.Y.Z and images X.Y.Z, without a v (DEPLOYMENT.md)',
   ],
+  [/Blank App/, 'the product is WorkHub, not a generic starter (ADR-0019)'],
+  [
+    /multiple individual users|every account is its own tenant/i,
+    'WorkHub has a single owner (ADR-0019, PRODUCT.md)',
+  ],
+  [/Using this as your base/i, 'WorkHub is one product, not a starter to fork (ADR-0019)'],
 ];
 
 function markdownFiles(dir) {
