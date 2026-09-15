@@ -4,8 +4,8 @@
 
 **A production-grade monorepo starter for building applications.**
 
-[![CI](https://github.com/HuttonHomeHub/blank-app/actions/workflows/ci.yml/badge.svg)](https://github.com/HuttonHomeHub/blank-app/actions/workflows/ci.yml)
-[![CodeQL](https://github.com/HuttonHomeHub/blank-app/actions/workflows/codeql.yml/badge.svg)](https://github.com/HuttonHomeHub/blank-app/actions/workflows/codeql.yml)
+[![CI](https://github.com/HuttonHomeHub/WorkHub/actions/workflows/ci.yml/badge.svg)](https://github.com/HuttonHomeHub/WorkHub/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/HuttonHomeHub/WorkHub/actions/workflows/codeql.yml/badge.svg)](https://github.com/HuttonHomeHub/WorkHub/actions/workflows/codeql.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Conventional Commits](https://img.shields.io/badge/Commits-Conventional-fe5196.svg)](https://www.conventionalcommits.org)
 
@@ -25,10 +25,12 @@ features on day one instead of wiring up foundations.
 ### Using this as your base
 
 1. Fork/clone and rename the repo and the root `package.json` name.
-2. Replace the `HuttonHomeHub/blank-app` placeholders with your GitHub org/repo — they
-   appear in the README badges, [`CODEOWNERS`](.github/CODEOWNERS),
-   [`.changeset/config.json`](.changeset/config.json),
-   [`SECURITY.md`](SECURITY.md), and [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
+2. Replace the `HuttonHomeHub/WorkHub` repository references with your GitHub
+   org/repo — search for `HuttonHomeHub/WorkHub` and `huttonhomehub/workhub`
+   (GHCR image names are lower-case). They appear in the README badges,
+   [`CODEOWNERS`](.github/CODEOWNERS), [`.changeset/config.json`](.changeset/config.json),
+   [`SECURITY.md`](SECURITY.md), the issue-template config, the compose files, and
+   [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
 3. Optionally rename the `@repo/*` package scope to your own.
 4. Replace this README, `CLAUDE.md` §1, `docs/ROADMAP.md`, and `docs/BACKLOG.md`
    with your application's content.
@@ -67,7 +69,7 @@ scripts/      Repository automation
 
 ```bash
 # 1. Clone and enter
-git clone https://github.com/HuttonHomeHub/blank-app.git && cd blank-app
+git clone https://github.com/HuttonHomeHub/WorkHub.git && cd WorkHub
 
 # 2. Bootstrap (installs deps, creates .env, starts Postgres)
 ./scripts/setup.sh

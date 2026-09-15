@@ -32,8 +32,8 @@ flowchart TD
 - Built by [`docker-publish.yml`](../.github/workflows/docker-publish.yml) on
   version tags (and manually via `workflow_dispatch`).
 - Published to **GitHub Container Registry**:
-  - `ghcr.io/HuttonHomeHub/blank-app/api`
-  - `ghcr.io/HuttonHomeHub/blank-app/web`
+  - `ghcr.io/huttonhomehub/workhub/api`
+  - `ghcr.io/huttonhomehub/workhub/web`
 - Tags: full SemVer, `major.minor`, and commit `sha`. Images include an **SBOM**
   and **build provenance**.
 - Images are **immutable**: the same artifact is promoted across environments;

@@ -83,5 +83,5 @@ Use the [issue templates](.github/ISSUE_TEMPLATE/). For security issues, do
 
 ## Questions
 
-Open a [discussion](https://github.com/HuttonHomeHub/blank-app/discussions). Thanks
+Open a [discussion](https://github.com/HuttonHomeHub/WorkHub/discussions). Thanks
 again for helping make Blank App better!

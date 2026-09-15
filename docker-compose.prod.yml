@@ -36,7 +36,7 @@ services:
       retries: 5
 
   migrate:
-    image: '${IMAGE_BASE:-ghcr.io/huttonhomehub/blank-app}/api:${IMAGE_TAG:?pin IMAGE_TAG to a released version}'
+    image: '${IMAGE_BASE:-ghcr.io/huttonhomehub/workhub}/api:${IMAGE_TAG:?pin IMAGE_TAG to a released version}'
     command: ['node_modules/.bin/prisma', 'migrate', 'deploy']
     restart: 'no'
     depends_on:
@@ -46,7 +46,7 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-app}?schema=public
 
   api:
-    image: ${IMAGE_BASE:-ghcr.io/huttonhomehub/blank-app}/api:${IMAGE_TAG}
+    image: ${IMAGE_BASE:-ghcr.io/huttonhomehub/workhub}/api:${IMAGE_TAG}
     restart: unless-stopped
     depends_on:
       db:
@@ -68,7 +68,7 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-info}
 
   web:
-    image: ${IMAGE_BASE:-ghcr.io/huttonhomehub/blank-app}/web:${IMAGE_TAG}
+    image: ${IMAGE_BASE:-ghcr.io/huttonhomehub/workhub}/web:${IMAGE_TAG}
     restart: unless-stopped
     depends_on:
       - api
