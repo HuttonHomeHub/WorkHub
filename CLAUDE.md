@@ -117,6 +117,9 @@ pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm docs:check
 - Skills: `/ship`, `/review`, `/feature`, `/deps`, `/release`, `/adr`
   ([`.claude/skills/`](.claude/skills/README.md)).
 - Reviewer findings are advice: reproduce each before acting on it.
+- [`.claude/settings.json`](.claude/settings.json) pre-approves the read-only
+  gates, blocks pushes to `main`, force pushes and `.env` edits, and formats
+  edited files. Any change to it needs the owner's entry-by-entry approval.
 
 ## 8. Where things live
 
