@@ -10,6 +10,37 @@ get an ADR instead (and may be linked from here).
 
 ---
 
+### 2026-09-15 — Right-size the process and agents for a solo developer
+
+**Decision.** Replace the team delivery process with the four change classes,
+now detailed in [PROCESS.md](PROCESS.md): Trivial and Small changes ship with CI,
+tests and path-matched reviews; Features get one living feature doc in
+`docs/features/` approved by the owner and built in slices; Architectural changes
+get an ADR. The two team-shaped templates, the project brief and the worked
+example are replaced by one feature template. The separate roadmap document is
+replaced by Now / Next / Later in [PRODUCT.md](PRODUCT.md), and the backlog
+becomes a one-line list. The PR template is rewritten for Claude-filled bodies;
+CODEOWNERS, the issue templates, CONTRIBUTING and the code of conduct are removed
+(backlog lives in the repository; there are no other contributors). The agents go
+from 12 to 8 — planner, ui-reviewer, accessibility-reviewer, backend-reviewer,
+security-reviewer, database-architect, test-engineer, devops-reviewer — with one
+reviewer output contract, and Claude Code skills (`/ship`, `/review`,
+`/feature`, `/deps`, `/release`, `/adr`) encode the recurring workflows.
+
+**Why.** One developer works with Claude Code and there are no human reviewers.
+The old process required a five-stage spec and plan for every requirement,
+approving reviews nobody could give, and an unenforced Definition of Done; the
+overlapping agents disagreed on output and still assumed a team-built SaaS
+(ADR-0019).
+
+**Consequences.** `pnpm docs:check` rejects the removed agent names and process
+terms outside historical records, and checks agent and skill frontmatter. A
+`.claude/settings.json` (permissions and a format hook) is proposed separately
+for the owner's line-by-line review. Commitlint accepts Dependabot's `deps-dev`
+scope.
+
+---
+
 ### 2026-09-15 — Tailor the repository to WorkHub
 
 **Decision.** Stop treating this repository as a domain-neutral base. It is
@@ -184,5 +215,5 @@ decide the concrete host later.
 costly.
 
 **Consequences.** Tracked in [TECH_DEBT.md](TECH_DEBT.md) and the
-[roadmap](ROADMAP.md); `docker-publish` targets GHCR so any container platform
+[roadmap](PRODUCT.md#roadmap); `docker-publish` targets GHCR so any container platform
 can consume the images.
