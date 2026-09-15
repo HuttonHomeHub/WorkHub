@@ -1,8 +1,8 @@
 <div align="center">
 
-# 🧱 Blank App
+# WorkHub
 
-**A production-grade monorepo starter for building applications.**
+**A private, self-hosted web app for a single owner.**
 
 [![CI](https://github.com/HuttonHomeHub/WorkHub/actions/workflows/ci.yml/badge.svg)](https://github.com/HuttonHomeHub/WorkHub/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/HuttonHomeHub/WorkHub/actions/workflows/codeql.yml/badge.svg)](https://github.com/HuttonHomeHub/WorkHub/actions/workflows/codeql.yml)
@@ -11,32 +11,14 @@
 
 </div>
 
-> **Project status: base repository (no application features).** This is a clean,
-> domain-neutral foundation — structure, tooling, CI/CD, containers,
-> documentation, standards, a delivery process, and a canonical feature template.
-> Fork it, replace this README with your app's, and build features from the
-> template. See the [roadmap](docs/ROADMAP.md).
+> **Project status: walking skeleton.** Sign-in, a protected shell and
+> `/api/v1/me` work end to end; the domain is still to be decided. What WorkHub
+> is, who it is for and the product decisions behind it are in
+> [`docs/PRODUCT.md`](docs/PRODUCT.md).
 
-Blank App gives a new application a solid, opinionated starting point: a
-TypeScript monorepo with a React web client and a NestJS API, strict tooling,
-tests, CI/CD, and documented engineering standards — so teams start building
-features on day one instead of wiring up foundations.
-
-### Using this as your base
-
-1. Fork/clone and rename the repo and the root `package.json` name.
-2. Replace the `HuttonHomeHub/WorkHub` repository references with your GitHub
-   org/repo — search for `HuttonHomeHub/WorkHub` and `huttonhomehub/workhub`
-   (GHCR image names are lower-case). They appear in the README badges,
-   [`CODEOWNERS`](.github/CODEOWNERS), [`.changeset/config.json`](.changeset/config.json),
-   [`SECURITY.md`](SECURITY.md), the issue-template config, the compose files, and
-   [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
-3. Optionally rename the `@repo/*` package scope to your own.
-4. Replace this README, `CLAUDE.md` §1, `docs/ROADMAP.md`, and `docs/BACKLOG.md`
-   with your application's content.
-5. Build your first feature with `pnpm gen:feature <entity>`
-   ([`docs/REFERENCE_FEATURE.md`](docs/REFERENCE_FEATURE.md)) via the delivery
-   process ([`docs/PROCESS.md`](docs/PROCESS.md)).
+WorkHub is used in desktop browsers and runs on the owner's own server with
+Docker Compose, behind a reverse proxy. It is a TypeScript monorepo with a React
+web client, a NestJS API and PostgreSQL.
 
 ## ✨ Tech stack
 
@@ -58,7 +40,7 @@ apps/
 packages/
   config/     Shared ESLint + tsconfig   (@repo/config)
   types/      Shared cross-boundary types (@repo/types)
-docs/         Architecture, guides, ADRs, roadmap
+docs/         Product profile, standards, guides, ADRs
 scripts/      Repository automation
 ```
 
@@ -81,10 +63,8 @@ pnpm dev
 ```
 
 Then open <http://localhost:5173> and sign in as **dev@example.com** /
-**dev-password-123** — `setup.sh` seeds that development account. The base
-ships a working auth walking skeleton (email/password sessions, a protected
-shell, owner-based access — ADR-0016). Public sign-up is off by default: create
-real accounts with `pnpm user:create` (ADR-0018).
+**dev-password-123** — `setup.sh` seeds that development account. Public
+sign-up is off: create real accounts with `pnpm user:create` (ADR-0018).
 
 Or run the full stack in containers (served at <http://localhost:8080>,
 migrations applied automatically):
@@ -109,7 +89,7 @@ covered in [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) and
 | `pnpm typecheck`            | Type-check the whole workspace                 |
 | `pnpm test`                 | Run unit tests                                 |
 | `pnpm test:e2e`             | Run end-to-end tests                           |
-| `pnpm changeset`            | Record a versioned, user-visible change        |
+| `pnpm changeset`            | Record a change to the running app for release |
 | `pnpm gen:feature <entity>` | Generate a backend feature from the template   |
 | `pnpm contract:generate`    | Regenerate the OpenAPI contract + client types |
 | `pnpm docs:check`           | Check docs for broken links and stale terms    |
@@ -119,38 +99,36 @@ covered in [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) and
 
 ## 📚 Documentation
 
-| Document                                                         | Purpose                                    |
-| ---------------------------------------------------------------- | ------------------------------------------ |
-| [`CLAUDE.md`](CLAUDE.md)                                         | Project operating manual (source of truth) |
-| [`docs/PROCESS.md`](docs/PROCESS.md)                             | How features go from idea to shipped       |
-| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)                   | System design and boundaries               |
-| [`docs/FRONTEND_ARCHITECTURE.md`](docs/FRONTEND_ARCHITECTURE.md) | Frontend architecture & patterns           |
-| [`docs/BACKEND_ARCHITECTURE.md`](docs/BACKEND_ARCHITECTURE.md)   | Backend architecture & patterns            |
-| [`docs/DATABASE.md`](docs/DATABASE.md)                           | Database standards & philosophy            |
-| [`docs/SECURITY_STANDARDS.md`](docs/SECURITY_STANDARDS.md)       | Security engineering standards             |
-| [`docs/OBSERVABILITY.md`](docs/OBSERVABILITY.md)                 | Logging, metrics, tracing, health          |
-| [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md)                     | Performance & scalability standards        |
-| [`docs/REFERENCE_FEATURE.md`](docs/REFERENCE_FEATURE.md)         | The canonical backend feature template     |
-| [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md)                 | Design tokens, theming, components         |
-| [`docs/UX_STANDARDS.md`](docs/UX_STANDARDS.md)                   | Project-wide UX principles                 |
-| [`docs/COMPONENT_LIBRARY.md`](docs/COMPONENT_LIBRARY.md)         | Component guidelines & lifecycle           |
-| [`docs/FRONTEND_QUALITY.md`](docs/FRONTEND_QUALITY.md)           | FE testing, a11y, perf, bundle             |
-| [`docs/API.md`](docs/API.md)                                     | REST/OpenAPI conventions                   |
-| [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md)                     | Local dev environment guide                |
-| [`docs/TESTING.md`](docs/TESTING.md)                             | Test strategy and tooling                  |
-| [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)                       | Release & deployment                       |
-| [`docs/ROADMAP.md`](docs/ROADMAP.md)                             | Direction and milestones                   |
-| [`docs/adr/`](docs/adr/)                                         | Architecture Decision Records              |
-| [`.claude/agents/`](.claude/agents/)                             | Specialised frontend & backend agents      |
-| [`CONTRIBUTING.md`](CONTRIBUTING.md)                             | How to contribute                          |
-| [`SECURITY.md`](SECURITY.md)                                     | Reporting vulnerabilities                  |
+| Document                                                         | Purpose                                     |
+| ---------------------------------------------------------------- | ------------------------------------------- |
+| [`docs/PRODUCT.md`](docs/PRODUCT.md)                             | What WorkHub is: users, platform, decisions |
+| [`CLAUDE.md`](CLAUDE.md)                                         | Operating manual for Claude Code            |
+| [`docs/PROCESS.md`](docs/PROCESS.md)                             | How features go from idea to shipped        |
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)                   | System design and boundaries                |
+| [`docs/FRONTEND_ARCHITECTURE.md`](docs/FRONTEND_ARCHITECTURE.md) | Frontend architecture & patterns            |
+| [`docs/BACKEND_ARCHITECTURE.md`](docs/BACKEND_ARCHITECTURE.md)   | Backend architecture & patterns             |
+| [`docs/DATABASE.md`](docs/DATABASE.md)                           | Database standards & philosophy             |
+| [`docs/SECURITY_STANDARDS.md`](docs/SECURITY_STANDARDS.md)       | Security engineering standards              |
+| [`docs/OBSERVABILITY.md`](docs/OBSERVABILITY.md)                 | Logging, metrics, tracing, health           |
+| [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md)                     | Performance standards                       |
+| [`docs/REFERENCE_FEATURE.md`](docs/REFERENCE_FEATURE.md)         | The canonical backend feature template      |
+| [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md)                 | Design tokens, theming, components          |
+| [`docs/UX_STANDARDS.md`](docs/UX_STANDARDS.md)                   | Project-wide UX principles                  |
+| [`docs/COMPONENT_LIBRARY.md`](docs/COMPONENT_LIBRARY.md)         | Component guidelines & lifecycle            |
+| [`docs/FRONTEND_QUALITY.md`](docs/FRONTEND_QUALITY.md)           | FE testing, a11y, perf, bundle              |
+| [`docs/API.md`](docs/API.md)                                     | REST/OpenAPI conventions                    |
+| [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md)                     | Local dev environment guide                 |
+| [`docs/TESTING.md`](docs/TESTING.md)                             | Test strategy and tooling                   |
+| [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)                       | Release & deployment                        |
+| [`docs/ROADMAP.md`](docs/ROADMAP.md)                             | Direction and milestones                    |
+| [`docs/adr/`](docs/adr/)                                         | Architecture Decision Records               |
+| [`.claude/agents/`](.claude/agents/)                             | Specialised frontend & backend agents       |
+| [`CONTRIBUTING.md`](CONTRIBUTING.md)                             | How to contribute                           |
+| [`SECURITY.md`](SECURITY.md)                                     | Reporting vulnerabilities                   |
 
-## 🤝 Contributing
-
-Contributions are welcome — please read [`CONTRIBUTING.md`](CONTRIBUTING.md) and
-our [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) first. All commits follow
-[Conventional Commits](https://www.conventionalcommits.org/).
+Some standards documents predate the product decisions and carry a "pending
+rewrite" banner; where they conflict, [`docs/PRODUCT.md`](docs/PRODUCT.md) wins.
 
 ## 📄 License
 
-[MIT](LICENSE) © The Blank App authors
+[MIT](LICENSE) © The WorkHub authors

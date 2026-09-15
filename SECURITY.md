@@ -1,6 +1,6 @@
 # Security Policy
 
-We take the security of Blank App and its users' sensitive data seriously.
+We take the security of WorkHub and its users' sensitive data seriously.
 
 ## Supported versions
 
@@ -57,4 +57,4 @@ degradation while testing.
 - **Least privilege:** scoped database roles, non-root container users, and
   minimally-scoped CI tokens.
 
-See [`CLAUDE.md` §14](CLAUDE.md) for the full security requirements.
+See [`docs/SECURITY_STANDARDS.md`](docs/SECURITY_STANDARDS.md) for the full security requirements.

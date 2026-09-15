@@ -2,7 +2,7 @@
   "name": "blank-app",
   "version": "0.1.0",
   "private": true,
-  "description": "Blank App — a production-grade monorepo starter (Turborepo + pnpm) for building applications.",
+  "description": "WorkHub — a private, self-hosted web app for a single owner (Turborepo + pnpm monorepo).",
   "license": "MIT",
   "type": "module",
   "packageManager": "pnpm@10.4.1",

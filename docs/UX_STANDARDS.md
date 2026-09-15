@@ -1,9 +1,11 @@
 # UX Standards
 
+> **Pending rewrite (ADR-0019).** Parts of this document assume a mobile-first, touch-friendly SaaS product — where it conflicts with [PRODUCT.md](PRODUCT.md), PRODUCT.md wins.
+
 > Project-wide UX principles every screen must uphold. These complement the
 > visual rules in [`DESIGN_SYSTEM.md`](DESIGN_SYSTEM.md) and the technical
 > patterns in [`FRONTEND_ARCHITECTURE.md`](FRONTEND_ARCHITECTURE.md). The goal:
-> Blank App should feel like a polished, trustworthy commercial SaaS product.
+> WorkHub should feel like a polished, trustworthy, professional tool.
 
 ## Core principles
 

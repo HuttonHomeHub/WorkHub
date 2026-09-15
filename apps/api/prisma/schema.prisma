@@ -1,4 +1,4 @@
-// Prisma schema for the Blank App API.
+// Prisma schema for the WorkHub API.
 // Docs: https://www.prisma.io/docs
 //
 // Conventions: see docs/DATABASE.md. Columns are snake_case in the database

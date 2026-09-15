@@ -1,6 +1,8 @@
 # Database Standards
 
-> Standards and philosophy for the Blank App data layer: **PostgreSQL 17 + Prisma**.
+> **Pending rewrite (ADR-0019).** Parts of this document assume `created_by`/`updated_by` columns, an append-only audit log, multiple tenants and multiple currencies — where it conflicts with [PRODUCT.md](PRODUCT.md), PRODUCT.md wins.
+
+> Standards and philosophy for the WorkHub data layer: **PostgreSQL 17 + Prisma**.
 > The schema in [`apps/api/prisma/schema.prisma`](../apps/api/prisma/schema.prisma)
 > is the single source of truth for the data model. See ADR-0008.
 

@@ -1,5 +1,5 @@
 {
-  "name": "Blank App",
+  "name": "WorkHub",
   "image": "mcr.microsoft.com/devcontainers/typescript-node:24",
   "features": {
     "ghcr.io/devcontainers/features/docker-in-docker:2": {}

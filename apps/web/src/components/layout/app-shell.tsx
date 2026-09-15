@@ -36,7 +36,7 @@ export function AppShell({ actions, children }: AppShellProps) {
     <div className="bg-background text-foreground min-h-svh">
       <header className="bg-background/95 sticky top-0 z-10 border-b backdrop-blur">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-4 px-4">
-          <span className="font-semibold">Blank App</span>
+          <span className="font-semibold">WorkHub</span>
           <div className="flex items-center gap-2">
             <ThemeToggle />
             {actions}

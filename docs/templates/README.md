@@ -1,5 +1,7 @@
 # Templates
 
+> **Pending rewrite (ADR-0019).** Parts of this document assume a team reviewing specs for every change — where it conflicts with [PRODUCT.md](../PRODUCT.md), PRODUCT.md wins.
+
 Reusable templates for the [delivery process](../PROCESS.md). Copy a template,
 fill it in, and store the filled copy where the team can review it (a
 `docs/specs/` or `docs/plans/` file, or attached to the tracking issue).

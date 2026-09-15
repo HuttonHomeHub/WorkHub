@@ -1,6 +1,6 @@
 # @repo/api
 
-The Blank App REST API: **NestJS 11 + TypeScript**, **Prisma** ORM over **PostgreSQL**,
+The WorkHub REST API: **NestJS 11 + TypeScript**, **Prisma** ORM over **PostgreSQL**,
 authentication via **Better Auth**, and an **OpenAPI** contract generated with
 `@nestjs/swagger`.
 

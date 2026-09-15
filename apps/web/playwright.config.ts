@@ -11,7 +11,7 @@ function chromiumConfig() {
   };
 }
 
-// End-to-end test configuration for the Blank App web client.
+// End-to-end test configuration for the WorkHub web client.
 // Playwright starts BOTH dev servers (API + web) unless PLAYWRIGHT_SKIP_WEBSERVER
 // is set (e.g. to test an already-running deployment via E2E_BASE_URL).
 // The API needs a database: set DATABASE_URL and apply migrations first

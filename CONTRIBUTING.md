@@ -1,8 +1,8 @@
-# Contributing to Blank App
+# Contributing to WorkHub
 
 Thank you for contributing! This guide explains how we work. It complements the
-project operating manual, [`CLAUDE.md`](CLAUDE.md), which is the source of truth
-for standards.
+product profile, [`docs/PRODUCT.md`](docs/PRODUCT.md), and the operating manual,
+[`CLAUDE.md`](CLAUDE.md), which links to each standard.
 
 ## Code of Conduct
 
@@ -88,4 +88,4 @@ Use the [issue templates](.github/ISSUE_TEMPLATE/). For security issues, do
 ## Questions
 
 Open a [discussion](https://github.com/HuttonHomeHub/WorkHub/discussions). Thanks
-again for helping make Blank App better!
+again for helping make WorkHub better!

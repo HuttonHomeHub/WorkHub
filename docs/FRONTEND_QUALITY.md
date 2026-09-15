@@ -1,5 +1,7 @@
 # Frontend Quality Standards
 
+> **Pending rewrite (ADR-0019).** Parts of this document assume mobile performance targets (a mid-tier phone on 4G) and an 80% coverage bar that CI does not enforce — where it conflicts with [PRODUCT.md](PRODUCT.md), PRODUCT.md wins.
+
 > The non-negotiable quality bar for `apps/web`. These are merge requirements,
 > enforced by CI, reviewers, and the specialised agents in `.claude/agents/`.
 
@@ -27,7 +29,7 @@
 
 ## Performance
 
-Targets (align with `CLAUDE.md` §15; re-baseline with real data):
+Targets (align with [`PRODUCT.md`](PRODUCT.md); re-baseline with real data):
 
 - **Core Web Vitals in "good":** LCP < 2.5s, INP < 200ms, CLS < 0.1 on a
   mid-tier mobile over 4G.

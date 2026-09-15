@@ -1,5 +1,7 @@
 # Backend Architecture
 
+> **Pending rewrite (ADR-0019).** Parts of this document assume BullMQ + Redis jobs, a Redis cache, S3 object storage and OpenTelemetry, which ADR-0019 defers — where it conflicts with [PRODUCT.md](PRODUCT.md), PRODUCT.md wins.
+
 > **Status:** implemented (infrastructure) + design. This document defines the
 > architecture the API (`apps/api`) follows. The reusable infrastructure (config,
 > Prisma, guards, filters, interceptors, health, bootstrap) is live in

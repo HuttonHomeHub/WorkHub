@@ -1,6 +1,6 @@
 # Claude agents
 
-Specialised subagents for Blank App. Each lives in a Markdown file here with YAML
+Specialised subagents for WorkHub. Each lives in a Markdown file here with YAML
 frontmatter (`name`, `description`, `tools`, `model`) and a system prompt. Claude
 Code can delegate to them automatically based on their `description`, or you can
 invoke one explicitly (e.g. "use the security-reviewer").
@@ -46,4 +46,4 @@ invoke one explicitly (e.g. "use the security-reviewer").
 
 Reviewers are read-only and report blocking vs. suggested findings with
 file/line references; they never approve by silence. See each agent file for its
-detailed checklist, and `CLAUDE.md` §20 for how they fit the workflow.
+detailed checklist, and `CLAUDE.md` §3 for how changes are classified.

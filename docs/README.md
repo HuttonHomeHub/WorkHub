@@ -1,13 +1,14 @@
-# Blank App documentation
+# WorkHub documentation
 
-This directory is the deep reference for the Blank App project. The
-[`CLAUDE.md`](../CLAUDE.md) operating manual at the repository root is the
-source of truth for standards; these documents expand on specific areas.
+This directory is the deep reference for WorkHub. [`PRODUCT.md`](PRODUCT.md)
+describes the product; each standard below is the canonical home of its rules,
+and [`CLAUDE.md`](../CLAUDE.md) links to them.
 
 ## Index
 
 | Document                                             | What it covers                                          |
 | ---------------------------------------------------- | ------------------------------------------------------- |
+| [PRODUCT.md](PRODUCT.md)                             | What WorkHub is: users, platform, UI, locale, hosting   |
 | [PROCESS.md](PROCESS.md)                             | Delivery process: idea → spec → design → plan → build   |
 | [templates/](templates/)                             | Feature-spec & implementation-plan templates            |
 | [examples/](examples/)                               | Worked example of the process (no code)                 |

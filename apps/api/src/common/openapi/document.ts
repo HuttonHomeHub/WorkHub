@@ -9,8 +9,8 @@ import { DocumentBuilder, SwaggerModule, type OpenAPIObject } from '@nestjs/swag
  */
 export function createOpenApiDocument(app: INestApplication): OpenAPIObject {
   const config = new DocumentBuilder()
-    .setTitle('Blank App API')
-    .setDescription('Blank App REST API')
+    .setTitle('WorkHub API')
+    .setDescription('WorkHub REST API')
     .setVersion('1.0')
     .addCookieAuth('better-auth.session_token')
     .build();

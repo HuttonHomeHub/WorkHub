@@ -1,5 +1,7 @@
 # Backlog
 
+> **Pending rewrite (ADR-0019).** Parts of this document assume a generic base repository rather than WorkHub — where it conflicts with [PRODUCT.md](PRODUCT.md), PRODUCT.md wins.
+
 Candidate work that is **not yet scheduled**. This is a grooming space; once an
 item is ready and prioritised, promote it to a GitHub issue (with acceptance
 criteria) and, if it shapes the product, reflect it in [ROADMAP.md](ROADMAP.md).
@@ -24,12 +26,10 @@ criteria) and, if it shapes the product, reflect it in [ROADMAP.md](ROADMAP.md).
 
 ## Product (unscheduled)
 
-> Blank App is a base repository with **no product backlog of its own**. When you
-> build an application, list its candidate features here. Common building blocks
-> the foundation already supports (add when a real feature needs them):
-> notifications (BullMQ), file uploads (object storage), email (SMTP for
-> verification/password reset — see ADR-0016), and internationalisation.
-> Authentication + individual accounts are already live (Better Auth, ADR-0016).
+> No product backlog yet: WorkHub's purpose is still to be decided
+> ([PRODUCT.md](PRODUCT.md)). Sign-in with closed sign-up is live (ADR-0016,
+> ADR-0018). Work already decided — passkeys, backups, the app shell and command
+> palette — is listed in PRODUCT.md and ADR-0019 until this file is rewritten.
 
 ## Engineering / platform (unscheduled)
 

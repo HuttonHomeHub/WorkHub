@@ -368,8 +368,8 @@
     }
   },
   "info": {
-    "title": "Blank App API",
-    "description": "Blank App REST API",
+    "title": "WorkHub API",
+    "description": "WorkHub REST API",
     "version": "1.0",
     "contact": {}
   },

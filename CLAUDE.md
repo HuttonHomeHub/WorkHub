@@ -1,401 +1,158 @@
-# CLAUDE.md — Project Operating Manual
+# CLAUDE.md — WorkHub operating manual
 
-> This file is the permanent operating manual for the **Blank App** repository.
-> It is authored for both human engineers and AI assistants (Claude Code).
-> **Keep it current.** Any change that alters architecture, standards, tooling,
-> or process MUST update this file in the same pull request.
+Instructions for Claude Code working in this repository. Keep this file short:
+link to the canonical document instead of restating a rule.
 
----
+## 1. WorkHub in brief
 
-## 1. What this project is
+- A private, self-hosted web app for **one owner**, used in **desktop browsers**
+  (Chromium, Firefox; designed for ≥ 1280px), internet-facing behind the owner's
+  reverse proxy. Purpose and domain: **TBD**.
+- Stack: Turborepo + pnpm, TypeScript strict on Node 24, React 19 + Vite +
+  Tailwind v4 + shadcn/ui, NestJS 11, PostgreSQL 17 + Prisma, Better Auth.
+- Locale is fixed: en-GB, GBP as integer pence, Europe/London.
+- The profile and its reasoning: [`docs/PRODUCT.md`](docs/PRODUCT.md) and
+  [ADR-0019](docs/adr/0019-workhub-single-owner-desktop-app.md).
 
-**Blank App** is a **production-grade starter/base repository** — a clean,
-domain-neutral monorepo foundation for building new applications. It is not a
-specific product: it ships the engineering foundation (tooling, structure,
-CI/CD, containers, documentation, standards, a delivery process, and a canonical
-feature template) so a real application can be built on top of it quickly and
-consistently.
+## 2. Current state
 
-> **Current stage: walking skeleton (no domain features).** The foundation and
-> a working end-to-end auth skeleton exist — email/password sign-in (Better
-> Auth; public sign-up off by default, accounts via `pnpm user:create`,
-> ADR-0018), sessions, a protected home page, and a `/api/v1/me` endpoint —
-> but domain/business code does **not**. When you start a real app, replace
-> this section with the app's purpose, users, and goals, and build features
-> from the reference template (§12, ADR-0015). Do not assume domain code
-> exists — check before referencing it.
->
-> The base is shaped for **multiple individual users** (ADR-0016): every
-> account is its own tenant, resources carry an `owner_id`, and there are no
-> organisations, roles, or admin. If your app needs teams/roles, supersede
-> ADR-0016 with a new ADR before building features.
+- **Exists:** email/password sign-in and sessions (Better Auth), closed sign-up
+  with CLI accounts (ADR-0018), a protected shell, `GET /api/v1/me`,
+  `GET /api/v1/config`, health endpoints, the feature generator, CI, Changesets
+  and GHCR images.
+- **Does not exist:** domain features or models, passkeys, backups, the sidebar,
+  command palette, background jobs, caching, file storage, OpenTelemetry.
+- Several standards documents still describe the old generic starter and carry a
+  **"Pending rewrite (ADR-0019)"** banner. Where they conflict with
+  `docs/PRODUCT.md`, PRODUCT.md wins.
+- **Check before assuming.** Grep for code before referencing it, and check
+  `git log origin/main` before relying on anything in this file.
 
-## 2. Project philosophy
+## 3. How to work
 
-We optimise, in order, for: **correctness → clarity → maintainability →
-performance**. Concretely:
+Classify every change before starting:
 
-- **Boring, proven technology** over novelty. Every dependency is a liability.
-- **Small, reviewable changes.** One logical change per pull request.
-- **Automate everything repeatable** — formatting, linting, testing, releases.
-- **Documentation is part of the change**, not an afterthought.
-- **Security and accessibility are requirements, not features.**
-- **Leave the campsite cleaner than you found it**, but avoid drive-by churn in
-  unrelated files.
+| Class             | Examples                                                                                     | What you do                                 |
+| ----------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| **Trivial**       | Typo, docs wording, dependency patch                                                         | Just do it                                  |
+| **Small**         | Bug fix, contained tweak; one PR, no schema or contract break                                | State a 3–5 bullet plan, then proceed       |
+| **Feature**       | New capability, model or endpoint; more than one PR                                          | Write a plan; wait for the owner's approval |
+| **Architectural** | New infrastructure, superseding an ADR, diverging from the template, major dependency change | Write an ADR; wait for the owner's approval |
 
-## 3. Technology stack
+**Escalation triggers** — each raises the class by at least one: a database
+migration; auth or ownership code; a new runtime dependency or service; a
+breaking OpenAPI change; a change to a CI or security gate.
 
-| Concern        | Choice                                              |
-| -------------- | --------------------------------------------------- |
-| Monorepo       | Turborepo + pnpm workspaces                         |
-| Language       | TypeScript (strict) on Node.js 24 LTS               |
-| Frontend       | React 19 + Vite                                     |
-| Styling / UI   | Tailwind CSS v4, shadcn/ui, Lucide icons            |
-| Backend        | NestJS 11                                           |
-| Database / ORM | PostgreSQL 17 + Prisma                              |
-| API            | REST, documented with OpenAPI (`@nestjs/swagger`)   |
-| Auth           | Better Auth (self-hosted) — see ADR-0003            |
-| Testing        | Vitest (unit), Supertest (API e2e), Playwright (UI) |
-| Containers     | Docker + Docker Compose; images on GHCR             |
-| CI/CD          | GitHub Actions                                      |
-| Versioning     | SemVer via Conventional Commits + Changesets        |
-| Docs           | Markdown + Mermaid diagrams                         |
+- Ask for approval with **AskUserQuestion**, putting your recommended option
+  first and saying why. Ask only questions whose answers change the design;
+  state defaults for the rest.
+- `docs/PROCESS.md` still describes the older team process. Until it is
+  rewritten, these change classes govern.
+- **The owner merges.** Merge only when told to in this session, only with CI
+  green, and never the "Version Packages" release PR unless asked.
 
-The rationale for the big decisions lives in [`docs/adr/`](docs/adr/).
+## 4. Non-negotiables
 
-## 4. Repository layout
+- **Ownership:** services check `principal.owns(row)`; another owner's row returns
+  the same 404 as a missing row (ADR-0016, `docs/SECURITY_STANDARDS.md`).
+- **Validation:** DTOs validate every input; rules both apps enforce live in
+  `@repo/types` (ADR-0017).
+- **Features come from the template:** `pnpm gen:feature <entity>`, then adapt
+  (`docs/REFERENCE_FEATURE.md`). Do not diverge from its cross-cutting patterns
+  without an ADR (ADR-0015). Change the template when a cross-cutting standard
+  changes.
+- **UI:** semantic tokens and shared components only — no one-off styling
+  (`docs/DESIGN_SYSTEM.md`). Desktop-first for ≥ 1280px.
+- **Accessibility:** WCAG 2.2 AA is a merge requirement, including reflow at
+  400% zoom.
+- **No secrets in git.** Never disable TLS verification.
+- **Never weaken a gate** (CI, lint, security, accessibility) to get green.
+- **Every bug fix ships a regression test**; every feature ships tests
+  (`docs/TESTING.md`).
+- **Do not merge red.**
 
-```text
-Blank App/
-├── apps/
-│   ├── web/          # React + Vite client (@repo/web)
-│   └── api/          # NestJS REST API (@repo/api)
-├── packages/
-│   ├── config/       # Shared ESLint + tsconfig presets (@repo/config)
-│   └── types/        # Shared cross-boundary types/DTOs (@repo/types)
-├── docs/             # Architecture, guides, ADRs, roadmap, decisions
-├── scripts/          # Repo automation (setup, feature generator, checks)
-├── .devcontainer/    # Codespaces / dev container (Node 24 + Docker, runs setup)
-├── .github/          # CI/CD workflows, issue/PR templates, CODEOWNERS
-├── .changeset/       # Release/versioning state
-├── CLAUDE.md         # ← you are here
-└── (root configs)    # turbo, tsconfig.base, eslint, prettier, docker-compose…
+## 5. Commands & verification
+
+Before calling work done, run and report honestly:
+
+```bash
+pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm docs:check
 ```
 
-## 5. Coding standards
+- **After any API change:** `pnpm contract:generate`, then `git status`; commit
+  `apps/api/openapi.json` and `packages/types/src/openapi.gen.ts`. CI fails on
+  drift.
+- **API e2e** (`pnpm --filter @repo/api test:e2e`; suites skip when
+  `DATABASE_URL` is unset):
+  1. `pnpm --filter @repo/types build`;
+  2. point `DATABASE_URL` at an `app_test` database (as CI does) and apply
+     migrations with `pnpm --filter @repo/api prisma:deploy`;
+  3. the API port variable is `API_PORT` (default 3000), not `PORT`.
+- **Accounts:** `pnpm db:seed` (dev account `dev@example.com` /
+  `dev-password-123`), `pnpm user:create`, `pnpm user:reset-password`.
+- **Codespace gotchas:**
+  - Docker blocks container-to-container traffic, so `docker compose up` fails
+    at migrate. Run `pnpm dev` against the Postgres container instead.
+  - A git worktree needs a full `pnpm install`; filtered installs leave packages
+    unlinked, and the git hooks need `node_modules`.
+- Setup and everyday commands: `docs/DEVELOPMENT.md`.
 
-- **TypeScript strict everywhere.** No `any` without a written justification;
-  prefer `unknown` + narrowing. `noUncheckedIndexedAccess` is on.
-- **Formatting is not a debate.** Prettier owns formatting; ESLint owns
-  correctness. Never hand-format to fight the tools.
-- **Naming:** `camelCase` for variables/functions, `PascalCase` for
-  types/components/classes, `SCREAMING_SNAKE_CASE` for constants, `kebab-case`
-  for file names (React components may use `PascalCase.tsx`).
-- **Imports** are ordered/grouped automatically (`import/order`). Use the `@/`
-  alias for intra-package imports and `@repo/*` for cross-package.
-- **No dead code, no commented-out code.** Delete it; git remembers.
-- **Errors:** never swallow. Fail loud in development, degrade gracefully in
-  production, and always log with context.
-- **Comments explain _why_, not _what_.** Match the density of surrounding code.
-- **Frontend:** function components + hooks only. Co-locate state with the
-  feature. Shared primitives live in `components/`, generated shadcn/ui parts in
-  `components/ui/`.
-- **Backend:** thin controllers, logic in services, validation via DTOs
-  (`class-validator`). One feature per Nest module. Prisma access is wrapped in
-  a `PrismaService`.
+## 6. Git & PR mechanics
 
-## 6. Documentation rules
+- Branch from `main`: `feat/<slug>`, `fix/<slug>`, `docs/<slug>`, `chore/<slug>`.
+  Never commit to or force-push `main`.
+- **Conventional Commits**, enforced by commitlint — allowed types and scopes are
+  in `commitlint.config.js`. Imperative, lower-case subject, no trailing period.
+  Breaking change: `!` plus a `BREAKING CHANGE:` footer.
+- Never skip hooks (`--no-verify`).
+- One logical change per PR; rebase on `main`; squash-merge with a Conventional
+  Commit title.
+- **Changesets** (`pnpm changeset`) only for changes to the running app (api, web
+  or shared runtime code) — not for docs, CI or tooling.
+- PR body: **Summary** and **How has this been tested**, following
+  `.github/pull_request_template.md`.
 
-- Documentation lives in Markdown; diagrams use **Mermaid** (rendered by GitHub).
-- Every significant change updates the relevant doc(s). The reviewer checks this.
-- **State each rule once.** Every standard has one canonical document (e.g.
-  ownership rules in `docs/SECURITY_STANDARDS.md`, envelopes in `docs/API.md`,
-  schema rules in `docs/DATABASE.md`); other docs link to it instead of
-  restating it. `pnpm docs:check` (CI) fails on broken links and known-stale
-  terms — extend its list when a decision is superseded.
-- **Architectural decisions** are recorded as ADRs in [`docs/adr/`](docs/adr/)
-  (see ADR-0001 for the process). Never delete an ADR — supersede it.
-- Keep `README.md` accurate as the front door; keep this file accurate as the
-  operating manual; keep `docs/` as the deep reference.
-- Public API changes update [`docs/API.md`](docs/API.md) and the committed OpenAPI
-  contract (`pnpm contract:generate`, ADR-0017).
+## 7. Agents & skills
 
-## 7. Testing requirements
+- Subagents and when to use them: [`.claude/agents/README.md`](.claude/agents/README.md).
+- Reviewer findings are advice: verify each against the code before acting on it.
 
-See [`docs/TESTING.md`](docs/TESTING.md) for the full strategy. In short:
+## 8. Where things live
 
-- **Every bug fix ships with a regression test.** Every feature ships with tests.
-- **Unit** (Vitest) for pure logic and components; **integration/e2e** (Supertest)
-  for API endpoints against a real Postgres; **end-to-end** (Playwright) for
-  critical user journeys.
-- Target **≥ 80% line coverage** on changed code; coverage must not regress.
-- Tests are deterministic and isolated — no shared mutable state, no reliance on
-  wall-clock time or network unless explicitly mocked.
-- CI (`pnpm test`) must be green before merge. Do not merge red.
+| Topic                                 | Canonical document                                                                                         |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Product profile, non-goals            | [`docs/PRODUCT.md`](docs/PRODUCT.md)                                                                       |
+| System overview                       | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)                                                             |
+| Frontend structure, state, routing    | [`docs/FRONTEND_ARCHITECTURE.md`](docs/FRONTEND_ARCHITECTURE.md)                                           |
+| Tokens and components                 | [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md), [`docs/COMPONENT_LIBRARY.md`](docs/COMPONENT_LIBRARY.md) |
+| UX principles                         | [`docs/UX_STANDARDS.md`](docs/UX_STANDARDS.md)                                                             |
+| Frontend quality (a11y, perf, bundle) | [`docs/FRONTEND_QUALITY.md`](docs/FRONTEND_QUALITY.md)                                                     |
+| Backend modules and layering          | [`docs/BACKEND_ARCHITECTURE.md`](docs/BACKEND_ARCHITECTURE.md)                                             |
+| REST conventions and envelopes        | [`docs/API.md`](docs/API.md)                                                                               |
+| Schema rules                          | [`docs/DATABASE.md`](docs/DATABASE.md)                                                                     |
+| Security, ownership, auth             | [`docs/SECURITY_STANDARDS.md`](docs/SECURITY_STANDARDS.md)                                                 |
+| Logging and health                    | [`docs/OBSERVABILITY.md`](docs/OBSERVABILITY.md)                                                           |
+| Backend performance                   | [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md)                                                               |
+| Feature template                      | [`docs/REFERENCE_FEATURE.md`](docs/REFERENCE_FEATURE.md)                                                   |
+| Tests and CI jobs                     | [`docs/TESTING.md`](docs/TESTING.md)                                                                       |
+| Local development                     | [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md)                                                               |
+| Releases and deployment               | [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)                                                                 |
+| Delivery process (pending rewrite)    | [`docs/PROCESS.md`](docs/PROCESS.md)                                                                       |
+| Architectural decisions (immutable)   | [`docs/adr/`](docs/adr/)                                                                                   |
+| Smaller decisions, newest first       | [`docs/DECISIONS.md`](docs/DECISIONS.md)                                                                   |
+| Known debt with remediation intent    | [`docs/TECH_DEBT.md`](docs/TECH_DEBT.md)                                                                   |
+| Direction / candidate work            | [`docs/ROADMAP.md`](docs/ROADMAP.md), [`docs/BACKLOG.md`](docs/BACKLOG.md)                                 |
 
-## 8. Branching strategy
+An **ADR** records an architecturally significant, hard-to-reverse choice
+(supersede, never edit). **DECISIONS.md** logs smaller choices. **TECH_DEBT.md**
+tracks shortcuts we mean to fix. **ROADMAP/BACKLOG** hold planned and candidate
+work.
 
-- **Trunk-based.** `main` is always releasable and protected.
-- Work happens on short-lived branches: `feat/<slug>`, `fix/<slug>`,
-  `docs/<slug>`, `chore/<slug>`.
-- Open a PR early; keep it small; rebase (don't merge) `main` into your branch to
-  stay current. Squash-merge into `main` with a Conventional Commit title.
-- Never force-push `main`. Never commit directly to `main`.
+## 9. Keeping docs true
 
-## 9. Commit standards
-
-- **[Conventional Commits](https://www.conventionalcommits.org/)** are enforced
-  by commitlint (git hook + expected in PR titles).
-- Format: `type(scope): subject` — e.g. `feat(api): add a recurring job scheduler`.
-- Allowed types: `feat, fix, docs, style, refactor, perf, test, build, ci, chore,
-revert`. Scopes: `web, api, config, types, db, ci, docs, deps, release, repo`.
-- Breaking changes: append `!` (`feat(api)!: …`) and a `BREAKING CHANGE:` footer.
-- Subject: imperative mood, lower-case, no trailing period, ≤ 100 chars.
-
-## 10. Versioning strategy
-
-- **Semantic Versioning** (`MAJOR.MINOR.PATCH`), driven by **Changesets**.
-- User-visible changes add a changeset (`pnpm changeset`) describing the bump.
-- While pre-1.0, breaking changes bump the **minor**; the public contract is not
-  yet stable. The move to 1.0 is a deliberate, documented milestone.
-
-## 11. Release & deployment process
-
-Full detail in [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md). Summary:
-
-1. Merging changesets to `main` makes the **Release** workflow open/update a
-   "Version Packages" PR.
-2. Merging that PR bumps versions (api, web, and types move together), updates
-   `CHANGELOG.md`, and tags each package as `@repo/api@X.Y.Z`, `@repo/web@X.Y.Z`.
-3. Each app tag triggers the **Publish container images** workflow, pushing that
-   image to **GHCR** as `X.Y.Z`, `X.Y`, and `sha`, with SBOM and provenance.
-4. Deployment promotes those immutable images through environments.
-
-## 12. Frontend architecture, UI standards & design system
-
-The frontend is designed to scale for the project's lifetime. The governing
-documents (keep them authoritative):
-
-- [`docs/FRONTEND_ARCHITECTURE.md`](docs/FRONTEND_ARCHITECTURE.md) — folder/
-  feature structure, state, routing, data fetching, caching, forms, errors,
-  loading, auth flow, theme, responsive strategy.
-- [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md) — tokens (colour, type,
-  spacing, sizing, elevation, radius, motion, breakpoints) and component
-  standards. Token implementation: `apps/web/src/styles/globals.css`.
-- [`docs/UX_STANDARDS.md`](docs/UX_STANDARDS.md) — project-wide UX principles.
-- [`docs/COMPONENT_LIBRARY.md`](docs/COMPONENT_LIBRARY.md) — component authoring,
-  naming, and lifecycle.
-- [`docs/FRONTEND_QUALITY.md`](docs/FRONTEND_QUALITY.md) — testing, a11y, perf,
-  bundle, splitting, error boundaries, telemetry, logging.
-
-Essentials: feature-first structure; server state in TanStack Query; URL state
-in the router (TanStack Router); minimal client state; API calls through the
-typed `apiClient` generated from the OpenAPI contract (ADR-0017); forms via RHF + Zod;
-styling via semantic tokens + Tailwind v4 + shadcn/ui + CVA. **Mobile-first,
-theme-aware (light/dark/system), and no one-off component styling — ever.**
-
-### Backend architecture & standards
-
-The backend is designed to last a decade. Governing documents:
-
-- [`docs/BACKEND_ARCHITECTURE.md`](docs/BACKEND_ARCHITECTURE.md) — modular
-  monolith, module boundaries, DI, validation, error handling, config,
-  background jobs, caching, file storage, auth/authz, observability.
-- [`docs/API.md`](docs/API.md) — REST/OpenAPI standards.
-- [`docs/DATABASE.md`](docs/DATABASE.md) — schema standards & philosophy.
-- [`docs/SECURITY_STANDARDS.md`](docs/SECURITY_STANDARDS.md) — security
-  engineering standards (secure by default).
-- [`docs/OBSERVABILITY.md`](docs/OBSERVABILITY.md) — logging, correlation,
-  health/readiness, metrics, tracing.
-- [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md) — caching, async, query
-  optimisation, scalability.
-- [`docs/REFERENCE_FEATURE.md`](docs/REFERENCE_FEATURE.md) — the non-shipping
-  feature **template** (`apps/api/examples/reference-feature/`, ADR-0014).
-
-Essentials: NestJS modular monolith; **thin controllers → services → Prisma**;
-**deny-by-default** auth with **owner-based access** (ADR-0016 — services check
-`principal.owns(row)`; other users' rows 404); validated
-DTOs; standard `{ data, meta }` / `{ error }` envelopes; **soft deletes,
-auditing, optimistic locking**; structured logs with correlation IDs; rules both
-apps enforce live in `@repo/types`. Generate features with
-`pnpm gen:feature <entity>` from the non-shipping reference template
-(`apps/api/examples/reference-feature/`, ADR-0014/0015) and regenerate the API
-contract with `pnpm contract:generate` (ADR-0017). **Security is on by default.**
-
-## 13. Accessibility requirements
-
-- Target **WCAG 2.2 AA**. This is a merge requirement, not a nicety.
-- Semantic HTML first; ARIA only to fill genuine gaps.
-- Full keyboard operability, visible focus, and correct focus management.
-- Colour contrast ≥ 4.5:1 (text). Never encode meaning in colour alone.
-- `eslint-plugin-jsx-a11y` runs in CI; Playwright journeys include a11y checks.
-
-## 14. Security requirements
-
-See [`SECURITY.md`](SECURITY.md). Baseline:
-
-- **No secrets in git.** Config comes from environment/secret manager. `.env` is
-  ignored; `.env.example` documents the shape.
-- Validate and sanitise all input at the boundary (DTOs + Prisma parameterised
-  queries; never string-build SQL).
-- Least-privilege everywhere (DB roles, container users, CI token scopes).
-- Dependencies are watched by Dependabot; code by CodeQL + secret scanning.
-- Auth via Better Auth with secure, http-only, same-site cookies; hashed
-  credentials; CSRF protection on state-changing requests.
-- Security headers via Helmet (API) and nginx (web).
-
-## 15. Performance goals
-
-Directional targets (revisit with real data — see `docs/TECH_DEBT.md`):
-
-- **Web:** Largest Contentful Paint < 2.5s on a mid-tier mobile over 4G; keep the
-  initial JS bundle lean (code-split by route); Core Web Vitals in the "good"
-  band.
-- **API:** p95 latency < 200ms for typical reads under expected load; paginate
-  all list endpoints; index every column used in a `WHERE`/`ORDER BY`.
-- Measure before optimising. No premature optimisation; no un-measured claims.
-
-## 16. Architectural decisions
-
-Recorded as ADRs in [`docs/adr/`](docs/adr/). Current set:
-
-- **ADR-0001** — Record architecture decisions (this process).
-- **ADR-0002** — Monorepo with Turborepo + pnpm.
-- **ADR-0003** — Authentication with Better Auth.
-- **ADR-0004** — Frontend state management (server/URL/local/global split).
-- **ADR-0005** — Routing with TanStack Router.
-- **ADR-0006** — Styling and design tokens (Tailwind v4 + shadcn/ui + CVA).
-- **ADR-0007** — Forms and validation (React Hook Form + Zod).
-- **ADR-0008** — Backend as a modular monolith with layered modules.
-- **ADR-0009** — Background processing with BullMQ + Redis.
-- **ADR-0010** — Caching strategy with Redis (cache-aside).
-- **ADR-0011** — File storage via an S3-compatible abstraction.
-- **ADR-0012** — Authorisation: RBAC with resource scoping (superseded by 0016).
-- **ADR-0013** — Observability with OpenTelemetry + Pino.
-- **ADR-0014** — Reference feature kept as a non-shipping template.
-- **ADR-0015** — Template-driven feature development (canonical standard).
-- **ADR-0016** — Owner-based access for individual accounts (supersedes 0012).
-- **ADR-0017** — Shared contracts and a generated API client.
-- **ADR-0018** — Closed sign-up with server-side account management.
-
-A lighter-weight running log of smaller decisions is in
-[`docs/DECISIONS.md`](docs/DECISIONS.md).
-
-## 17. Known limitations & assumptions
-
-- No domain code exists yet; the walking skeleton (auth + protected shell) is
-  the only live feature surface. Docs describe intent and conventions.
-- No email is sent: public sign-up is off by default and passwords are reset
-  with `pnpm user:reset-password` (ADR-0018); add an SMTP integration (email
-  verification, self-service reset) before enabling public sign-up. Local
-  development signs in as `dev@example.com` from `pnpm db:seed`. CI e2e runs the
-  chromium project only
-  (`docs/TECH_DEBT.md`).
-- The reference deployment is **self-hosted Docker Compose behind the
-  operator's reverse proxy** (`docker-compose.prod.yml`); the images remain
-  platform-neutral if that changes. Auth rate limits are per API instance and
-  need `AUTH_TRUSTED_PROXIES` to match the proxy hops
-  (`docs/SECURITY_STANDARDS.md`).
-- Single-currency, single-locale assumptions are **not** baked in — i18n/L10n is
-  on the roadmap and code should avoid hard-coding currency/locale.
-
-## 18. Roadmap, backlog & technical debt
-
-- Direction: [`docs/ROADMAP.md`](docs/ROADMAP.md)
-- Candidate work: [`docs/BACKLOG.md`](docs/BACKLOG.md)
-- Debt register: [`docs/TECH_DEBT.md`](docs/TECH_DEBT.md)
-
-## 19. Working agreement for AI assistants
-
-When operating in this repo, Claude Code should:
-
-1. **Never jump from an idea to implementation.** For a new feature/requirement,
-   follow the delivery process (§21, [`docs/PROCESS.md`](docs/PROCESS.md)):
-   understand → design → plan → **get approval** → build. Use the
-   **feature-analyst** agent to produce the spec + plan.
-2. **Build features from the reference template.** Generate new backend features
-   with `pnpm gen:feature <entity>` (from `apps/api/examples/reference-feature/`)
-   and adapt them — see [`docs/REFERENCE_FEATURE.md`](docs/REFERENCE_FEATURE.md).
-   **Do not diverge from its cross-cutting patterns** (layering
-   controller→service→repository, deny-by-default auth + ownership checks,
-   standard envelopes, DB standards, tests) **without a documented architectural
-   reason — an ADR** (ADR-0015). Keep the template in step when you change a
-   cross-cutting standard (`scripts/verify-template.sh` enforces it in CI).
-3. **Prefer the smallest change that fully solves the task.** Do not scaffold
-   application features unless explicitly asked.
-4. **Match existing conventions** (this file + `docs/`). If a convention is
-   missing, propose one here rather than inventing an undocumented one.
-5. **Keep docs in lock-step** with code. Update the ADRs/CLAUDE.md/`docs/` when
-   you change architecture, standards, or process.
-6. **Never commit secrets**, disable TLS verification, or weaken security/a11y
-   gates to make CI pass.
-7. **Run `pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm docs:check`**
-   (as applicable, plus `pnpm contract:generate` after API changes) before
-   declaring work done, and report failures honestly.
-8. **Use Conventional Commits** and add a changeset for user-visible change.
-   Meet the Feature Completion Criteria (§21) before calling work done.
-
-## 20. Specialised agents
-
-Subagents live in [`.claude/agents/`](.claude/agents/) (see its
-[README](.claude/agents/README.md) for details and when to use each).
-
-**Discovery:**
-
-- **feature-analyst** — run **first** on any new idea/requirement: produces the
-  Feature Spec + Implementation Plan and stops for approval (never writes app
-  code). See §21.
-
-**Frontend:**
-
-- **ui-architect** — design/evolve frontend architecture and draft ADRs; run
-  **before** building non-trivial UI.
-- **ux-reviewer** — UX consistency, hierarchy, state coverage, copy, responsive.
-- **accessibility-reviewer** — WCAG 2.2 AA audit of UI changes.
-- **component-reviewer** — component API, composability, token/variant usage,
-  tests; catches one-off styling.
-- **performance-reviewer** — bundle size, code splitting, lazy loading, render
-  efficiency, Core Web Vitals.
-
-**Backend:**
-
-- **database-architect** — design schema/migrations/indexes; run **before**
-  writing a migration.
-- **api-reviewer** — REST/OpenAPI conventions, status codes, envelopes,
-  pagination.
-- **security-reviewer** — auth, ownership scoping (IDOR), validation,
-  secrets, injection, rate limiting, Docker/deps.
-- **backend-performance-reviewer** — query efficiency (N+1/indexes), caching,
-  async/queue offload, transactions.
-- **test-engineer** — design/write unit, API (Supertest), and e2e tests.
-- **devops-reviewer** — Dockerfiles, compose, CI workflows, release, secrets.
-
-Typical flow: **design** with ui-architect / database-architect → implement →
-**review** with the relevant reviewers (e.g. api + security + backend-performance
-for an endpoint; component + accessibility + ux for UI). Reviewers are read-only
-and report blocking vs. suggested findings with file/line references.
-
-## 21. Delivery process (introducing features)
-
-Every new requirement follows [`docs/PROCESS.md`](docs/PROCESS.md) — **understand
-→ design → plan → get approval → build.** Do not write application code before
-the spec and plan are approved.
-
-Pipeline: **1** business understanding → **2** functional requirements → **3**
-technical analysis → **4** solution design (with Mermaid diagrams; ADR if
-architecturally significant) → **5** implementation plan (Epic → Milestone →
-Feature → Task → Steps, each with complexity/dependencies/risks/tests). Ask only
-the **critical** questions; state defaults for the rest.
-
-Artifacts use the [templates](docs/templates/): `feature-spec.md` (stages 1–4)
-and `implementation-plan.md` (stage 5). A worked example is in
-[`docs/examples/`](docs/examples/). The **feature-analyst** agent produces them.
-
-**Feature Completion Criteria (Definition of Done):** code, tests, docs, security
-review, performance, accessibility, Docker build, CI green, changelog/changeset,
-and version-impact assessed — mirrored in the PR template.
-
-**Change management:** architectural changes require an ADR (problem, options,
-choice, trade-offs, consequences). **Repository maintenance:** periodically
-review architecture, dependencies, security, performance, tech debt, docs, and
-UI consistency, and recommend improvements.
+- Update the affected docs in the same PR as the change.
+- State each rule once, in its canonical document; link to it from elsewhere.
+- When a decision flips, add its tell-tale terms to `STALE_TERMS` in
+  `scripts/check-docs.mjs` so `pnpm docs:check` catches leftovers.
+- Keep this file under about 170 lines. If it grows, move detail into the
+  canonical document and link to it.

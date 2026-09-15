@@ -10,6 +10,30 @@ get an ADR instead (and may be linked from here).
 
 ---
 
+### 2026-09-15 — Tailor the repository to WorkHub
+
+**Decision.** Stop treating this repository as a domain-neutral base. It is
+**WorkHub**: one product for a single owner, used in desktop browsers, self-hosted
+and internet-facing. This reverses the 2026-07-09 "Generalise the repository
+into a domain-neutral base" entry and the "keep the repository a domain-neutral
+base" part of the tidy-up entry below. The product profile is in
+[PRODUCT.md](PRODUCT.md); the decision, its new defaults, and the deferral of
+ADRs 0009–0011 and part of 0013 are in
+[ADR-0019](adr/0019-workhub-single-owner-desktop-app.md).
+
+**Why.** The generic standards assumed a mobile-first, multi-tenant SaaS built by
+a team, which WorkHub is not. `CLAUDE.md` restated those rules in every Claude
+Code session, so work started from wrong assumptions.
+
+**Consequences.** `CLAUDE.md` is rewritten as a short manual that links to the
+canonical documents, and it defines four change classes in place of the team
+process. Standards documents that still assume the old shape carry a "pending
+rewrite" banner until their area PR lands; where they conflict with PRODUCT.md,
+PRODUCT.md wins. The workspace package names (`blank-app`, `@repo/*`) are
+unchanged.
+
+---
+
 ### 2026-09-15 — Dependency pass: release tags follow Changesets; NestJS 12 deferred
 
 **Decision.** Take the open Dependabot updates as a few grouped PRs

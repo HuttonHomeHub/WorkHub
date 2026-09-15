@@ -1,5 +1,7 @@
 # Frontend Architecture
 
+> **Pending rewrite (ADR-0019).** Parts of this document assume mobile-first, small-screen-up responsive layouts — where it conflicts with [PRODUCT.md](PRODUCT.md), PRODUCT.md wins.
+
 > **Status:** implemented (walking skeleton) + design. The app entry,
 > providers, router, auth feature, shell, and base primitives are live in
 > `apps/web/src/` exactly as described here; this remains the blueprint every
