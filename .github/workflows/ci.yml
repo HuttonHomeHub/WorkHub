@@ -79,8 +79,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # Materialise, type-check, and unit-test the canonical reference template
-      # so it can never silently rot (see docs/REFERENCE_FEATURE.md, ADR-0015).
+      # Generate a feature from the canonical reference template with
+      # `pnpm gen:feature`, then type-check, lint, and unit-test it, so neither
+      # the template nor the generator can silently rot (ADR-0015).
       - name: Verify reference template
         run: bash scripts/verify-template.sh
 
@@ -131,6 +132,11 @@ jobs:
 
       - name: Run end-to-end tests
         run: pnpm test:e2e
+
+      # Runs after the suites above: it pushes a throwaway table into this
+      # disposable database and drops it again when done.
+      - name: Run the generated feature's API e2e tests
+        run: bash scripts/verify-template.sh --e2e
 
       - name: Upload Playwright report
         if: ${{ !cancelled() }}

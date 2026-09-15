@@ -1,14 +1,12 @@
 // Reference model sketch (TEMPLATE — not part of the live schema).
-// Copy into apps/api/prisma/schema.prisma and adapt for your entity, then run
-// `prisma migrate dev`. Follows docs/DATABASE.md: snake_case columns, UUID v7,
-// timestamptz, soft delete, auditing, optimistic-locking version, owner-scoped
-// indexes (ADR-0016).
+// `pnpm gen:feature <entity>` renames it and appends it to
+// apps/api/prisma/schema.prisma, adding the `User` back-relation. Follows
+// docs/DATABASE.md: snake_case columns, UUID v7, timestamptz, soft delete,
+// auditing, optimistic-locking version, owner-scoped indexes (ADR-0016).
 //
-// `ownerId` references `users.id`. When you adapt this for a real feature, add
-// the two-sided Prisma relation (a `ReferenceItem[]` back-relation on `User`
-// and `owner User @relation(...)` here) so the FK is enforced. The template
-// keeps the model standalone only so CI can materialise it without editing the
-// live `User` model (scripts/verify-template.sh appends this file verbatim).
+// `owner` is a real foreign key to users.id. ON DELETE CASCADE because owner_id
+// is true ownership (ADR-0016): deleting an account erases the user's data
+// rather than blocking account deletion (docs/DATABASE.md → Constraints).
 
 enum ReferenceItemStatus {
   DRAFT
@@ -28,6 +26,8 @@ model ReferenceItem {
   createdBy   String?             @map("created_by") @db.Uuid
   updatedBy   String?             @map("updated_by") @db.Uuid
   deletedAt   DateTime?           @map("deleted_at") @db.Timestamptz(3)
+
+  owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 
   @@index([ownerId])
   @@index([ownerId, status])

@@ -15,7 +15,7 @@ function makeItem(overrides: Partial<ReferenceItem> = {}): ReferenceItem {
   return {
     id: ITEM_ID,
     ownerId: USER,
-    name: 'Reference',
+    name: 'Example',
     description: null,
     status: ReferenceItemStatus.DRAFT,
     version: 1,
@@ -65,13 +65,13 @@ describe('ReferenceService', () => {
     it('creates an item owned by the caller with audit fields', async () => {
       repository.create.mockResolvedValue(makeItem());
 
-      const result = await service.create(owner, { name: 'Reference' });
+      const result = await service.create(owner, { name: 'Example' });
 
       expect(result.id).toBe(ITEM_ID);
       expect(repository.create).toHaveBeenCalledWith(
         expect.objectContaining({
           ownerId: USER,
-          name: 'Reference',
+          name: 'Example',
           description: null,
           createdBy: USER,
           updatedBy: USER,

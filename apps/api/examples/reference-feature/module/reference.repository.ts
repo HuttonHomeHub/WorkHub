@@ -4,14 +4,14 @@ import { Prisma, type ReferenceItem } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 
 /**
- * Reference repository — the **data-access layer** template (ADR-0008). It is
- * the ONLY place that talks to Prisma for this feature, so queries live in one
+ * Reference items repository — the **data-access layer** (ADR-0008). It is the
+ * ONLY place that talks to Prisma for this feature, so queries live in one
  * place and the service stays free of persistence detail.
  *
  * It also centralises the **soft-delete filter**: every read goes through
  * {@link active}, so no caller can forget `deletedAt: null` (docs/DATABASE.md).
- * (A Prisma client extension can enforce this globally across all models; this
- * per-repository form keeps the template self-contained.)
+ * (A Prisma client extension could enforce this globally across all models;
+ * the per-repository form keeps each feature self-contained.)
  */
 @Injectable()
 export class ReferenceRepository {
@@ -22,7 +22,7 @@ export class ReferenceRepository {
     return { ...where, deletedAt: null };
   }
 
-  async create(data: Prisma.ReferenceItemCreateInput): Promise<ReferenceItem> {
+  async create(data: Prisma.ReferenceItemUncheckedCreateInput): Promise<ReferenceItem> {
     return this.prisma.referenceItem.create({ data });
   }
 

@@ -8,27 +8,27 @@ import { Principal } from '../src/common/auth/principal';
 import type { PrismaService } from '../src/prisma/prisma.service';
 
 /**
- * End-to-end HTTP tests for the reference feature — the API-test template.
- * Boots the real Nest app (global pipe, filter, interceptor, guards) against a
- * real PostgreSQL, and overrides the authentication seam to inject a test
- * principal (the standard NestJS pattern — production auth stays deny-by-default).
- * The real session flow is covered separately by `test/auth.e2e-spec.ts`.
+ * End-to-end HTTP tests for the reference items API. Boots the real Nest app
+ * (global pipe, filter, interceptor, guards) against a real PostgreSQL, and
+ * overrides the authentication seam to inject a test principal (the standard
+ * NestJS pattern — production auth stays deny-by-default). The real session
+ * flow is covered separately by `test/auth.e2e-spec.ts`.
  *
- * Requires a database: run in CI (Postgres service + `prisma migrate deploy`).
- * Skipped locally when DATABASE_URL is unset. `AppModule` is imported lazily so
- * a skipped run never triggers configuration validation. See docs/TESTING.md.
+ * Requires a database: run in CI (Postgres service + migrations). Skipped
+ * locally when DATABASE_URL is unset. `AppModule` is imported lazily so a
+ * skipped run never triggers configuration validation. See docs/TESTING.md.
  */
 const hasDatabase = Boolean(process.env.DATABASE_URL);
 
 const USER = '018f4e8a-9a1b-7c2d-8e3f-4a5b6c7d8e9f';
 const OTHER_USER = '018f4e8a-7b2c-7c3d-8e4f-1a2b3c4d5e6f';
 
-describe.skipIf(!hasDatabase)('Reference API (e2e)', () => {
+describe.skipIf(!hasDatabase)('Reference items API (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
 
   // Mutable so individual tests can act as a different user (IDOR checks).
-  let principal = new Principal(USER, 'user@example.com', 'Test User');
+  let principal = new Principal(USER, 'owner@example.com', 'Test User');
   const base = '/api/v1/reference-items';
 
   beforeAll(async () => {
@@ -47,14 +47,24 @@ describe.skipIf(!hasDatabase)('Reference API (e2e)', () => {
     await app.init();
 
     prisma = app.get(PrismaServiceToken);
+    // owner_id is a foreign key to users.id, so the test principals must exist.
+    await prisma.user.createMany({
+      data: [
+        { id: USER, email: `e2e-owner-${USER}@example.com`, name: 'Owner' },
+        { id: OTHER_USER, email: `e2e-other-${OTHER_USER}@example.com`, name: 'Other' },
+      ],
+      skipDuplicates: true,
+    });
   });
 
   afterAll(async () => {
+    // Deleting the users cascades to their rows.
+    await prisma?.user.deleteMany({ where: { id: { in: [USER, OTHER_USER] } } });
     await app?.close();
   });
 
   beforeEach(async () => {
-    principal = new Principal(USER, 'user@example.com', 'Test User');
+    principal = new Principal(USER, 'owner@example.com', 'Test User');
     await prisma.referenceItem.deleteMany();
   });
 
