@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-Blank App is a **monorepo** containing a single-page web client and a REST API,
+WorkHub is a **monorepo** containing a single-page web client and a REST API,
 backed by PostgreSQL. It is deployed as two container images behind a reverse
 proxy.
 

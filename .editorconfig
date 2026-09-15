@@ -1,5 +1,5 @@
 # EditorConfig — https://editorconfig.org
-# Top-most EditorConfig file for the Blank App monorepo.
+# Top-most EditorConfig file for the WorkHub monorepo.
 root = true
 
 [*]

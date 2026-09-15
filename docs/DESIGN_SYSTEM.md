@@ -2,7 +2,7 @@
 
 > **Pending rewrite (ADR-0019).** Parts of this document assume mobile-first layouts, touch targets, roomier default control heights, and future internationalisation — where it conflicts with [PRODUCT.md](PRODUCT.md), PRODUCT.md wins.
 
-> The single source of truth for Blank App's visual language and component
+> The single source of truth for WorkHub's visual language and component
 > standards. The token _implementation_ lives in
 > [`apps/web/src/styles/globals.css`](../apps/web/src/styles/globals.css); this
 > document is the spec and rationale. **No one-off component styling may ever

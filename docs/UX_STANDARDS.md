@@ -5,7 +5,7 @@
 > Project-wide UX principles every screen must uphold. These complement the
 > visual rules in [`DESIGN_SYSTEM.md`](DESIGN_SYSTEM.md) and the technical
 > patterns in [`FRONTEND_ARCHITECTURE.md`](FRONTEND_ARCHITECTURE.md). The goal:
-> Blank App should feel like a polished, trustworthy commercial SaaS product.
+> WorkHub should feel like a polished, trustworthy, professional tool.
 
 ## Core principles
 

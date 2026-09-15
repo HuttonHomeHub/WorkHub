@@ -1,6 +1,6 @@
 # reference module (TEMPLATE)
 
-The **canonical feature template** for the Blank App API. `ReferenceItem` is not a
+The **canonical feature template** for the WorkHub API. `ReferenceItem` is not a
 business entity — it demonstrates every backend standard in one small,
 fully-tested feature. Generate a real feature from it with
 `pnpm gen:feature <entity>`; see

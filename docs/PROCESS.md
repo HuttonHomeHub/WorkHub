@@ -3,7 +3,7 @@
 > **Pending rewrite (ADR-0019).** Parts of this document assume a team (Product Owner, Solution Architect, Technical Lead) and a full spec and plan for every change — where it conflicts with [PRODUCT.md](PRODUCT.md), PRODUCT.md wins. Until this document is rewritten, the change classes in [CLAUDE.md](../CLAUDE.md) govern.
 
 > The single, repeatable method for introducing **any** new requirement or
-> feature into Blank App. It exists so every change is understood, designed,
+> feature into WorkHub. It exists so every change is understood, designed,
 > reviewed, and shipped to the same high bar — and so we **never jump from an
 > idea straight to code**.
 >

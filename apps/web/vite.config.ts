@@ -5,7 +5,7 @@ import { tanstackRouter } from '@tanstack/router-plugin/vite';
 import react from '@vitejs/plugin-react';
 import { defaultClientConditions, defineConfig } from 'vite';
 
-// Vite configuration for the Blank App web client.
+// Vite configuration for the WorkHub web client.
 // Tailwind CSS v4 is wired in via its first-party Vite plugin (no PostCSS config
 // needed). TanStack Router generates src/routeTree.gen.ts from src/routes/
 // (file-based routing, ADR-0005) with per-route code splitting.

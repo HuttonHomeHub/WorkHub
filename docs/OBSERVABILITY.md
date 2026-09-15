@@ -2,7 +2,7 @@
 
 > **Pending rewrite (ADR-0019).** Parts of this document assume OpenTelemetry metrics and traces, BullMQ jobs and an audit log, which ADR-0019 defers or drops — where it conflicts with [PRODUCT.md](PRODUCT.md), PRODUCT.md wins.
 
-> How Blank App is made observable in production. Backed by ADR-0013 (OpenTelemetry
+> How WorkHub is made observable in production. Backed by ADR-0013 (OpenTelemetry
 > and Pino). Goal: answer _what happened_ and _why is it slow_ quickly, without
 > vendor lock-in.
 

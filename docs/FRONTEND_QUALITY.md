@@ -29,7 +29,7 @@
 
 ## Performance
 
-Targets (align with `CLAUDE.md` §15; re-baseline with real data):
+Targets (align with [`PRODUCT.md`](PRODUCT.md); re-baseline with real data):
 
 - **Core Web Vitals in "good":** LCP < 2.5s, INP < 200ms, CLS < 0.1 on a
   mid-tier mobile over 4G.

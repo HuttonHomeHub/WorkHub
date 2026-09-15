@@ -1,4 +1,4 @@
-# pnpm workspace definition for the Blank App monorepo.
+# pnpm workspace definition for the WorkHub monorepo.
 # Docs: https://pnpm.io/workspaces
 packages:
   - 'apps/*'
