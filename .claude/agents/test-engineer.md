@@ -23,19 +23,23 @@ rewrite"), `docs/TESTING.md`, `docs/FRONTEND_QUALITY.md`, and the template tests
 ## What to write
 
 - **API e2e (primary backend layer):** Supertest against the real Nest app and a
-  real Postgres `app_test` database. Assert status codes, `{ data, meta }` /
-  `{ error }` envelopes, validation failures, and that another owner's row
-  returns 404. Each test creates and removes its own data; suites skip when
+  real Postgres database whose name ends in `_test` (`app_test`) — never the dev
+  database. Assert every status code the endpoint returns (400 vs 422 as in
+  `docs/API.md`), `{ data, meta }` / `{ error }` envelopes, that another owner's
+  row returns 404, and optimistic-lock 409s. Each suite creates its own users
+  and rows and removes them, scoping cleanup to its own test users rather than
+  whole tables; never assert on table-wide counts. Suites skip when
   `DATABASE_URL` is unset.
-- **Unit (Vitest):** services and pure functions with real branching — rules,
-  optimistic-lock conflicts, formatting. Don't unit-test pass-through code.
+- **Unit (Vitest):** real logic only — calculations, state machines, date and
+  time rules (Europe/London), pure helpers. No mocked-repository tests for
+  pass-through CRUD. There is no coverage percentage to hit.
 - **UI:** component tests with Testing Library queried by role/label; Playwright
   journeys for user-facing flows at a desktop viewport (1280×800 or wider), each
   with an axe check.
 - **Bugs:** write the regression test first, run it and show it **failing**,
   then confirm it passes with the fix.
-- **Determinism:** no real clock, network or randomness without control; no
-  `.only` or skipped tests committed.
+- **Determinism:** no real network; no assertions on the wall-clock date (a
+  fixed `Clock` once the seam exists); no `.only` or new skips committed.
 
 ## Commands (report exactly what you ran)
 
