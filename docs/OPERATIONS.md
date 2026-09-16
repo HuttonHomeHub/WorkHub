@@ -159,14 +159,16 @@ On the host, before the proxy is involved:
 # The API answers through nginx, and sign-up is disabled.
 curl -fsS http://127.0.0.1:8080/api/v1/config          # {"data":{"signUpEnabled":false}}
 
-# Readiness, including the database (not reachable through nginx yet).
-wh exec api node -e "fetch('http://127.0.0.1:3000/health/ready').then(async r => console.log(r.status, await r.text()))"
+# Readiness, including the database, through nginx.
+curl -fsS http://127.0.0.1:8080/health/ready           # {"data":{"status":"ok",…}}
 
 # Swagger UI is off in production.
 curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8080/api/docs   # 404
 
-# nginx security headers on the SPA.
+# nginx security headers on the SPA and on its assets.
 curl -sI http://127.0.0.1:8080/ | grep -iE 'x-content-type-options|x-frame-options|referrer-policy'
+ASSET=$(curl -s http://127.0.0.1:8080/ | grep -o '/assets/[^"]*\.js' | head -1)
+curl -sI "http://127.0.0.1:8080$ASSET" | grep -iE 'cache-control|x-content-type-options|x-frame-options|referrer-policy'
 ```
 
 Signing in from `http://127.0.0.1:8080` fails with _Invalid origin_ — expected,
@@ -561,11 +563,9 @@ The alerts that matter, all checked from **outside the host** so a dead server
 still alerts ([OBSERVABILITY.md](OBSERVABILITY.md#alerts-that-matter)):
 
 1. **Uptime:** an external monitor requests
-   `https://workhub.example.com/api/v1/config` every few minutes and alerts
-   after two failures. Use this endpoint, not `/health/ready`: nginx does not
-   proxy `/health/*`, so that path returns the SPA with 200 whatever the API's
-   state (BACKLOG.md). `/api/v1/config` proves the proxy, nginx and the API
-   answer; it does not prove the database is up.
+   `https://workhub.example.com/health/ready` every few minutes and alerts
+   after two failures. A 200 proves the proxy, nginx, the API and the database
+   answer; judge by the status code (503: database down, 502: API down).
 2. **Backup heartbeat (planned):** the nightly job pings a dead-man's switch;
    a missed ping alerts.
 3. **Disk space:** alert well before the disk fills (for example at 80%) — a
@@ -664,11 +664,11 @@ docker inspect --format '{{json .State.Health}}' workhub-api-1 | jq '.Log[-3:]'
 
 ### The web container returns the SPA for an API path
 
-nginx proxies only paths under `/api/`; everything else falls back to
-`index.html` with 200.
+nginx proxies paths under `/api/` and exactly `/health` and `/health/ready`;
+everything else falls back to `index.html` with 200.
 
-- `/health` and `/health/ready` are not proxied by design today (BACKLOG.md) —
-  check them inside the container ([Verify](#5-verify)).
+- `/health/` with a trailing slash, and other paths under `/health`, are not
+  proxied.
 - `/api` without the trailing slash is not an API path.
 - If real API calls (`/api/v1/…`, `/api/auth/…`) come back as HTML, the reverse
   proxy is rewriting or stripping the path, or routing `/api` somewhere other

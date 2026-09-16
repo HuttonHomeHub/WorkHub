@@ -135,11 +135,10 @@ sequenceDiagram
 
 - Services throw the domain errors in `common/errors/domain-errors.ts`;
   `AllExceptionsFilter` maps them, Nest `HttpException`s and known Prisma errors
-  (`P2025` → 404, `P2002` → 409) to the error envelope. Everything else becomes a
-  generic 500 and is logged with its stack.
-- Status and code rules are in [API.md](API.md#status-codes). Known mapping gaps
-  (a malformed cursor's Prisma `P2023`, an oversized body) return 500 today and
-  are backlog items.
+  (`P2025` → 404, `P2002` → 409, `P2023` → 400) and known body-parser
+  rejections (400, 413, 415) to the error envelope. Everything else becomes a generic 500 and is
+  logged with its stack.
+- Status and code rules are in [API.md](API.md#status-codes).
 
 ## Validation
 

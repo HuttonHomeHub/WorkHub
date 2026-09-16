@@ -39,10 +39,6 @@ finished item; move a scheduled one to PRODUCT.md.
 - `S` Cross-tab sign-out and theme sync (`BroadcastChannel` or `storage` event).
 - `S` Report client errors (root and route boundaries) to the API log.
 - `S` Dependency licence check in CI.
-- `S` **Bug:** validate the list `cursor` and map Prisma `P2023` to a 4xx — a
-  malformed cursor reaches Prisma and returns 500 today (API.md → Lists).
-- `S` **Bug:** map Express's `PayloadTooLargeError` to 413 — a body over 100 kB
-  returns 500 today (API.md → Payload limits).
 - `S` Structured validation `details` (`{ field, code, message }[]`) from the
   exception filter, replacing today's `string[]` (API.md).
 - `S` Pagination: optional `meta.total` and a maximum `limit` of 200 in
@@ -65,12 +61,14 @@ finished item; move a scheduled one to PRODUCT.md.
 - `S` Log auth security events (OBSERVABILITY.md) and bring `/api/auth/*` into
   the request log — Better Auth is mounted before `nestjs-pino` today. Required
   before exposure.
-- `S` Proxy `/health/ready` through the web nginx so an external uptime monitor
-  can reach readiness (today it gets the SPA's `index.html` with 200).
 - `S` Regression test that Swagger UI (`/api/docs`) is not served in production.
-- `S` **Bug:** `add_header Cache-Control` in nginx's `location /assets/` drops
-  the server-level security headers for every asset (nginx does not inherit
-  `add_header` into a block that sets its own); repeat them or use an include.
+- `S` `/health/ready`'s 503 body: the exception filter replaces Terminus's
+  per-check detail with `{"error":{"code":"ERROR",…}}`. Map 503 to a
+  `SERVICE_UNAVAILABLE` code, or let health responses through unchanged.
+- `S` Proxied API responses carry each security header twice, from Helmet and
+  from nginx, and two disagree (`X-Frame-Options` `SAMEORIGIN`/`DENY`,
+  `Referrer-Policy` `no-referrer`/`strict-origin-when-cross-origin`); add the
+  nginx copy only when the upstream sent none.
 - `S` Container hardening in `docker-compose.prod.yml`: `no-new-privileges`,
   `cap_drop: [ALL]`, `read_only` with tmpfs, `init: true`, memory limits; and
   `nginxinc/nginx-unprivileged` for the web image.

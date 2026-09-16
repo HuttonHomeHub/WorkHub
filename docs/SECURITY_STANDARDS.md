@@ -169,7 +169,10 @@ As shipped in `apps/api/src/app.setup.ts` and `auth.instance.ts`:
 - **API:** Helmet with its defaults (CSP, HSTS, `X-Content-Type-Options`,
   frame and referrer policies) on every Nest response.
 - **Web:** nginx sets `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`
-  and `Referrer-Policy: strict-origin-when-cross-origin`. A content security
+  and `Referrer-Policy: strict-origin-when-cross-origin` on every response,
+  assets included. Every `add_header` lives at server level in
+  `apps/web/nginx.conf.template`, because a `location` that sets its own
+  `add_header` silently drops all of them. A content security
   policy for the SPA is not set yet ([TECH_DEBT.md](TECH_DEBT.md)).
 - **HSTS for the site** belongs on the owner's reverse proxy, which terminates
   TLS.

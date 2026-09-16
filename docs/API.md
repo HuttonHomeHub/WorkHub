@@ -89,42 +89,50 @@ flags the signed-out screens need).
 
 ## Status codes
 
-| Code | When                                                                                                     |
-| ---- | -------------------------------------------------------------------------------------------------------- |
-| 200  | A read, an update, or an idempotent create that found the existing row                                   |
-| 201  | Created; the body is the new resource                                                                    |
-| 204  | Success with no body (delete)                                                                            |
-| 400  | The request cannot be interpreted: malformed JSON, a malformed path id, a malformed cursor **(planned)** |
-| 401  | No valid session                                                                                         |
-| 403  | Not used for ownership — reserved for an action the owner may never take (none exist today)              |
-| 404  | Missing, soft-deleted, **or owned by someone else** — the same response for all three (ADR-0016)         |
-| 409  | Optimistic-lock version mismatch, unique violation, or an idempotent-create id clash                     |
-| 413  | Body over the size limit **(planned — today 500, see below)**                                            |
-| 422  | A well-formed request that fails validation: body or query DTO rules, or a domain rule                   |
-| 429  | Rate limited (the Nest throttler, or Better Auth's limiter on `/api/auth/*`)                             |
-| 500  | Anything unexpected; the body is always `INTERNAL_ERROR` with a generic message                          |
+| Code | When                                                                                             |
+| ---- | ------------------------------------------------------------------------------------------------ |
+| 200  | A read, an update, or an idempotent create that found the existing row                           |
+| 201  | Created; the body is the new resource                                                            |
+| 204  | Success with no body (delete)                                                                    |
+| 400  | The request cannot be interpreted: malformed JSON, a malformed path id, a malformed cursor       |
+| 401  | No valid session                                                                                 |
+| 403  | Not used for ownership — reserved for an action the owner may never take (none exist today)      |
+| 404  | Missing, soft-deleted, **or owned by someone else** — the same response for all three (ADR-0016) |
+| 409  | Optimistic-lock version mismatch, unique violation, or an idempotent-create id clash             |
+| 413  | Body over the size limit ([Payload limits](#payload-limits))                                     |
+| 422  | A well-formed request that fails validation: body or query DTO rules, or a domain rule           |
+| 429  | Rate limited (the Nest throttler, or Better Auth's limiter on `/api/auth/*`)                     |
+| 500  | Anything unexpected; the body is always `INTERNAL_ERROR` with a generic message                  |
 
 **400 vs 422, the rule:** if the request could not be parsed into the shape the
 endpoint expects, it is **400**; if it parsed but a value breaks a rule, it is
-**422**. That is how the code behaves today: `ParseUuidPipe` throws 400, the
-global `ValidationPipe` is configured with `errorHttpStatusCode: 422`, and a
-domain `ValidationError` maps to 422.
+**422**. That is how the code behaves today: `ParseUuidPipe` and `IsCursor()`
+throw 400, the global `ValidationPipe` is configured with
+`errorHttpStatusCode: 422`, and a domain `ValidationError` maps to 422.
+Prisma's `P2023` (a value that cannot be converted to the column's type, such as
+a malformed UUID) also maps to 400, as a backstop for a value that slips past
+boundary validation. The trade-off: a server-side bug that passes a bad value
+would also look like a 400, so the filter logs each one at `warn` with
+`prismaCode` and `prismaModel` (not the value). A `P2023` in the logs means a
+missing boundary check or a bug — investigate it.
 
 ## Error codes
 
 **Today** the filter derives codes from the HTTP status or the domain error:
 
-| Code                | Status | Source                                                         |
-| ------------------- | ------ | -------------------------------------------------------------- |
-| `BAD_REQUEST`       | 400    | `ParseUuidPipe`, other `BadRequestException`s                  |
-| `UNAUTHENTICATED`   | 401    | The authentication guard                                       |
-| `FORBIDDEN`         | 403    | `ForbiddenError` (unused)                                      |
-| `NOT_FOUND`         | 404    | `NotFoundError`, Prisma `P2025`, unknown routes                |
-| `CONFLICT`          | 409    | `ConflictError` (including optimistic locking), Prisma `P2002` |
-| `VALIDATION_FAILED` | 422    | The `ValidationPipe`, `ValidationError`                        |
-| `RATE_LIMITED`      | 429    | The Nest throttler                                             |
-| `INTERNAL_ERROR`    | 500    | Anything else, including unmapped Prisma errors                |
-| `ERROR`             | other  | Fallback for an `HttpException` status with no mapping         |
+| Code                     | Status | Source                                                                                      |
+| ------------------------ | ------ | ------------------------------------------------------------------------------------------- |
+| `BAD_REQUEST`            | 400    | `ParseUuidPipe`, `IsCursor()`, malformed JSON, other `BadRequestException`s, Prisma `P2023` |
+| `UNAUTHENTICATED`        | 401    | The authentication guard                                                                    |
+| `FORBIDDEN`              | 403    | `ForbiddenError` (unused)                                                                   |
+| `NOT_FOUND`              | 404    | `NotFoundError`, Prisma `P2025`, unknown routes                                             |
+| `CONFLICT`               | 409    | `ConflictError` (including optimistic locking), Prisma `P2002`                              |
+| `PAYLOAD_TOO_LARGE`      | 413    | A body over the parser's size limit                                                         |
+| `UNSUPPORTED_MEDIA_TYPE` | 415    | A body in a charset or encoding the parser cannot read                                      |
+| `VALIDATION_FAILED`      | 422    | The `ValidationPipe`, `ValidationError`                                                     |
+| `RATE_LIMITED`           | 429    | The Nest throttler                                                                          |
+| `INTERNAL_ERROR`         | 500    | Anything else, including unmapped Prisma errors                                             |
+| `ERROR`                  | other  | Fallback for an `HttpException` status with no mapping                                      |
 
 **(planned — PRODUCT.md, Later)** An error-code catalogue in `@repo/types`: one exported union of
 codes, so the API throws and the web branches on the same constants. Feature
@@ -182,10 +190,10 @@ parameters:
 - **Stable order:** the query sorts by the chosen field and then by `id`, so
   pages never skip or repeat rows. Every sortable field needs an index with
   `owner_id` first ([DATABASE.md](DATABASE.md#queries-and-indexes)).
-- **Cursor today** is the last row's `id`, accepted by `@IsString()`. A
-  malformed value reaches Prisma, which throws `P2023` and the filter returns
-  **500**. That is a bug (BACKLOG.md): the cursor must be validated and a bad
-  one answered with 400.
+- **Cursor today** is the last row's `id`. `PaginationQueryDto` checks it with
+  `IsCursor()` (`common/validation/cursor.ts`): anything that is not a UUID is
+  answered with **400 `BAD_REQUEST`** before the query runs. Change that check
+  if the cursor format changes.
 - Filters and sort fields are explicit DTO properties — never pass a client
   object straight into a Prisma `where` or `orderBy`.
 
@@ -228,8 +236,14 @@ The server never formats for display: the web renders instants in
   (`apps/api/src/app.setup.ts`). Raise it per route only with a reason.
 - Every string DTO field has `@MaxLength`, and every array `@ArrayMaxSize`, so a
   body within the byte limit is still bounded.
-- An oversized body today returns **500 `INTERNAL_ERROR`** because the filter
-  does not map Express's `PayloadTooLargeError`. It should be **413** (BACKLOG.md).
+- An oversized body is answered with **413 `PAYLOAD_TOO_LARGE`** in the error
+  envelope, and a body in an unsupported charset or encoding with **415
+  `UNSUPPORTED_MEDIA_TYPE`**. The parsers reject these before any route or the
+  request logger runs, so the filter assigns the correlation id itself
+  ([OBSERVABILITY.md](OBSERVABILITY.md#correlation-ids)).
+- The filter recognises body-parser errors only by a known `type` (a list in
+  `all-exceptions.filter.ts`) and answers each with a fixed message, never the
+  parser's own, which can echo client input. An unlisted type is a 500.
 - File uploads are not supported yet; the default when a feature needs them is a
   backed-up Docker volume (ADR-0019), designed in that feature's doc.
 

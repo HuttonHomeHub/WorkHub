@@ -74,8 +74,9 @@ As defined by [`docker-compose.prod.yml`](../docker-compose.prod.yml):
   depend on the compose project name; backups and restore are in
   [OPERATIONS.md](OPERATIONS.md#backups-and-restore).
 - **Health.** `api` exposes `/health` (liveness, used by its Docker healthcheck)
-  and `/health/ready` (database ping) at the root, outside `/api`; nginx does not
-  proxy them ([OBSERVABILITY.md](OBSERVABILITY.md#health)).
+  and `/health/ready` (database ping) at the root, outside `/api`; nginx proxies
+  both exact paths, so an external monitor can reach readiness
+  ([OBSERVABILITY.md](OBSERVABILITY.md#health)).
 - **Images** are published to GHCR per release and pinned by `IMAGE_TAG`
   ([RELEASING.md](RELEASING.md)).
 

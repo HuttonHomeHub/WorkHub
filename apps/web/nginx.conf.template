@@ -16,25 +16,47 @@ map $http_x_forwarded_proto $forwarded_proto {
   '' $scheme;
 }
 
+# Long-cache fingerprinted assets (their names change with their content). An
+# empty value adds no header, so every other response is left alone.
+map $uri $asset_cache_control {
+  default '';
+  ~^/assets/ 'public, max-age=31536000, immutable';
+}
+
 server {
   listen 8080;
   server_name _;
   root /usr/share/nginx/html;
   index index.html;
 
+  # Proxy settings for every location below that proxies to the API. They are
+  # inherited because no location sets its own proxy_set_header.
+  proxy_http_version 1.1;
+  proxy_set_header Host $host;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_set_header X-Forwarded-Proto $forwarded_proto;
+
   # Same-origin API (auth cookies stay first-party; no CORS in production).
   location /api/ {
     proxy_pass http://${API_UPSTREAM};
-    proxy_http_version 1.1;
-    proxy_set_header Host $host;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto $forwarded_proto;
   }
 
-  # Long-cache fingerprinted assets.
+  # The API's health probes live at the root, outside /api. Proxy the two exact
+  # paths so an external uptime monitor gets the API's answer (503 when the
+  # database is down, 502 when the API is) instead of the SPA's index.html.
+  location = /health {
+    proxy_pass http://${API_UPSTREAM};
+  }
+
+  location = /health/ready {
+    proxy_pass http://${API_UPSTREAM};
+  }
+
+  # Fingerprinted assets. No add_header in here: a location that sets its own
+  # add_header inherits none from the server block, which dropped the security
+  # headers below. Their Cache-Control comes from $asset_cache_control instead.
   location /assets/ {
-    expires 1y;
-    add_header Cache-Control "public, immutable";
+    try_files $uri =404;
   }
 
   # SPA fallback: route everything else to index.html.
@@ -43,6 +65,11 @@ server {
   }
 
   # Baseline security headers (tune CSP once the app's origins are known).
+  # Every response header is set here, at server level, and no location sets
+  # add_header — otherwise that location loses all of them.
+  # No `always` on purpose: a 404 or 5xx from /assets/ must not be cached for a
+  # year. Assets no longer send Expires; Cache-Control max-age replaces it.
+  add_header Cache-Control $asset_cache_control;
   add_header X-Content-Type-Options "nosniff" always;
   add_header X-Frame-Options "DENY" always;
   add_header Referrer-Policy "strict-origin-when-cross-origin" always;
