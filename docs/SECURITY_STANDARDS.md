@@ -227,10 +227,13 @@ them is part of login hardening (BACKLOG.md).
 
 ## Containers and host
 
-Images run as non-root users with health checks; production exposes only the web
-container's port, bound to `127.0.0.1` by default, and Postgres has no host port.
-Host, proxy, secret rotation and backup procedures are in
-[OPERATIONS.md](OPERATIONS.md). Further container hardening is a backlog item.
+Both images have health checks. The api image runs as the unprivileged `node`
+user; the web image is stock nginx, whose master process runs as root with
+unprivileged workers. Production exposes only the web container's port, bound to
+`127.0.0.1` by default, and Postgres has no host port. Host, proxy, secret
+rotation and backup procedures are in [OPERATIONS.md](OPERATIONS.md). Container
+hardening (`no-new-privileges`, dropped capabilities, read-only filesystems,
+memory limits, an unprivileged nginx image) is a backlog item.
 
 ## Data protection
 

@@ -68,3 +68,32 @@ finished item; move a scheduled one to PRODUCT.md.
 - `S` Proxy `/health/ready` through the web nginx so an external uptime monitor
   can reach readiness (today it gets the SPA's `index.html` with 200).
 - `S` Regression test that Swagger UI (`/api/docs`) is not served in production.
+- `S` **Bug:** `add_header Cache-Control` in nginx's `location /assets/` drops
+  the server-level security headers for every asset (nginx does not inherit
+  `add_header` into a block that sets its own); repeat them or use an include.
+- `S` Container hardening in `docker-compose.prod.yml`: `no-new-privileges`,
+  `cap_drop: [ALL]`, `read_only` with tmpfs, `init: true`, memory limits; and
+  `nginxinc/nginx-unprivileged` for the web image.
+- `S` Make `web` depend on `api` with `condition: service_healthy`, so nginx
+  doesn't answer 502 while the API starts.
+- `S` Pass `RATE_LIMIT_TTL`, `RATE_LIMIT_LIMIT` and `AUTH_RATE_LIMIT_ENABLED`
+  through `docker-compose.prod.yml` so the server can tune them without editing
+  the file.
+- `S` Dependabot `docker-compose` ecosystem for `postgres:17-alpine` in both
+  compose files, ignoring majors (a PostgreSQL major is a dump-and-restore,
+  OPERATIONS.md).
+- `S` Workflows: `node-version-file: .nvmrc` instead of hard-coded `24`, and
+  `timeout-minutes` on every job.
+- `S` Web source maps: `build.sourcemap: 'hidden'` so the image doesn't serve
+  `.map` files publicly.
+- `S` A pre-migration `pg_dump` step in the upgrade path (scripted, not only the
+  manual step in OPERATIONS.md → Routine upgrade).
+- `S` Pin the compose network subnet in `docker-compose.prod.yml`, or keep
+  documenting `AUTH_TRUSTED_PROXIES` for Docker pools from `192.168.0.0/16`
+  (OPERATIONS.md → Reverse proxy).
+- `S` Decide GHCR package visibility for `workhub/api` and `workhub/web`
+  (recommended: public — DECISIONS.md, 2026-09-16).
+- `S` CI smoke test of `docker-compose.prod.yml`: boot the built images and
+  request `/api/v1/config` through nginx (alongside the Docker build in
+  PRODUCT.md's Next list).
+- `S` Rename the root `package.json` from `blank-app` to `workhub`.
