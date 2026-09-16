@@ -180,7 +180,7 @@ parameters:
   endpoints whose table shows a count; it is omitted, not `null`, elsewhere.
 - **Stable order:** the query sorts by the chosen field and then by `id`, so
   pages never skip or repeat rows. Every sortable field needs an index with
-  `owner_id` first ([DATABASE.md](DATABASE.md#indexes)).
+  `owner_id` first ([DATABASE.md](DATABASE.md#queries-and-indexes)).
 - **Cursor today** is the last row's `id`, accepted by `@IsString()`. A
   malformed value reaches Prisma, which throws `P2023` and the filter returns
   **500**. That is a bug (BACKLOG.md): the cursor must be validated and a bad
