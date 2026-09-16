@@ -5,6 +5,16 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import type { ToolManifest } from '@/lib/tool-manifest';
 import { cn } from '@/lib/utils';
 
+/**
+ * Whether the sidebar is showing the rail right now: collapsed, or narrower
+ * than 48rem. Mirrors the `sidebar-rail` variant in globals.css; keep the two
+ * in step. Read at event time only, never to lay anything out.
+ */
+function isSidebarRail(): boolean {
+  if (document.documentElement.dataset.sidebar === 'collapsed') return true;
+  return typeof window.matchMedia === 'function' && window.matchMedia('(width < 48rem)').matches;
+}
+
 interface SidebarProps extends React.ComponentPropsWithoutRef<'nav'> {
   /** The tool manifests, in sidebar order (`app/tools.ts`). */
   tools: readonly ToolManifest[];
@@ -18,8 +28,9 @@ interface SidebarProps extends React.ComponentPropsWithoutRef<'nav'> {
  * Expanded (240px) it shows each tool's icon and label. As the rail (56px),
  * when collapsed or below 48rem, it shows icons only: the label stays in the
  * accessibility tree as the link's name, and a tooltip shows it on hover and
- * focus. The expanded/rail switch is CSS (`sidebar-rail`/`sidebar-expanded` in
- * globals.css), driven by `data-sidebar` on `<html>`.
+ * focus. The expanded/rail switch is CSS (the `sidebar-rail` variant in
+ * globals.css), driven by `data-sidebar` on `<html>`. Expanded, the label is
+ * visible, so the tooltip never opens (and adds no `aria-describedby`).
  *
  * Keyboard contract: each tool is a link in the tab order; Enter follows it.
  * The link for the current tool, and for every route under it, carries
@@ -47,8 +58,9 @@ export function Sidebar({ tools, className, ...props }: SidebarProps) {
 
 function SidebarLink({ tool }: { tool: ToolManifest }) {
   const Icon = tool.icon;
+  const [tooltipOpen, setTooltipOpen] = React.useState(false);
   return (
-    <Tooltip>
+    <Tooltip open={tooltipOpen} onOpenChange={(open) => setTooltipOpen(open && isSidebarRail())}>
       <TooltipTrigger asChild>
         <Link
           to={tool.path}
@@ -68,10 +80,7 @@ function SidebarLink({ tool }: { tool: ToolManifest }) {
           <span className="sidebar-rail:sr-only truncate">{tool.label}</span>
         </Link>
       </TooltipTrigger>
-      {/* The label is visible when expanded, so the tooltip is only for the rail. */}
-      <TooltipContent side="right" className="sidebar-expanded:hidden">
-        {tool.label}
-      </TooltipContent>
+      <TooltipContent side="right">{tool.label}</TooltipContent>
     </Tooltip>
   );
 }

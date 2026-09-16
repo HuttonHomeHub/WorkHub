@@ -26,6 +26,8 @@
  * and AppShell keeps it in sync. Below 48rem (Tailwind's `md`, which a 1280px
  * window passes at 200% zoom) the sidebar is always the rail, whatever the
  * preference, so content keeps its room at the 320 CSS px reflow floor.
+ * `isSidebarRail()` in components/layout/sidebar.tsx mirrors this rule for the
+ * rail tooltips; keep the two in step.
  */
 @custom-variant sidebar-rail {
   @media (width < 48rem) {
@@ -33,13 +35,6 @@
   }
   &:where([data-sidebar='collapsed'] *) {
     @slot;
-  }
-}
-@custom-variant sidebar-expanded {
-  @media (width >= 48rem) {
-    &:where([data-sidebar='expanded'] *) {
-      @slot;
-    }
   }
 }
 

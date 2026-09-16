@@ -17,6 +17,7 @@ interface AppShellProps {
 }
 
 const MAIN_ID = 'main';
+const SIDEBAR_ID = 'sidebar';
 
 function ThemeToggle() {
   const { theme, setTheme } = useTheme();
@@ -55,6 +56,11 @@ function useSidebarCollapsed() {
   return { collapsed, toggle };
 }
 
+/**
+ * A disclosure-style toggle: one stable name ("Sidebar") with `aria-expanded`
+ * for the state and `aria-controls` for the `<nav>`. The tooltip names the
+ * action it will take.
+ */
 function SidebarToggle({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
   const label = collapsed ? 'Expand sidebar' : 'Collapse sidebar';
   return (
@@ -64,7 +70,9 @@ function SidebarToggle({ collapsed, onToggle }: { collapsed: boolean; onToggle: 
         <Button
           variant="ghost"
           size="icon"
-          aria-label={label}
+          aria-label="Sidebar"
+          aria-expanded={!collapsed}
+          aria-controls={SIDEBAR_ID}
           onClick={onToggle}
           className="max-md:hidden"
         >
@@ -125,7 +133,7 @@ export function AppShell({ tools, actions, children }: AppShellProps) {
           </div>
         </header>
         <div className="flex flex-1">
-          <Sidebar tools={tools} aria-label="Tools" />
+          <Sidebar id={SIDEBAR_ID} tools={tools} aria-label="Tools" />
           <main id={MAIN_ID} tabIndex={-1} className="min-w-0 flex-1 p-6 outline-none">
             {/* Long words wrap rather than widen the page at the reflow floor. */}
             <div className="max-w-(--width-page) break-words">{children}</div>

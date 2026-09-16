@@ -17,6 +17,10 @@ function sidebar(page: Page): Locator {
   return page.getByRole('navigation', { name: 'Tools' });
 }
 
+function sidebarToggle(page: Page): Locator {
+  return page.getByRole('button', { name: 'Sidebar' });
+}
+
 async function widthOf(locator: Locator): Promise<number> {
   const box = await locator.boundingBox();
   expect(box).not.toBeNull();
@@ -54,10 +58,13 @@ for (const viewport of [
       await expect(home.getByText('Home')).toBeVisible();
       expect(await widthOf(sidebar(page))).toBe(SIDEBAR_WIDTH);
 
-      // The label is visible, so focusing the link shows no tooltip.
+      // The label is visible, so focusing or hovering the link opens no
+      // tooltip and adds no description.
       await tabTo(page, home);
-      await expect(home).toHaveAttribute('data-state', /open/);
+      await home.hover();
+      await page.waitForTimeout(600);
       await expect(page.getByRole('tooltip')).toHaveCount(0);
+      await expect(home).not.toHaveAttribute('aria-describedby');
 
       // Content is no longer capped at 1024px; it fills the window beside the sidebar.
       const main = page.getByRole('main');
@@ -76,8 +83,9 @@ for (const viewport of [
       page,
     }) => {
       await signIn(page);
-      await page.getByRole('button', { name: 'Collapse sidebar' }).click();
-      await expect(page.getByRole('button', { name: 'Expand sidebar' })).toBeVisible();
+      await expect(sidebarToggle(page)).toHaveAttribute('aria-expanded', 'true');
+      await sidebarToggle(page).click();
+      await expect(sidebarToggle(page)).toHaveAttribute('aria-expanded', 'false');
       expect(await widthOf(sidebar(page))).toBe(RAIL_WIDTH);
 
       // Icon only, but still named, with the label in a tooltip on hover and focus.
@@ -93,7 +101,7 @@ for (const viewport of [
 
       // Reloaded, the rail is back.
       await page.reload();
-      await expect(page.getByRole('button', { name: 'Expand sidebar' })).toBeVisible();
+      await expect(sidebarToggle(page)).toHaveAttribute('aria-expanded', 'false');
       expect(await widthOf(sidebar(page))).toBe(RAIL_WIDTH);
 
       // The pre-paint script alone (no app JavaScript) applies the stored state.
@@ -119,14 +127,18 @@ for (const viewport of [
       await expect(page.getByRole('main')).toBeFocused();
 
       // The toggle works from the keyboard and keeps focus.
-      const collapse = page.getByRole('button', { name: 'Collapse sidebar' });
-      await tabTo(page, collapse);
+      const toggle = sidebarToggle(page);
+      await expect(toggle).toHaveAttribute('aria-controls', 'sidebar');
+      await expect(sidebar(page)).toHaveAttribute('id', 'sidebar');
+      await tabTo(page, toggle);
+      await expect(page.getByRole('tooltip', { name: 'Collapse sidebar' })).toBeVisible();
       await page.keyboard.press('Enter');
-      const expand = page.getByRole('button', { name: 'Expand sidebar' });
-      await expect(expand).toBeFocused();
+      await expect(toggle).toBeFocused();
+      await expect(toggle).toHaveAttribute('aria-expanded', 'false');
       expect(await widthOf(sidebar(page))).toBe(RAIL_WIDTH);
       await page.keyboard.press('Space');
-      await expect(collapse).toBeFocused();
+      await expect(toggle).toBeFocused();
+      await expect(toggle).toHaveAttribute('aria-expanded', 'true');
       expect(await widthOf(sidebar(page))).toBe(SIDEBAR_WIDTH);
 
       // Tool links are in the tab order after the header, and Enter follows them.
@@ -151,7 +163,7 @@ test.describe('at the 320 CSS px reflow floor (1280×800 at 400% zoom)', () => {
     await expect(page.locator('html')).toHaveAttribute('data-sidebar', 'expanded');
     expect(await widthOf(sidebar(page))).toBe(RAIL_WIDTH);
     // The toggle would do nothing here, so it is not offered.
-    await expect(page.getByRole('button', { name: 'Collapse sidebar' })).toBeHidden();
+    await expect(sidebarToggle(page)).toBeHidden();
 
     const home = sidebar(page).getByRole('link', { name: 'Home' });
     await expect(home).toHaveAttribute('aria-current', 'page');
@@ -166,5 +178,41 @@ test.describe('at the 320 CSS px reflow floor (1280×800 at 400% zoom)', () => {
 
     await expectNoPageHorizontalScroll(page);
     await expectNoA11yViolations(page);
+  });
+});
+
+test.describe('focus after a route change (WCAG 2.4.3)', () => {
+  test.use({ viewport: { width: 1280, height: 800 } });
+
+  test('signing in with the keyboard moves focus to main; the initial load does not', async ({
+    page,
+  }) => {
+    await page.goto('/sign-in');
+    await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible();
+    // The initial load (including the redirect to sign-in) leaves focus alone.
+    expect(await page.evaluate(() => document.activeElement === document.body)).toBe(true);
+
+    await page.getByLabel('Email').focus();
+    await page.keyboard.type(E2E_USER.email);
+    await page.keyboard.press('Tab');
+    await page.keyboard.type(E2E_USER.password);
+    await page.keyboard.press('Enter');
+
+    await expect(page.getByRole('heading', { name: `Welcome, ${E2E_USER.name}` })).toBeVisible();
+    await expect(page.getByRole('main')).toBeFocused();
+    expect(await page.evaluate(() => document.activeElement?.id)).toBe('main');
+  });
+
+  test('a search-param-only change keeps focus where it is', async ({ page }) => {
+    await signIn(page);
+    const home = sidebar(page).getByRole('link', { name: 'Home' });
+    await home.focus();
+    await page.evaluate(() => {
+      window.history.pushState(window.history.state, '', '/?probe=1');
+      window.dispatchEvent(new PopStateEvent('popstate', { state: window.history.state }));
+    });
+    await expect(page).toHaveURL(/\?probe=1$/);
+    await page.waitForTimeout(300);
+    await expect(home).toBeFocused();
   });
 });

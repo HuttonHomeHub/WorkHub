@@ -132,6 +132,19 @@ describe('AppShell', () => {
       expect(hours).toHaveAttribute('aria-current', 'page');
     });
 
+    it('never opens a tooltip or adds a description when expanded', async () => {
+      const user = userEvent.setup();
+      await renderShell('/');
+      const hours = within(sidebar()).getByRole('link', { name: 'Hours' });
+      for (let stop = 0; stop < 6; stop += 1) await user.tab();
+      expect(hours).toHaveFocus();
+      await user.hover(hours);
+      // Give a zero-delay tooltip every chance to open.
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+      expect(hours).not.toHaveAttribute('aria-describedby');
+    });
+
     it('shows the label in a tooltip when a rail item receives focus', async () => {
       const user = userEvent.setup();
       localStorage.setItem(
@@ -150,12 +163,24 @@ describe('AppShell', () => {
   });
 
   describe('sidebar toggle', () => {
+    function toggle() {
+      return screen.getByRole('button', { name: 'Sidebar' });
+    }
+
+    it('is a disclosure: one name, aria-expanded, and aria-controls on the nav', async () => {
+      await renderShell();
+      expect(toggle()).toHaveAttribute('aria-expanded', 'true');
+      expect(sidebar().id).not.toBe('');
+      expect(toggle()).toHaveAttribute('aria-controls', sidebar().id);
+    });
+
     it('starts expanded, collapses to the rail and persists the choice', async () => {
       const user = userEvent.setup();
       const { unmount } = await renderShell();
       expect(document.documentElement.dataset.sidebar).toBe('expanded');
 
-      await user.click(screen.getByRole('button', { name: 'Collapse sidebar' }));
+      await user.click(toggle());
+      expect(toggle()).toHaveAttribute('aria-expanded', 'false');
       expect(document.documentElement.dataset.sidebar).toBe('collapsed');
       expect(JSON.parse(localStorage.getItem('workhub:sidebar') ?? 'null')).toEqual({
         version: 1,
@@ -166,29 +191,31 @@ describe('AppShell', () => {
       unmount();
       delete document.documentElement.dataset.sidebar;
       await renderShell();
-      expect(screen.getByRole('button', { name: 'Expand sidebar' })).toBeInTheDocument();
+      expect(toggle()).toHaveAttribute('aria-expanded', 'false');
       expect(document.documentElement.dataset.sidebar).toBe('collapsed');
     });
 
-    it('toggles from the keyboard', async () => {
+    it('toggles from the keyboard, keeping focus, with the action in its tooltip', async () => {
       const user = userEvent.setup();
       await renderShell();
       await user.tab();
       await user.tab();
-      expect(screen.getByRole('button', { name: 'Collapse sidebar' })).toHaveFocus();
+      expect(toggle()).toHaveFocus();
+      expect(await screen.findByRole('tooltip')).toHaveTextContent('Collapse sidebar');
 
       await user.keyboard('{Enter}');
-      const expand = screen.getByRole('button', { name: 'Expand sidebar' });
-      expect(expand).toHaveFocus();
+      expect(toggle()).toHaveFocus();
+      expect(toggle()).toHaveAttribute('aria-expanded', 'false');
       await user.keyboard(' ');
-      expect(screen.getByRole('button', { name: 'Collapse sidebar' })).toHaveFocus();
+      expect(toggle()).toHaveFocus();
+      expect(toggle()).toHaveAttribute('aria-expanded', 'true');
       expect(document.documentElement.dataset.sidebar).toBe('expanded');
     });
 
     it('falls back to expanded when the stored preference is corrupt', async () => {
       localStorage.setItem('workhub:sidebar', '{not json');
       await renderShell();
-      expect(screen.getByRole('button', { name: 'Collapse sidebar' })).toBeInTheDocument();
+      expect(toggle()).toHaveAttribute('aria-expanded', 'true');
     });
   });
 
