@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import { IsIn, IsInt, IsOptional, Max, Min } from 'class-validator';
 
 import { IsCursor } from '../validation/cursor';
 
@@ -18,10 +18,14 @@ export class PaginationQueryDto {
   @Max(100)
   limit = 20;
 
-  @ApiPropertyOptional({ description: 'Opaque cursor from a previous response.' })
+  @ApiPropertyOptional({
+    format: 'uuid',
+    description: 'Opaque cursor from a previous response.',
+  })
+  // IsOptional also whitelists the property; IsCursor has already rejected
+  // anything but a UUID string (with a 400, not a 422 — docs/API.md).
   @IsOptional()
-  @IsCursor() // A malformed cursor is a 400, not a 422 (docs/API.md).
-  @IsString()
+  @IsCursor()
   cursor?: string;
 
   @ApiPropertyOptional({ enum: ['asc', 'desc'], default: 'desc', description: 'Sort direction.' })

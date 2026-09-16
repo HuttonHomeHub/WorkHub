@@ -28,8 +28,19 @@ async function statusFor(query: Record<string, unknown>): Promise<number | 'ok'>
 }
 
 describe('PaginationQueryDto', () => {
-  it('accepts a cursor that is a row id (UUID)', async () => {
-    await expect(statusFor({ cursor: '018f4e8a-9a1b-7c2d-8e3f-4a5b6c7d8e9f' })).resolves.toBe('ok');
+  it('accepts a cursor that is a row id (UUID) and keeps it', async () => {
+    const cursor = '018f4e8a-9a1b-7c2d-8e3f-4a5b6c7d8e9f';
+    await expect(statusFor({ cursor })).resolves.toBe('ok');
+    const dto = (await pipe.transform(
+      { cursor },
+      { type: 'query', metatype: PaginationQueryDto },
+    )) as PaginationQueryDto;
+    expect(dto.cursor).toBe(cursor);
+  });
+
+  it('rejects a non-string cursor with 400', async () => {
+    await expect(statusFor({ cursor: 42 })).resolves.toBe(400);
+    await expect(statusFor({ cursor: null })).resolves.toBe(400);
   });
 
   it('accepts a request without a cursor', async () => {
