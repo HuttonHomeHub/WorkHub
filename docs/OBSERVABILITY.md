@@ -41,8 +41,10 @@ PRODUCT.md's [roadmap](PRODUCT.md#roadmap).
   `nestjs-pino` middleware that Nest adds at `app.init()`. Auth requests are
   answered before the request logger runs, so sign-ins (successful or not) leave
   no trace. Verified with an e2e boot on 2026-09-16.
-- **Body-parsing failures** (for example an oversized body) happen before the
-  request logger too, so their 5xx log line has no correlation ID.
+- **Body-parsing failures** (an oversized body, an unsupported charset) happen
+  before the request logger too, so they get no request log line. The exception
+  filter still logs each as a 4xx warning with a correlation ID, which it
+  assigns itself.
 
 ## Correlation IDs
 
@@ -50,7 +52,9 @@ PRODUCT.md's [roadmap](PRODUCT.md#roadmap).
   uses it as the request id on every log line for that request, and returns it in
   the `x-correlation-id` response header.
 - The exception filter includes it (`correlationId`) when it logs an error, so
-  a failing request can be found from the response header.
+  a failing request can be found from the response header. For a request that
+  failed before the request logger ran, the filter picks the id the same way
+  (`common/logging/correlation-id.ts`) and sets the response header.
 - Anything that runs outside a request — a future job or scheduled task — creates
   its own id and logs it the same way.
 
@@ -78,22 +82,22 @@ WorkHub has no audit log (ADR-0019); these events are its security record.
 
 ## Health
 
-| Endpoint            | Kind      | Checks                        | Response                                                 |
-| ------------------- | --------- | ----------------------------- | -------------------------------------------------------- |
-| `GET /health`       | Liveness  | None — the process answers    | 200 `{ "status": "ok", … }`                              |
-| `GET /health/ready` | Readiness | A Prisma ping of the database | 200 when up; 503 with `"database": { "status": "down" }` |
+| Endpoint            | Kind      | Checks                        | Response                                               |
+| ------------------- | --------- | ----------------------------- | ------------------------------------------------------ |
+| `GET /health`       | Liveness  | None — the process answers    | 200 `{ "data": { "status": "ok", … } }`                |
+| `GET /health/ready` | Readiness | A Prisma ping of the database | 200 when up; 503 in the error envelope when it is down |
 
 - Both are `@Public()`, served at the **root, outside `/api`**
   (`setGlobalPrefix('api', { exclude: [...] })`), and report only up/down per
   check.
 - The api image's Docker `HEALTHCHECK` calls `/health` inside the container; the
   web image's checks that nginx serves `/`.
-- **Not reachable from outside.** The web container's nginx proxies only
-  `/api/`, so `https://<your-host>/health/ready` falls through to the SPA and
-  returns `index.html` with **200** whatever the API's state. An external
-  monitor pointed there would never alert. Exposing readiness through nginx is a
-  backlog item; until then, point the monitor at `GET /api/v1/config`, which
-  proves the proxy and the API answer (not the database).
+- **Reachable through the proxy.** The web container's nginx proxies exactly
+  `/health` and `/health/ready` to the API, so `https://<your-host>/health/ready`
+  answers 200 when the API and database are up, 503 when the database is down,
+  and 502 when the API is not answering. Monitors judge by the status code
+  alone: the 503 body is the generic error envelope
+  (`{"error":{"code":"ERROR",…}}`), not Terminus's per-check detail.
 - A new critical dependency adds a check to `/health/ready` in the same PR.
 
 ## Alerts that matter
@@ -102,7 +106,8 @@ Two alerts, both delivered to the owner's phone or email, both checked from
 **outside the host** so a dead server still alerts:
 
 1. **Uptime** — an external monitor requests readiness every few minutes and
-   alerts after two consecutive failures (see the reachability gap above).
+   alerts after two consecutive failures: `https://<your-host>/health/ready`
+   ([Health](#health)).
 2. **Backup heartbeat (planned)** — the nightly backup pings a dead-man's-switch
    service after the encrypted off-site copy succeeds; a missed ping alerts
    (PRODUCT.md → Data safety).
