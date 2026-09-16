@@ -31,6 +31,9 @@ interface PreferenceDefinition<T> {
 }
 
 const definitions: { [N in PreferenceName]: PreferenceDefinition<Preferences[N]> } = {
+  // Also read by the inline pre-paint script in index.html, which must only
+  // ever write constants ('collapsed' | 'expanded') into the DOM, never stored
+  // text. src/pre-paint-script.test.ts keeps its key and version in step.
   sidebar: {
     key: 'workhub:sidebar',
     schema: z.object({ collapsed: z.boolean() }),
