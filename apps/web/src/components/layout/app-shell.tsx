@@ -109,7 +109,7 @@ function SkipLink() {
 export function AppShell({ tools, actions, children }: AppShellProps) {
   const { collapsed, toggle } = useSidebarCollapsed();
   return (
-    <div className="bg-background text-foreground min-h-svh">
+    <div className="bg-background text-foreground flex min-h-svh flex-col">
       <SkipLink />
       <header className="bg-background/95 sticky top-0 z-(--z-header) flex min-h-(--header-height) flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b px-3 py-1.5 backdrop-blur max-md:static">
         <div className="flex items-center gap-2">
@@ -121,10 +121,11 @@ export function AppShell({ tools, actions, children }: AppShellProps) {
           {actions}
         </div>
       </header>
-      <div className="flex">
+      <div className="flex flex-1">
         <Sidebar tools={tools} aria-label="Tools" />
         <main id={MAIN_ID} tabIndex={-1} className="min-w-0 flex-1 p-6 outline-none">
-          <div className="max-w-(--width-page)">{children}</div>
+          {/* Long words wrap rather than widen the page at the reflow floor. */}
+          <div className="max-w-(--width-page) break-words">{children}</div>
         </main>
       </div>
     </div>
