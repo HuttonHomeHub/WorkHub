@@ -19,36 +19,76 @@ import {
 } from '../errors/domain-errors';
 import { assignCorrelationId } from '../logging/correlation-id';
 
-/**
- * A client error from Express's body parsers (`express.json()`,
- * `express.urlencoded()`): an `http-errors` error with a `type` such as
- * `entity.too.large` (413) or `charset.unsupported` (415). They are raised
- * before any route or the request logger runs. Malformed JSON is a
- * `SyntaxError`, which Nest already turns into a 400 `BadRequestException`.
- */
-interface BodyParserError extends Error {
-  status: number;
-  expose: true;
-  type: string;
-}
-
-function isBodyParserError(exception: unknown): exception is BodyParserError {
-  if (!(exception instanceof Error)) return false;
-  const candidate = exception as Partial<BodyParserError>;
-  return (
-    typeof candidate.type === 'string' &&
-    candidate.expose === true &&
-    typeof candidate.status === 'number' &&
-    candidate.status >= 400 &&
-    candidate.status < 500
-  );
-}
-
 interface Mapped {
   status: number;
   code: string;
   message: string;
   details?: unknown;
+  /** Extra fields for the filter's log line; never sent to the client. */
+  log?: Record<string, unknown>;
+}
+
+/**
+ * Client errors from Express's body parsers (`express.json()`,
+ * `express.urlencoded()`, via body-parser and raw-body), keyed by the `type`
+ * they set. They are raised before any route or the request logger runs.
+ * Each gets a fixed message: the parsers' own messages can echo client input
+ * (`unsupported charset "…"`).
+ *
+ * Not listed, so they stay an opaque 500: `stream.encoding.set` and
+ * `stream.not.readable`, which raw-body raises with status 500 for a server
+ * fault. Malformed JSON (`entity.parse.failed`) is a `SyntaxError`, which Nest
+ * turns into a 400 `BadRequestException` before this filter sees it.
+ */
+const BODY_PARSER_ERRORS: Readonly<Record<string, Omit<Mapped, 'details' | 'log'>>> = {
+  'entity.too.large': {
+    status: HttpStatus.PAYLOAD_TOO_LARGE,
+    code: 'PAYLOAD_TOO_LARGE',
+    message: 'The request body is too large.',
+  },
+  'parameters.too.many': {
+    status: HttpStatus.PAYLOAD_TOO_LARGE,
+    code: 'PAYLOAD_TOO_LARGE',
+    message: 'The request body has too many parameters.',
+  },
+  'charset.unsupported': {
+    status: HttpStatus.UNSUPPORTED_MEDIA_TYPE,
+    code: 'UNSUPPORTED_MEDIA_TYPE',
+    message: 'The request body charset is not supported.',
+  },
+  'encoding.unsupported': {
+    status: HttpStatus.UNSUPPORTED_MEDIA_TYPE,
+    code: 'UNSUPPORTED_MEDIA_TYPE',
+    message: 'The request body content encoding is not supported.',
+  },
+  'request.aborted': {
+    status: HttpStatus.BAD_REQUEST,
+    code: 'BAD_REQUEST',
+    message: 'The request body was not received in full.',
+  },
+  'request.size.invalid': {
+    status: HttpStatus.BAD_REQUEST,
+    code: 'BAD_REQUEST',
+    message: 'The request body does not match its Content-Length.',
+  },
+  // A URL-encoded body nested deeper than the parser allows.
+  'querystring.parse.rangeError': {
+    status: HttpStatus.BAD_REQUEST,
+    code: 'BAD_REQUEST',
+    message: 'The request body is nested too deeply.',
+  },
+  // Only raised when a parser is given a `verify` function (none today).
+  'entity.verify.failed': {
+    status: HttpStatus.FORBIDDEN,
+    code: 'FORBIDDEN',
+    message: 'The request body was rejected.',
+  },
+};
+
+function bodyParserErrorType(exception: unknown): string | undefined {
+  if (!(exception instanceof Error)) return undefined;
+  const { type } = exception as Error & { type?: unknown };
+  return typeof type === 'string' && Object.hasOwn(BODY_PARSER_ERRORS, type) ? type : undefined;
 }
 
 /**
@@ -87,7 +127,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       );
     } else {
       this.logger.warn(
-        { correlationId, code: mapped.code, path: request.url },
+        { correlationId, code: mapped.code, path: request.url, ...mapped.log },
         `${mapped.status} ${mapped.code} on ${request.method} ${request.url}`,
       );
     }
@@ -113,8 +153,9 @@ export class AllExceptionsFilter implements ExceptionFilter {
       return this.mapHttp(exception);
     }
 
-    if (isBodyParserError(exception)) {
-      return this.mapBodyParser(exception);
+    const bodyParserType = bodyParserErrorType(exception);
+    if (bodyParserType !== undefined) {
+      return { ...BODY_PARSER_ERRORS[bodyParserType]!, log: { type: bodyParserType } };
     }
 
     // Unknown/unexpected → opaque 500 (never leak internals).
@@ -160,17 +201,6 @@ export class AllExceptionsFilter implements ExceptionFilter {
           message: 'An unexpected error occurred.',
         };
     }
-  }
-
-  private mapBodyParser(error: BodyParserError): Mapped {
-    const status: number = error.status;
-    const tooLarge = status === Number(HttpStatus.PAYLOAD_TOO_LARGE);
-    return {
-      status,
-      code: this.statusCode(status),
-      // http-errors marks these messages safe to expose (`expose: true`).
-      message: tooLarge ? 'The request body is too large.' : error.message,
-    };
   }
 
   private mapHttp(exception: HttpException): Mapped {

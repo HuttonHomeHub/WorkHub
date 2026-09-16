@@ -64,21 +64,77 @@ describe('AllExceptionsFilter', () => {
     });
   });
 
-  it('maps an oversized body (PayloadTooLargeError) to 413 PAYLOAD_TOO_LARGE', () => {
-    const reply = run(bodyParserError(413, 'entity.too.large', 'request entity too large'));
+  it.each([
+    [
+      413,
+      'entity.too.large',
+      'request entity too large',
+      'PAYLOAD_TOO_LARGE',
+      'The request body is too large.',
+    ],
+    [
+      413,
+      'parameters.too.many',
+      'too many parameters',
+      'PAYLOAD_TOO_LARGE',
+      'The request body has too many parameters.',
+    ],
+    [
+      415,
+      'charset.unsupported',
+      'unsupported charset "<SCRIPT>"',
+      'UNSUPPORTED_MEDIA_TYPE',
+      'The request body charset is not supported.',
+    ],
+    [
+      415,
+      'encoding.unsupported',
+      'unsupported content encoding "x-evil"',
+      'UNSUPPORTED_MEDIA_TYPE',
+      'The request body content encoding is not supported.',
+    ],
+    [
+      400,
+      'request.aborted',
+      'request aborted',
+      'BAD_REQUEST',
+      'The request body was not received in full.',
+    ],
+    [
+      400,
+      'request.size.invalid',
+      'request size did not match content length',
+      'BAD_REQUEST',
+      'The request body does not match its Content-Length.',
+    ],
+    [
+      400,
+      'querystring.parse.rangeError',
+      'The input exceeded the depth',
+      'BAD_REQUEST',
+      'The request body is nested too deeply.',
+    ],
+    [403, 'entity.verify.failed', 'verify said no', 'FORBIDDEN', 'The request body was rejected.'],
+  ])(
+    'maps a %i %s body-parser error to its status with a fixed message',
+    (status, type, parserMessage, code, message) => {
+      const reply = run(bodyParserError(status, type, parserMessage));
 
-    expect(reply.status).toBe(413);
+      expect(reply.status).toBe(status);
+      expect(reply.body).toEqual({ error: { code, message } });
+    },
+  );
+
+  it.each([
+    ['stream.encoding.set', 500],
+    ['stream.not.readable', 500],
+    ['some.future.type', 400],
+  ])('answers the unlisted body-parser type %s with an opaque 500', (type, status) => {
+    const reply = run(bodyParserError(status, type, 'parser detail'));
+
+    expect(reply.status).toBe(500);
     expect(reply.body).toEqual({
-      error: { code: 'PAYLOAD_TOO_LARGE', message: 'The request body is too large.' },
-    });
-  });
-
-  it('maps an unsupported body charset to 415 UNSUPPORTED_MEDIA_TYPE', () => {
-    const reply = run(bodyParserError(415, 'charset.unsupported', 'unsupported charset "LATIN-2"'));
-
-    expect(reply.status).toBe(415);
-    expect(reply.body).toEqual({
-      error: { code: 'UNSUPPORTED_MEDIA_TYPE', message: 'unsupported charset "LATIN-2"' },
+      error: { code: 'INTERNAL_ERROR', message: 'An unexpected error occurred.' },
     });
   });
 

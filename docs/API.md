@@ -238,6 +238,9 @@ The server never formats for display: the web renders instants in
   `UNSUPPORTED_MEDIA_TYPE`**. The parsers reject these before any route or the
   request logger runs, so the filter assigns the correlation id itself
   ([OBSERVABILITY.md](OBSERVABILITY.md#correlation-ids)).
+- The filter recognises body-parser errors only by a known `type` (a list in
+  `all-exceptions.filter.ts`) and answers each with a fixed message, never the
+  parser's own, which can echo client input. An unlisted type is a 500.
 - File uploads are not supported yet; the default when a feature needs them is a
   backed-up Docker volume (ADR-0019), designed in that feature's doc.
 
