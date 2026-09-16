@@ -17,6 +17,32 @@ import {
   NotFoundError,
   ValidationError,
 } from '../errors/domain-errors';
+import { assignCorrelationId } from '../logging/correlation-id';
+
+/**
+ * A client error from Express's body parsers (`express.json()`,
+ * `express.urlencoded()`): an `http-errors` error with a `type` such as
+ * `entity.too.large` (413) or `charset.unsupported` (415). They are raised
+ * before any route or the request logger runs. Malformed JSON is a
+ * `SyntaxError`, which Nest already turns into a 400 `BadRequestException`.
+ */
+interface BodyParserError extends Error {
+  status: number;
+  expose: true;
+  type: string;
+}
+
+function isBodyParserError(exception: unknown): exception is BodyParserError {
+  if (!(exception instanceof Error)) return false;
+  const candidate = exception as Partial<BodyParserError>;
+  return (
+    typeof candidate.type === 'string' &&
+    candidate.expose === true &&
+    typeof candidate.status === 'number' &&
+    candidate.status >= 400 &&
+    candidate.status < 500
+  );
+}
 
 interface Mapped {
   status: number;
@@ -42,6 +68,9 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const request = ctx.getRequest<Request & { id?: string }>();
 
     const mapped = this.mapException(exception);
+    // A request rejected before the request logger ran (body parsing) has no
+    // id yet; give it one so the log line and the response still carry it.
+    const correlationId = request.id ?? assignCorrelationId(request, response);
 
     const body: ApiError = {
       error: {
@@ -53,12 +82,12 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     if (mapped.status >= 500) {
       this.logger.error(
-        { correlationId: request.id, err: exception, path: request.url },
+        { correlationId, err: exception, path: request.url },
         `Unhandled ${mapped.status} on ${request.method} ${request.url}`,
       );
     } else {
       this.logger.warn(
-        { correlationId: request.id, code: mapped.code, path: request.url },
+        { correlationId, code: mapped.code, path: request.url },
         `${mapped.status} ${mapped.code} on ${request.method} ${request.url}`,
       );
     }
@@ -82,6 +111,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     if (exception instanceof HttpException) {
       return this.mapHttp(exception);
+    }
+
+    if (isBodyParserError(exception)) {
+      return this.mapBodyParser(exception);
     }
 
     // Unknown/unexpected → opaque 500 (never leak internals).
@@ -129,6 +162,17 @@ export class AllExceptionsFilter implements ExceptionFilter {
     }
   }
 
+  private mapBodyParser(error: BodyParserError): Mapped {
+    const status: number = error.status;
+    const tooLarge = status === Number(HttpStatus.PAYLOAD_TOO_LARGE);
+    return {
+      status,
+      code: this.statusCode(status),
+      // http-errors marks these messages safe to expose (`expose: true`).
+      message: tooLarge ? 'The request body is too large.' : error.message,
+    };
+  }
+
   private mapHttp(exception: HttpException): Mapped {
     const status = exception.getStatus();
     const res = exception.getResponse();
@@ -154,6 +198,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
       [HttpStatus.FORBIDDEN]: 'FORBIDDEN',
       [HttpStatus.NOT_FOUND]: 'NOT_FOUND',
       [HttpStatus.CONFLICT]: 'CONFLICT',
+      [HttpStatus.PAYLOAD_TOO_LARGE]: 'PAYLOAD_TOO_LARGE',
+      [HttpStatus.UNSUPPORTED_MEDIA_TYPE]: 'UNSUPPORTED_MEDIA_TYPE',
       [HttpStatus.UNPROCESSABLE_ENTITY]: 'VALIDATION_FAILED',
       [HttpStatus.TOO_MANY_REQUESTS]: 'RATE_LIMITED',
     };

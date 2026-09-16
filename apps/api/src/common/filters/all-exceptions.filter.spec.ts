@@ -44,6 +44,11 @@ function run(
   return captured;
 }
 
+/** The shape body-parser (via http-errors) rejects a body with. */
+function bodyParserError(status: number, type: string, message: string): Error {
+  return Object.assign(new Error(message), { status, statusCode: status, expose: true, type });
+}
+
 describe('AllExceptionsFilter', () => {
   it('maps Prisma P2023 (a malformed value for a column, e.g. a bad UUID cursor) to 400', () => {
     const error = new Prisma.PrismaClientKnownRequestError('Inconsistent column data', {
@@ -56,6 +61,24 @@ describe('AllExceptionsFilter', () => {
     expect(reply.status).toBe(400);
     expect(reply.body).toEqual({
       error: { code: 'BAD_REQUEST', message: 'The request contains a malformed value.' },
+    });
+  });
+
+  it('maps an oversized body (PayloadTooLargeError) to 413 PAYLOAD_TOO_LARGE', () => {
+    const reply = run(bodyParserError(413, 'entity.too.large', 'request entity too large'));
+
+    expect(reply.status).toBe(413);
+    expect(reply.body).toEqual({
+      error: { code: 'PAYLOAD_TOO_LARGE', message: 'The request body is too large.' },
+    });
+  });
+
+  it('maps an unsupported body charset to 415 UNSUPPORTED_MEDIA_TYPE', () => {
+    const reply = run(bodyParserError(415, 'charset.unsupported', 'unsupported charset "LATIN-2"'));
+
+    expect(reply.status).toBe(415);
+    expect(reply.body).toEqual({
+      error: { code: 'UNSUPPORTED_MEDIA_TYPE', message: 'unsupported charset "LATIN-2"' },
     });
   });
 
@@ -74,6 +97,36 @@ describe('AllExceptionsFilter', () => {
     expect(reply.status).toBe(400);
     expect(reply.body).toEqual({
       error: { code: 'BAD_REQUEST', message: 'Parameter must be a valid UUID.' },
+    });
+  });
+
+  describe('correlation id', () => {
+    it('logs the request id the request logger assigned', () => {
+      const filter = new AllExceptionsFilter();
+      const warn = vi.spyOn(filter['logger'], 'warn').mockImplementation(() => undefined);
+      const response = { status: () => response, json: () => response, setHeader: vi.fn() };
+      const host = {
+        switchToHttp: () => ({
+          getResponse: () => response,
+          getRequest: () => ({ id: 'from-pino', method: 'GET', url: '/x', headers: {} }),
+        }),
+      } as unknown as ArgumentsHost;
+
+      filter.catch(new BadRequestException(), host);
+
+      expect(warn).toHaveBeenCalledWith(
+        expect.objectContaining({ correlationId: 'from-pino' }),
+        expect.any(String),
+      );
+      expect(response.setHeader).not.toHaveBeenCalled();
+    });
+
+    it('assigns one when the request failed before the request logger ran (body parsing)', () => {
+      const reply = run(bodyParserError(413, 'entity.too.large', 'request entity too large'), {
+        headers: { 'x-correlation-id': 'client-supplied' },
+      });
+
+      expect(reply.headers['x-correlation-id']).toBe('client-supplied');
     });
   });
 });

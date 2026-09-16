@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 
 import { Module, ValidationPipe } from '@nestjs/common';
@@ -10,6 +9,7 @@ import { AuthModule } from './common/auth/auth.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { AuthenticationGuard } from './common/guards/authentication.guard';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
+import { assignCorrelationId } from './common/logging/correlation-id';
 import { AppConfigService } from './config/app-config.service';
 import { AppConfigModule } from './config/config.module';
 import { HealthModule } from './health/health.module';
@@ -32,12 +32,8 @@ import { PublicConfigModule } from './public-config/public-config.module';
       useFactory: (config: AppConfigService) => ({
         pinoHttp: {
           level: config.logLevel,
-          genReqId: (req: IncomingMessage, res: ServerResponse): string => {
-            const header = req.headers['x-correlation-id'];
-            const id = (typeof header === 'string' && header) || randomUUID();
-            res.setHeader('x-correlation-id', id);
-            return id;
-          },
+          genReqId: (req: IncomingMessage, res: ServerResponse): string =>
+            assignCorrelationId(req, res),
           // Never log secrets/PII.
           redact: {
             paths: [
