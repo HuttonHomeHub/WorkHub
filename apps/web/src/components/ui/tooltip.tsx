@@ -11,8 +11,8 @@ import { cn } from '@/lib/utils';
  * on Esc or blur; opens on hover after the provider's delay, and stays open
  * while the pointer moves onto it (WCAG 1.4.13). Focus never moves into it.
  *
- * One `TooltipProvider` wraps the app (`app/providers.tsx`), so moving between
- * triggers skips the delay once a tooltip has opened.
+ * A `TooltipProvider` must wrap every tooltip; `AppShell` provides one for the
+ * signed-in app, so moving between triggers skips the delay once one has opened.
  */
 function TooltipProvider({
   delayDuration = 400,

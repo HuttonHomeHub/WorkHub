@@ -781,7 +781,10 @@ None.
   `--width-prose`, `--width-page`, `--z-header` and `--z-popover`. No density or
   motion tokens: the sidebar does not animate.
 - **New dependency:** `@radix-ui/react-tooltip`, wrapped as
-  `components/ui/tooltip.tsx`, with one `TooltipProvider` in `app/providers.tsx`.
+  `components/ui/tooltip.tsx`, with one `TooltipProvider` in `AppShell`, so Radix loads with the signed-in
+  route chunk, not on the sign-in page. Measured with `pnpm build`: initial JS
+  91.2 kB gzipped, and the `_authed` layout chunk 20.3 kB gzipped (within
+  FRONTEND_QUALITY.md's advisory budgets).
 - **Tests:** `app/tools.test.ts`, `lib/preferences.test.ts`,
   `components/ui/tooltip.test.tsx`, `components/layout/app-shell.test.tsx`, and
   `e2e/app-shell.spec.ts`. That spec covers 1280×800 and 1920×1080 (expanded,

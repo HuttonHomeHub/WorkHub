@@ -12,7 +12,6 @@ import { Clock, House } from 'lucide-react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AppShell } from '@/components/layout/app-shell';
-import { TooltipProvider } from '@/components/ui/tooltip';
 import { ThemeProvider } from '@/hooks/use-theme';
 import type { ToolManifest } from '@/lib/tool-manifest';
 
@@ -33,11 +32,9 @@ async function renderShell(initialPath = '/') {
   const rootRoute = createRootRoute({
     component: () => (
       <ThemeProvider>
-        <TooltipProvider delayDuration={0}>
-          <AppShell tools={TOOLS} actions={<button type="button">Sign out</button>}>
-            <Outlet />
-          </AppShell>
-        </TooltipProvider>
+        <AppShell tools={TOOLS} actions={<button type="button">Sign out</button>}>
+          <Outlet />
+        </AppShell>
       </ThemeProvider>
     ),
   });

@@ -3,7 +3,7 @@ import * as React from 'react';
 
 import { Sidebar } from '@/components/layout/sidebar';
 import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useTheme } from '@/hooks/use-theme';
 import { readPreference, writePreference } from '@/lib/preferences';
 import type { ToolManifest } from '@/lib/tool-manifest';
@@ -109,25 +109,29 @@ function SkipLink() {
 export function AppShell({ tools, actions, children }: AppShellProps) {
   const { collapsed, toggle } = useSidebarCollapsed();
   return (
-    <div className="bg-background text-foreground flex min-h-svh flex-col">
-      <SkipLink />
-      <header className="bg-background/95 sticky top-0 z-(--z-header) flex min-h-(--header-height) flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b px-3 py-1.5 backdrop-blur max-md:static">
-        <div className="flex items-center gap-2">
-          <SidebarToggle collapsed={collapsed} onToggle={toggle} />
-          <span className="font-semibold">WorkHub</span>
+    // The shell is the only place with tooltips today; providing them here keeps
+    // Radix out of the sign-in page's JavaScript.
+    <TooltipProvider>
+      <div className="bg-background text-foreground flex min-h-svh flex-col">
+        <SkipLink />
+        <header className="bg-background/95 sticky top-0 z-(--z-header) flex min-h-(--header-height) flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b px-3 py-1.5 backdrop-blur max-md:static">
+          <div className="flex items-center gap-2">
+            <SidebarToggle collapsed={collapsed} onToggle={toggle} />
+            <span className="font-semibold">WorkHub</span>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <ThemeToggle />
+            {actions}
+          </div>
+        </header>
+        <div className="flex flex-1">
+          <Sidebar tools={tools} aria-label="Tools" />
+          <main id={MAIN_ID} tabIndex={-1} className="min-w-0 flex-1 p-6 outline-none">
+            {/* Long words wrap rather than widen the page at the reflow floor. */}
+            <div className="max-w-(--width-page) break-words">{children}</div>
+          </main>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <ThemeToggle />
-          {actions}
-        </div>
-      </header>
-      <div className="flex flex-1">
-        <Sidebar tools={tools} aria-label="Tools" />
-        <main id={MAIN_ID} tabIndex={-1} className="min-w-0 flex-1 p-6 outline-none">
-          {/* Long words wrap rather than widen the page at the reflow floor. */}
-          <div className="max-w-(--width-page) break-words">{children}</div>
-        </main>
       </div>
-    </div>
+    </TooltipProvider>
   );
 }

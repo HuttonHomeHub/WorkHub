@@ -8,9 +8,9 @@
 > [`FRONTEND_QUALITY.md`](FRONTEND_QUALITY.md).
 
 **Status:** a walking skeleton. The entry, providers, router, auth and account
-features, the app shell with its tools sidebar, and seven primitives exist. Anything marked
-**_planned_** is the agreed pattern for when a feature first needs it — it is not
-in the code, so don't cite it as existing.
+features, the app shell with its tools sidebar, and seven primitives exist.
+Anything marked **_planned_** is the agreed pattern for when a feature first
+needs it — it is not in the code, so don't cite it as existing.
 
 ## Guiding principles
 
@@ -44,7 +44,7 @@ apps/web/
 └── src/
     ├── main.tsx              # Creates the query client + router, mounts providers
     ├── app/
-    │   ├── providers.tsx     # RootErrorBoundary → ThemeProvider → QueryClientProvider → TooltipProvider
+    │   ├── providers.tsx     # RootErrorBoundary → ThemeProvider → QueryClientProvider
     │   ├── router.tsx        # createRouter: route tree, context, preload defaults
     │   └── tools.ts          # The tool registry: manifests in sidebar order (ADR-0020)
     ├── routes/               # File-based routes (routeTree.gen.ts is generated)
@@ -58,7 +58,7 @@ apps/web/
     │       └── index.ts      # A feature's public surface
     ├── components/
     │   ├── ui/               # Primitives: alert, button, card, form, input, label, tooltip
-    │   └── layout/           # app-shell.tsx (skip link, header, main), sidebar.tsx
+    │   └── layout/           # app-shell.tsx (TooltipProvider, skip link, header, main), sidebar.tsx
     ├── hooks/                # use-theme.tsx
     ├── lib/
     │   ├── api/client.ts     # apiClient, ApiRequestError, unwrap()
@@ -86,10 +86,10 @@ the reverse, and never feature → feature — share through a shared layer or
 WorkHub is one app made of tools. The web side of a tool is a feature folder
 plus a **manifest** that tells the shell about it.
 
-- **`ToolManifest`** (`lib/tool-manifest.ts`): `{ id, label, icon, path,
-commands }`: a kebab-case tool id (`core` is reserved), a sentence-case
-  label, a Lucide icon, the tool's home route (a typed router path) and its
-  palette commands (`{ id, label }`, "Go to <tool>" first).
+- **`ToolManifest`** (`lib/tool-manifest.ts`) has five fields: `id`, a
+  kebab-case tool id (`core` is reserved); `label`, sentence case; `icon`, a
+  Lucide icon; `path`, the tool's home route as a typed router path; and
+  `commands`, its palette commands (`{ id, label }`, "Go to <tool>" first).
 - **A tool exports its manifest** from `features/<tool>/tool.ts`.
 - **`app/tools.ts` is the registry:** it lists the manifests in sidebar order.
   `app/` is the composition root, like `routes/`, so it is the one shared place
