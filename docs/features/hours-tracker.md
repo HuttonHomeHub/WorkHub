@@ -1,6 +1,6 @@
 # Hours tracker
 
-- **Status:** Draft. The owner answered the design questions on 2026-09-16
+- **Status:** Draft. The owner answered every design question on 2026-09-16
   ([decisions](#decisions--open-questions)); final approval is pending.
 - **Change class:** Feature, built on
   [ADR-0020](../adr/0020-modular-tools-over-shared-core-data.md) (Architectural,
@@ -18,15 +18,16 @@ hand.
 
 When this ships the owner can:
 
-- type one start, end and break for each day into a dense week view, keyboard
-  first;
-- see each week's hours against the 37.5-hour contract, with a flexi balance
-  that can go negative;
-- mark part of a week's extra time as TOIL or overtime. The tool spreads it
-  across the days, applies the monthly TOIL cap, and converts unused TOIL at
-  month end;
-- record leave in hours and see the leave allowance remaining for the year,
-  with bank holidays deducted;
+- type one start, end and break per day into a dense week view, keyboard first;
+- see flexi build up day by day against a 7:30 daily target (37:30 a week). The
+  balance can go negative;
+- switch on "convert this week's excess" for a week. At settlement the week's
+  net excess becomes TOIL, up to 7:30 a month, and the rest becomes overtime,
+  spread over the days by levelling;
+- see unused TOIL convert to overtime at month end. Overtime is paid only while
+  paid overtime is allowed in the settings;
+- record leave in hours against a 247:30 yearly allowance, with England and
+  Wales bank holidays deducted;
 - get warnings for short days, time outside the working band, and caps;
 - review weekly and monthly summaries, and export the data.
 
@@ -35,20 +36,21 @@ When this ships the owner can:
 Use these terms in code, UI copy and docs (they move to PRODUCT.md's glossary
 on approval). Every duration is whole minutes.
 
-| Term                 | Meaning                                                                                                                                                          |
-| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Work day**         | One row for a date: an optional start and end, break, leave, TOIL taken, and whether a bank holiday was worked.                                                  |
-| **Worked time**      | The span from start to end, minus the deducted break (rule 2).                                                                                                   |
-| **Credited time**    | Worked time + leave + TOIL taken + bank holiday credit.                                                                                                          |
-| **Work terms**       | Effective-dated settings: weekly contracted hours, working days and their minimums, break rule, working band, overtime eligibility, caps, maximum leave per day. |
-| **Daily minimum**    | The least credited time expected on a working day (7:30 Mon–Thu, 5:30 Fri). It raises a warning only.                                                            |
-| **Week excess**      | A week's credited time minus weekly contracted time, when positive.                                                                                              |
-| **Extra time claim** | The owner marking part of a week's excess as TOIL and/or overtime.                                                                                               |
-| **Flexi balance**    | The running total of weekly variance that is not claimed. It can go negative.                                                                                    |
-| **TOIL**             | Claimed time to be taken as time off in the same calendar month; at most 7:30 a month.                                                                           |
-| **Overtime**         | Claimed or converted time: **paid** when the owner is eligible and it is approved, otherwise **unpaid**. Recorded in hours only.                                 |
-| **Leave year**       | 1 January to 31 December, with an allowance in hours (247:30, plus 37:30 bought leave when chosen).                                                              |
-| **Time adjustment**  | A signed, dated correction: an opening balance, a confirmed flexi forfeit, a correction.                                                                         |
+| Term                  | Meaning                                                                                                                            |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| **Work day**          | One row for a date: an optional start and end, break, leave, TOIL taken, and whether a bank holiday was worked.                    |
+| **Worked time**       | The span from start to end, minus the deducted break (rule 3).                                                                     |
+| **Credited time**     | Worked time + leave + TOIL taken + bank holiday credit.                                                                            |
+| **Daily target**      | The time a working day is expected to credit for flexi: 7:30 Mon–Fri. It drives the maths.                                         |
+| **Daily minimum**     | The least time the owner should work on a day: 7:30 Mon–Thu, 5:30 Fri. It raises a warning only and never changes a number.        |
+| **Day flexi**         | Credited time minus the daily target (the target is 0 on a non-working day), less any minutes converted on that day.               |
+| **Settlement day**    | The last working day of a week (Friday by default). The week's conversion applies from then.                                       |
+| **Excess conversion** | The owner's per-week switch. When on, the week's net positive flexi at settlement becomes TOIL and overtime.                       |
+| **TOIL**              | Converted time to be taken off in the same calendar month; at most 7:30 a month.                                                   |
+| **Overtime**          | Converted time over the TOIL cap, or TOIL unused at month end. **Paid** if paid overtime is allowed on that date, else **unpaid**. |
+| **Work terms**        | Effective-dated settings: targets, minimums, break rule, band, paid overtime allowed, caps, maximum leave per day.                 |
+| **Leave year**        | 1 January to 31 December, with an allowance in hours (247:30, plus 37:30 bought leave when chosen).                                |
+| **Time adjustment**   | A signed, dated correction: an opening balance, a confirmed flexi forfeit, a correction.                                           |
 
 ## Acceptance criteria
 
@@ -59,31 +61,35 @@ on approval). Every duration is whole minutes.
       leave and TOIL taken, using only the keyboard. Times are typed as `0830`,
       `830`, `8:30` or `08.30`, and an end before the start is shown as past
       midnight.
-- [ ] Each day shows worked and credited time as `h:mm`. The week shows credited
-      vs 37:30, variance, flexi balance, TOIL this month, overtime (paid and
-      unpaid) and leave remaining. A sign and a word show direction, not colour
-      alone.
+- [ ] Each day shows worked time, credited time and day flexi as `h:mm`. The
+      week shows credited vs target, the flexi balance, TOIL this month,
+      overtime (paid and unpaid) and leave remaining. A sign and a word show
+      direction, not colour alone.
 - [ ] Totals update while the owner types, before saving, and match what the API
       returns after saving.
+- [ ] With the week's conversion switch on, the week's net positive flexi at
+      settlement becomes TOIL, up to the monthly 7:30 cap by allocation date,
+      and then overtime. It is spread over days by the
+      [levelling rule](#rule-6-allocating-a-weeks-excess-to-days). A preview
+      shows the result before settlement.
+- [ ] TOIL unused at month end becomes overtime. Overtime is paid only where the
+      terms on that date allow paid overtime; otherwise it is unpaid.
+- [ ] Editing a day in a settled week recalculates its week and months and tells
+      the owner what changed.
+- [ ] Leave is recorded in hours (more than 0, at most 7:30 a day). England and
+      Wales bank holidays credit 7:30 and are deducted from the 247:30
+      allowance. Bought leave adds 37:30 for a year.
 - [ ] Warnings (not errors) appear for:
-  - a working day below its minimum;
+  - a day below its minimum;
   - time outside the working band;
+  - a past working day with nothing recorded;
   - a flexi cap crossed;
-  - TOIL over the monthly cap, or unused at month end;
-  - leave over the allowance;
-  - a claim larger than the week's excess.
-- [ ] The owner can claim part of a week's excess as TOIL and/or overtime. It is
-      spread across days by the [allocation rule](#rule-7-allocating-a-claim-to-days),
-      and the rest stays in flexi.
-- [ ] TOIL above 7:30 in a calendar month, and TOIL unused at month end, become
-      overtime: paid when eligible and approved, unpaid otherwise.
-- [ ] Leave is recorded in hours (more than 0, at most 7:30 a day). Bank holidays
-      are deducted from the 247:30 allowance, and bought leave adds 37:30 for a
-      year.
-- [ ] Clearing a day or deleting a claim removes it at once and shows an 8-second
-      undo toast. Undo restores it.
+  - TOIL unused at month end;
+  - leave over the allowance.
+- [ ] Clearing a day removes it at once and shows an 8-second undo toast; undo
+      restores it.
 - [ ] Work terms are effective-dated from a Monday. A change never alters results
-      for earlier weeks.
+      for dates before it.
 - [ ] Calculations are correct across week and month boundaries and on the BST
       start and end dates. Each rule has unit tests.
 - [ ] `/hours/summary` shows totals by week or month for a range held in the URL.
@@ -99,155 +105,209 @@ on approval). Every duration is whole minutes.
 
 The engine is pure TypeScript in `@repo/domain` (`packages/domain/src/hours/`).
 It does no I/O and never reads "now": callers pass every date, including
-`asOf`. Both apps run the same code (ADR-0020 §5). Dates and zones use
-**Temporal** (`Temporal.PlainDate`, `Temporal.ZonedDateTime` in
-`Europe/London`) through `temporal-polyfill`. All arithmetic is in **integer
-minutes**. Rules marked **(Q n)** wait for open question _n_ in the
-[decisions](#decisions--open-questions).
+`asOf` (today in `Europe/London` from the web). Both apps run the same code
+(ADR-0020 §5). Dates and zones use **Temporal** through `temporal-polyfill`.
+All arithmetic is in **integer minutes**. Every result is recomputed from the
+current rows; nothing derived is stored, so the same inputs always give the
+same outputs.
 
-1. **Weeks** run Monday to Sunday in `Europe/London`. Work terms apply from
-   their `effectiveFrom` Monday, and each week uses the terms in force on its
-   Monday.
-2. **Worked time** = elapsed minutes from `startsAt` to `endsAt`, computed on
-   instants, minus the deducted break.
-   - If the elapsed span is over the break threshold (default 6:00), the
-     deducted break is the recorded break or the break minimum (default 0:30),
-     whichever is larger.
-   - Otherwise the deducted break is the recorded break.
-   - The span is used, not worked time, so the rule cannot loop. A span of 6:01
-     with no break is 5:31 worked.
+1. **Terms in force.** For a date, use the active work terms with the latest
+   `effectiveFrom` on or before it. `effectiveFrom` is always a Monday, so a week
+   never mixes terms. A day with a **target** is a working day; a day without one
+   is not.
+2. **Weeks** run Monday to Sunday. The **settlement day** is the week's last
+   working day (Friday by default).
+3. **Worked time** = elapsed minutes from `startsAt` to `endsAt` on instants,
+   minus the deducted break.
+   - If the span is over the break threshold (default 6:00), the deducted break
+     is the recorded break or the break minimum (default 0:30), whichever is
+     larger. Otherwise it is the recorded break.
    - A night across a clock change is an hour shorter (March) or longer
      (October).
-3. **Bank holiday credit:** a working weekday that is a public holiday gets
-   credit equal to the maximum leave per day (7:30). It is also deducted from
-   the leave allowance. If `bankHolidayWorked` is set, there is no credit and no
-   deduction, and the day counts as normal time.
-4. **Credited time** for a day = worked + leave + TOIL taken + bank holiday
-   credit. Leave and TOIL taken are more than 0 and at most the maximum leave
-   per day (7:30) each, and only on working days.
-5. **Week variance** = Σ credited − weekly contracted (default 37:30) − the
-   claimed minutes the week keeps after rule 8. Daily minimums never change
-   this number.
-6. **Flexi (Q4):** a week's variance is booked on its Sunday, once the week has
-   ended (`asOf` is on or after that Sunday). The week in progress shows
-   progress ("22:30 of 37:30"), not a negative variance. The flexi balance as of
-   a date is the sum of booked variances and flexi adjustments up to it. It can
-   go negative. Credit and debit caps are unset by default; when set, a balance
-   past a cap raises a warning. A forfeit happens only when the owner confirms
-   one, which creates an adjustment.
-7. **Allocating a claim to days** (Q1), defined
-   [below](#rule-7-allocating-a-claim-to-days).
-8. **Claim clamping:** if later edits shrink the week's excess below the claim,
-   the effective claim is reduced (overtime first, then TOIL) to the excess, and
-   a warning is shown. The stored claim is not changed.
-9. **Monthly TOIL cap:** walk the calendar month's days in date order and add up
-   the TOIL allocated to each day. The allocated minutes that take the total past
-   the cap (default 7:30) become overtime on that day.
-10. **Month-end conversion:** at the end of a month (`asOf` on or after its last
-    day), unused TOIL = TOIL allocated in the month (after the cap) − TOIL taken
-    in the month. If positive, it becomes overtime booked on the last day of the
-    month. If negative (taken but never earned), the shortfall is booked as a
-    flexi debit on that day, with a warning. TOIL never carries into the next
-    month.
-11. **Overtime classification (Q2):** overtime minutes from a claim, the cap or
-    month-end conversion are **paid** when the terms in force have
-    `overtimeEligible` **and** that calendar month is approved for paid overtime.
-    Otherwise they are **unpaid**. Not eligible means always unpaid.
-12. **Leave year:** used = leave + bank holiday credit, for dates in the year.
-    Remaining = allowance (default 247:30) + 37:30 if bought leave is set for
-    that year + leave adjustments − used. It can go negative, with a warning.
-13. **Warnings** (they never change a number): a working day with credited time
-    below its minimum, once the day is past; a start before or end after the
-    working band (default 07:00–19:00); a past working day with nothing
-    recorded; the flexi caps (rule 6); TOIL over the cap or unused (rules 9–10);
-    leave over allowance; claim clamping (rule 8); a break raised to the minimum
-    (rule 2, an informational note).
-14. **Display:** `h:mm` (`7:30`); signed variance (`+3:00 over`,
-    `−1:15 under`); decimal hours only in CSV.
+   - A night shift counts wholly to its row's date.
+4. **Credited time** = worked + leave + TOIL taken + bank holiday credit.
+   - **Bank holiday credit:** a working day that is an England and Wales bank
+     holiday credits the maximum leave per day (7:30), unless the row marks it
+     as worked.
+   - Leave, TOIL taken and bank holiday credit are allowed only on working days.
+     Together they are at most that day's target, so time off can never create
+     excess.
+5. **Day flexi (raw)** = credited − target (target 0 on a non-working day).
+   - A day counts once it is in the past (`date < asOf`), or it is today and has
+     a row.
+   - A past working day with no row counts as −target, with a warning.
+   - Daily minimums never change this number.
+6. **Week excess and conversion.**
+   - **Excess** E = max(0, Σ raw day flexi over the week's counted days).
+   - If the week's conversion switch is **off**, nothing converts: every day
+     keeps its raw flexi.
+   - If it is **on** and `asOf` is on or after the settlement day, E is
+     allocated to days by [levelling](#rule-6-allocating-a-weeks-excess-to-days).
+     Each day's **day flexi** = raw − allocated minutes, and the allocated
+     minutes on that date become **converted minutes**.
+   - A week with a net zero or negative total has E = 0, so nothing is
+     allocated. The switch stays on and the week shows "Nothing to convert".
+   - Before settlement, the conversion is only a **preview** and changes no
+     balance.
+   - Weekend time entered after settlement joins the same week and recomputes
+     E (rule 11).
+7. **TOIL cap by allocation date.** For each calendar month, walk its days in
+   date order and add up converted minutes as TOIL until the month's TOIL
+   reaches the cap (default 7:30). Converted minutes beyond the cap become
+   **overtime** on their date. In a week that spans two months, each day's
+   converted minutes count against **the month that date falls in**.
+8. **Month end.** Once `asOf` is after a month's last day:
+   - unused TOIL = the month's TOIL (rule 7) − the TOIL taken in the month;
+   - if positive, it becomes **overtime** dated the last day of the month;
+   - if negative (taken but not earned), the shortfall becomes a flexi debit on
+     that day, with a warning;
+   - TOIL never carries into the next month.
+9. **Paid or unpaid.** Overtime dated _d_ is **paid** if the terms in force on
+   _d_ have `paidOvertimeAllowed`, otherwise **unpaid**. The default is off.
+10. **Flexi balance** as of a date = Σ day flexi + month-end flexi debits +
+    flexi adjustments, up to that date. It can go negative. Credit and debit caps
+    are unset by default; when set, a balance past a cap warns. A forfeit happens
+    only when the owner confirms one, which creates an adjustment.
+11. **Edits after settlement** are ordinary edits, because everything is
+    recomputed.
+    - The engine returns the week's before and after figures: E, TOIL and
+      overtime per month.
+    - The web shows "Week of 28 Sep recalculated: TOIL 1:00 → 0:40, overtime
+      2:00 → 1:40".
+    - If the edit touches a month that has already ended, it adds "September
+      totals changed".
+12. **Leave year:** used = leave + bank holiday credit for dates in the year.
+    Remaining = allowance (247:30) + 37:30 if bought leave is set + leave
+    adjustments − used. It can go negative, with a warning.
+13. **Warnings** never change a number:
+    - a day's worked time below its minimum;
+    - a start before or an end after the band (07:00–19:00);
+    - a missing past working day;
+    - flexi caps;
+    - TOIL unused at month end, and TOIL taken but not earned;
+    - leave over the allowance;
+    - a break raised to the minimum (a note).
+14. **Display:** `h:mm`; signed flexi (`+0:40 over`, `−2:00 under`); decimal
+    hours only in CSV.
 
-#### Rule 7: allocating a claim to days
+#### Rule 6: allocating a week's excess to days
 
-The owner marks how much of a week's excess to take out of flexi, as TOIL
-minutes and overtime minutes (one claim per week). The engine then decides
-**which days** those minutes sit on. This matters for the monthly TOIL cap and
-for monthly totals when a week spans two months. It is the owner's "best place
-to average hours": take from the days furthest above their minimum until they
-are level.
+This is the owner's "best place to average hours": take the week's excess from
+the days furthest above their target, levelling them down together.
 
-1. For each day in the week with worked time, **surplus** = worked − that day's
-   minimum (the minimum is 0 on a non-working day).
+1. For each counted day in the week with worked time, **surplus** = worked −
+   target (target 0 on a non-working day).
 2. **Take one minute at a time** from the day with the **largest remaining
-   surplus**. On a tie, take from the **latest date**, so time lands later and
-   there is more of the month left to take TOIL. A day never gives more than its
-   worked minutes.
-3. Repeat until the claim is allocated. The result is the same as levelling the
-   highest days down to a common line.
-4. **TOIL is allocated first**, then overtime continues from the surpluses that
-   remain.
+   surplus**. On a tie, take from the **latest date**.
+3. A day never gives more than its worked minutes. A surplus may go below zero
+   if that is where the level falls.
+4. Stop when E minutes are allocated.
 
-The claim is limited to the week's excess, and the excess is never more than
-the week's worked time, so step 3 always finishes.
+The result is the same as levelling the highest days down to a common line.
+Rule 4 caps time off at the target, so E is never more than the week's worked
+minutes, and the loop always finishes.
 
-**Worked example.** Week of Monday 5 October 2026. Terms are the defaults
-(37:30; minimums 7:30 Mon–Thu, 5:30 Fri; break 0:30 over 6:00), and the owner is
-eligible for overtime.
+#### Worked example
 
-| Day     | Start–end   | Break recorded | Break deducted | Worked | Minimum | Surplus |
-| ------- | ----------- | -------------- | -------------- | ------ | ------- | ------- |
-| Mon 5   | 08:00–17:30 | 0:30           | 0:30           | 9:00   | 7:30    | 1:30    |
-| Tue 6   | 07:30–18:00 | 0:30           | 0:30           | 10:00  | 7:30    | 2:30    |
-| Wed 7   | 08:00–16:00 | 0:30           | 0:30           | 7:30   | 7:30    | 0:00    |
-| Thu 8   | 08:00–17:00 | 0:15           | 0:30 (rule 2)  | 8:30   | 7:30    | 1:00    |
-| Fri 9   | 08:00–13:30 | 0:00           | 0:00 (≤ 6:00)  | 5:30   | 5:30    | 0:00    |
-| **Sum** |             |                |                | 40:30  |         |         |
+Terms are the defaults: targets 7:30 Mon–Fri; minimums 7:30 Mon–Thu and 5:30
+Fri; break 0:30 over 6:00; TOIL cap 7:30; paid overtime **not allowed**.
 
-- **Week excess** = 40:30 − 37:30 = **3:00**. The owner claims **2:00 as TOIL**.
-- **Allocation:** Tue has the largest surplus, so it gives 1:00 until it is level
-  with Mon at 1:30. Mon and Tue then share the next 1:00, 0:30 each, until both
-  are level with Thu at 1:00. The claim is used up.
-- **Result:** TOIL Tue 1:30, Mon 0:30. The days now read Mon 8:30, Tue 8:30,
-  Wed 7:30, Thu 8:30, Fri 5:30. The remaining **+1:00** is booked to flexi on
-  Sunday 11 October.
-- **Monthly cap (rule 9):** suppose TOIL of 6:30 was already allocated on 1 and 2
-  October. Walking October in date order: 6:30 + Mon 0:30 = 7:00; Tue's 1:30
-  takes it to 8:30. So on Tue, **0:30 stays TOIL** and **1:00 becomes
-  overtime**. October is not approved for paid overtime, so the 1:00 is
-  **unpaid** (rule 11).
-- **Month end (rule 10):** if the owner takes 5:00 TOIL in October, the unused
-  7:30 − 5:00 = **2:30** becomes overtime on 31 October. It is unpaid unless
-  October is approved.
+**Week of Monday 5 October 2026, switch off (daily flexi):**
+
+| Day     | Start–end   | Break (recorded → deducted) | Worked | Target | Day flexi | Flexi balance¹ |
+| ------- | ----------- | --------------------------- | ------ | ------ | --------- | -------------- |
+| Mon 5   | 08:00–17:30 | 0:30 → 0:30                 | 9:00   | 7:30   | +1:30     | +1:30          |
+| Tue 6   | 07:30–18:00 | 0:30 → 0:30                 | 10:00  | 7:30   | +2:30     | +4:00          |
+| Wed 7   | 08:00–16:00 | 0:30 → 0:30                 | 7:30   | 7:30   | 0:00      | +4:00          |
+| Thu 8   | 08:00–17:00 | 0:15 → 0:30 (rule 3)        | 8:30   | 7:30   | +1:00     | +5:00          |
+| Fri 9   | 08:00–13:30 | none (span ≤ 6:00)          | 5:30   | 7:30   | −2:00     | +3:00          |
+| **Sum** |             |                             | 40:30  | 37:30  | **+3:00** |                |
+
+¹ The flexi balance starts from 0 for the example. Friday's 5:30 meets its
+minimum, so there is no warning.
+
+**Same week, switch on.** Settlement is Fri 9 Oct, and E = **3:00**. Surpluses
+are Mon 1:30, Tue 2:30, Wed 0:00, Thu 1:00, Fri −2:00.
+
+1. Tue gives 1:00 and is level with Mon at 1:30.
+2. Mon and Tue give 0:30 each and are level with Thu at 1:00 (2:00 given so far).
+3. Mon, Tue and Thu give 0:20 each and level at 0:40. The loop takes one minute
+   at a time, latest date first on ties.
+
+| Day   | Raw flexi | Converted | Day flexi | Month-to-date TOIL²  | TOIL | Overtime (unpaid) |
+| ----- | --------- | --------- | --------- | -------------------- | ---- | ----------------- |
+| Mon 5 | +1:30     | 0:50      | +0:40     | 6:30 → 7:20          | 0:50 | —                 |
+| Tue 6 | +2:30     | 1:50      | +0:40     | 7:20 → 7:30 (capped) | 0:10 | 1:40              |
+| Wed 7 | 0:00      | —         | 0:00      | 7:30                 | —    | —                 |
+| Thu 8 | +1:00     | 0:20      | +0:40     | 7:30 (capped)        | —    | 0:20              |
+| Fri 9 | −2:00     | —         | −2:00     | 7:30                 | —    | —                 |
+
+² Assumes 6:30 of TOIL was already converted on 1–2 October.
+
+- The week's flexi is now 0:00, and 3:00 was converted: **1:00 TOIL and 2:00
+  overtime**.
+- The overtime is **unpaid**, because paid overtime is not allowed (rule 9).
+- If the owner takes 5:00 TOIL in October, the unused 7:30 − 5:00 = **2:30**
+  becomes unpaid overtime on 31 October (rule 8).
+
+**Cross-month week, switch on.** Week of Monday 28 September 2026, settling Fri
+2 Oct; no TOIL yet in either month.
+
+| Day    | Worked | Raw flexi | Converted | Month     |
+| ------ | ------ | --------- | --------- | --------- |
+| Mon 28 | 9:30   | +2:00     | 2:00      | September |
+| Tue 29 | 7:30   | 0:00      | —         | September |
+| Wed 30 | 7:30   | 0:00      | —         | September |
+| Thu 1  | 8:30   | +1:00     | 1:00      | October   |
+| Fri 2  | 7:30   | 0:00      | —         | October   |
+
+- E = 3:00. Levelling takes Mon down to 1:00, then Mon and Thu down to 0:00.
+- The 2:00 on 28 Sep is **September TOIL**. September has ended by settlement,
+  so it is unused and becomes **unpaid overtime on 30 Sep** (rule 8). Until
+  2 Oct, September's figures did not include it (rule 6); rule 11 reports the
+  change.
+- The 1:00 on 1 Oct is **October TOIL** that can still be taken this month.
 
 **Unit test matrix** (Vitest; fixed dates; no wall clock):
 
-- **Worked time:** a span exactly 6:00 and 6:01; a recorded break above and below
-  the minimum; a zero or negative span (invalid); a span over 24 hours (invalid);
-  a night shift past midnight counting to its start date.
+- **Worked time:**
+  - spans of exactly 6:00 and 6:01;
+  - a recorded break above and below the minimum;
+  - invalid spans: zero, negative, over 24 hours;
+  - a night shift.
 - **Clock changes:** Sat 28 Mar 2026 22:00 – Sun 29 Mar 06:00 is a 7:00 span;
   Sat 24 Oct 2026 22:00 – Sun 25 Oct 06:00 is 9:00; Sun 25 Oct 2026 00:30–03:30
-  is 4:00. Repeat for 28 Mar and 31 Oct 2027. Week totals for all four weeks.
-- **Weeks:** week variance with and without leave, TOIL taken and bank holidays;
-  a week in progress (no booking); a terms change taking effect on a Monday;
-  weekend work (minimum 0).
-- **Allocation:**
-  - the worked example;
+  is 4:00. Repeat for 28 Mar and 31 Oct 2027, with day flexi and week totals.
+- **Day flexi:**
+  - today with and without a row;
+  - a missing past day;
+  - weekend work (target 0);
+  - leave, TOIL taken and bank holiday credit up to the target;
+  - a worked bank holiday;
+  - a terms change on a Monday.
+- **Conversion:**
+  - the worked example, switch off and on;
+  - the preview before settlement vs applied from settlement;
+  - a net negative week;
   - all surpluses equal (latest date wins);
-  - a claim equal to the whole excess;
-  - a claim needing minutes from below a day's minimum;
-  - TOIL and overtime in one claim;
-  - clamping after an edit.
-- **Month boundaries:**
-  - a week straddling 30 Sep – 4 Oct, with allocation landing in both months;
-  - the TOIL cap exactly at 7:30 and one minute over;
-  - unused TOIL at month end, positive and negative;
-  - TOIL taken before it is earned in the same month.
-- **Overtime:** not eligible, eligible but not approved, eligible and approved.
-- **Leave:** 7:30 maximum; bank holidays deducted; bought leave; bank holiday
-  worked; an allowance going negative; a leave adjustment.
+  - allocation needing minutes below the target;
+  - weekend time added after settlement;
+  - a settlement day other than Friday.
+- **Months:**
+  - the cross-month example;
+  - the cap exactly at 7:30 and one minute over;
+  - month-end unused TOIL, positive and negative;
+  - TOIL taken before it is converted;
+  - `asOf` on and after the last day of the month.
+- **Paid or unpaid:** allowed off, on, and switched on mid-month (the date
+  decides).
+- **Edits after settlement:** before and after figures, including a closed month.
+- **Leave:** the 7:30 maximum; bank holidays deducted; bought leave; an allowance
+  going negative; a leave adjustment.
 - **Flexi:** a negative balance; caps unset, then set and crossed; a confirmed
   forfeit.
-- **Warnings:** the minimum on Mon–Thu vs Fri; band edges at exactly 07:00 and
-  19:00; a missing past day.
-- **Parser and formatter:** `0830`, `830`, `8:30`, `08.30`, `7` → 07:00, `24:00`
+- **Warnings:** minimums on Mon–Thu vs Fri; band edges at 07:00 and 19:00.
+- **Parser and formatter:** `0830`, `830`, `8:30`, `08.30`, `7` → 07:00; `24:00`
   and `25:00` invalid; negative values and totals over 24 hours.
 
 ### Data model
@@ -255,56 +315,54 @@ eligible for overtime.
 Standard columns on every table (UUID v7 `id`, `owner_id`, `created_at`,
 `updated_at`, `deleted_at`, `version`), per [DATABASE.md](../DATABASE.md).
 Durations are `Int` minutes. **Run database-architect before each migration.**
-Uniqueness is on active rows through partial unique indexes written in the SQL.
-One row per date means there are no overlapping spans on the same date, so there
-is **no exclusion constraint and no `btree_gist`**. The service checks that a
-past-midnight end does not run into the next day's start (422).
+Uniqueness is on active rows through partial unique indexes in the migration SQL.
+One row per date means there is no exclusion constraint and no `btree_gist`. The
+service rejects (422) a night shift that runs into the next day's start.
 
 **Core** (`modules/core/`, ADR-0020 §2):
 
-- **`public_holidays`** (`PublicHoliday`): `date date`, `name text`; unique active
-  `(owner_id, date)`. Rows are imported from a bundled England and Wales list
-  (Q3); there is no runtime network call.
+- **`public_holidays`** (`PublicHoliday`): `date date`, `name text`; unique
+  active `(owner_id, date)`. Imported from a bundled **England and Wales** list,
+  8 a year; there is no runtime network call.
 
 **Tool-owned** (`modules/hours/`):
 
 - **`work_terms`** (`WorkTerms`), effective-dated settings:
   - `effective_from date`, `CHECK` that it is a Monday; unique active
     `(owner_id, effective_from)`;
-  - `weekly_contracted_minutes int` (2250);
-  - `min_minutes_mon` … `min_minutes_sun int NULL`, where null means not a
-    working day (450 Mon–Thu, 330 Fri, null Sat–Sun);
+  - `target_minutes_mon` … `target_minutes_sun int NULL`: the **flexi target**.
+    Null means not a working day. Defaults are 450 Mon–Fri and null Sat–Sun, and
+    the weekly contract (37:30) is their sum, so it is not stored separately;
+  - `min_minutes_mon` … `min_minutes_sun int NULL`: the **warning-only
+    minimum**. Defaults are 450 Mon–Thu, 330 Fri and null Sat–Sun, with a
+    `CHECK` that each is null where the target is null;
   - `break_threshold_minutes int` (360), `break_minimum_minutes int` (30);
-  - `band_start time(0)` (07:00), `band_end time(0)` (19:00), with
+  - `band_start time(0)` (07:00), `band_end time(0)` (19:00),
     `CHECK band_end > band_start`. `time` is new to DATABASE.md's type table;
     database-architect adds it;
-  - `overtime_eligible boolean`;
+  - `paid_overtime_allowed boolean default false`. This replaces the earlier
+    "eligible for overtime" toggle; the owner's two toggles are the same concept;
   - `toil_monthly_cap_minutes int` (450);
   - `leave_day_max_minutes int` (450);
   - `flexi_credit_cap_minutes int NULL`, `flexi_debit_cap_minutes int NULL`
     (null, so no cap);
-  - `CHECK`s that minutes are within 0–1440, or 0–10080 for weekly minutes.
-  - The earliest active `effective_from` is the **tracking start** (a Monday).
+  - `CHECK`s that minutes are within 0–1440.
+  - The earliest active `effective_from` is the **tracking start**.
 - **`work_days`** (`WorkDay`), one per date:
   - `date date`, unique active `(owner_id, date)`;
   - `starts_at timestamptz(3) NULL`, `ends_at timestamptz(3) NULL`, with
     `CHECK` both-or-neither, `ends_at > starts_at`, and at most 24 hours. The
     service checks that `starts_at` falls on `date` in `Europe/London`;
-  - `break_minutes int default 0`;
-  - `leave_minutes int default 0`, `toil_taken_minutes int default 0`, each
-    `CHECK` 0–1440. The rule maximum (7:30) comes from `work_terms` and is
-    checked in the service;
+  - `break_minutes int default 0`, `leave_minutes int default 0`,
+    `toil_taken_minutes int default 0`, each `CHECK` 0–1440. Rule 4's limits,
+    which depend on the terms, are checked in the service;
   - `bank_holiday_worked boolean default false`;
-  - no note and no activity: the owner deferred recording what time was spent
-    on, and adding a nullable `note` later is additive.
-- **`extra_time_claims`** (`ExtraTimeClaim`), one per week:
+  - no note and no activity (deferred by the owner; a nullable note can be added
+    later without a breaking change).
+- **`excess_conversions`** (`ExcessConversion`): the weekly switch.
   - `week_start date` (`CHECK` Monday), unique active `(owner_id, week_start)`;
-  - `toil_minutes int`, `overtime_minutes int`, both `>= 0`, with
-    `CHECK toil_minutes + overtime_minutes > 0`.
-- **`overtime_approvals`** (`OvertimeApproval`), a month approved for paid
-  overtime (Q2):
-  - `month date`, `CHECK` it is the 1st; unique active `(owner_id, month)`;
-  - the row's presence is the approval, and deleting it (with undo) withdraws it.
+  - an active row means the switch is **on**. Turning it off soft-deletes the
+    row; turning it on again creates a new one.
 - **`leave_years`** (`LeaveYear`):
   - `year int` (`CHECK` 2000–2100), unique active `(owner_id, year)`;
   - `allowance_minutes int default 14850` (247:30);
@@ -316,12 +374,10 @@ past-midnight end does not run into the next day's start (422).
   - `reason` enum `OPENING_BALANCE | FORFEIT | CORRECTION`;
   - index `(owner_id, effective_date)`.
 
-Range reads use the unique indexes, which lead with `owner_id`. Nothing derived
-is stored. At personal scale (under 400 rows a year) balances are computed on
-read; a stored monthly snapshot is added only if a measurement shows the need.
-
-**Migrations:** two additive migrations, in slices 4 and 6.
-No destructive changes. A `pg_dump` is still taken before each deploy.
+Nothing derived is stored. At personal scale (under 400 rows a year) balances are
+computed on read; a stored monthly snapshot is added only if a measurement shows
+the need. **Migrations:** two additive ones, in slices 4 and 6. A `pg_dump` is
+taken before each deploy.
 
 ### API
 
@@ -329,34 +385,48 @@ All endpoints are under `/api/v1`, authenticated, with OpenAPI tag `Hours` (or
 `Core`), and generated with `pnpm gen:feature <entity> --tool hours` (or
 `--core`), then adapted. Ids use `ParseUuidPipe`. Instants are ISO with `Z`,
 dates `YYYY-MM-DD`, and durations are integer `…Minutes` fields. Every change is
-additive, so there is no breaking contract change, and `pnpm contract:generate`
-runs in each API slice.
+additive, and `pnpm contract:generate` runs in each API slice.
 
-| Method and path                                         | Purpose                                                                                                                | Status codes                                 |
-| ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
-| `GET /work-days?from&to&limit&cursor`                   | Days in `[from, to)`, sorted by `date` asc                                                                             | 200, 400, 401, 422                           |
-| `POST /work-days`                                       | `{ date, startsAt?, endsAt?, breakMinutes, leaveMinutes, toilTakenMinutes, bankHolidayWorked }`                        | 201, 401, 409 (date exists), 422             |
-| `GET/PATCH/DELETE /work-days/:id`, `POST …/:id/restore` | Read, update with `version`, soft delete, undo                                                                         | 200/204, 400, 401, 404, 409, 422             |
-| `GET/POST /extra-time-claims`, `…/:id`, `…/:id/restore` | Claims by `weekStart`; 422 if the claim exceeds the week's excess when saved                                           | as above                                     |
-| `GET/POST/DELETE /overtime-approvals`, `…/:id/restore`  | Months approved for paid overtime                                                                                      | as above                                     |
-| `GET/POST /work-terms`, `GET/PATCH/DELETE …/:id`        | Effective-dated terms; deleting the last remaining one is refused (422)                                                | as above                                     |
-| `GET/POST/PATCH /leave-years`, `…/:id`                  | Allowance and bought leave per year                                                                                    | as above                                     |
-| `GET/POST /time-adjustments`, `…/:id`, `…/:id/restore`  | Opening balances, forfeits, corrections                                                                                | as above                                     |
-| `GET /time-summaries?from&to&groupBy=day\|week\|month`  | Computed groups: credited, worked, leave, TOIL allocated/taken/converted, overtime paid/unpaid, flexi at end, warnings | 200, 401, 422 (over 366 days, `to` ≤ `from`) |
-| `GET /time-balances?asOf`                               | `{ flexiMinutes, toilMonthMinutes, leaveRemainingMinutes, overtimePaidYearMinutes, overtimeUnpaidYearMinutes }`        | 200, 401, 422                                |
-| `GET/POST /public-holidays`, `…/:id`, `…/:id/restore`   | Core: list by range, manual add, delete                                                                                | as above                                     |
-| `POST /public-holiday-imports`                          | `{ year }`: adds the missing bundled dates for that year                                                               | 200 (nothing new), 201, 401, 422             |
+| Method and path                                             | Purpose                                                                                         | Status codes                                   |
+| ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| `GET /work-days?from&to&limit&cursor`                       | Days in `[from, to)`, sorted by `date` asc                                                      | 200, 400, 401, 422                             |
+| `POST /work-days`                                           | `{ date, startsAt?, endsAt?, breakMinutes, leaveMinutes, toilTakenMinutes, bankHolidayWorked }` | 201, 401, 409 (date exists), 422               |
+| `GET/PATCH/DELETE /work-days/:id`, `POST …/:id/restore`     | Read, update with `version`, soft delete, undo                                                  | 200/204, 400, 401, 404, 409, 422               |
+| `GET /excess-conversions?from&to`                           | Weeks whose switch is on                                                                        | 200, 401, 422                                  |
+| `POST /excess-conversions`                                  | `{ weekStart }`: switch on                                                                      | 201, 401, 409 (already on), 422 (not a Monday) |
+| `DELETE /excess-conversions/:id`                            | Switch off                                                                                      | 204, 400, 401, 404                             |
+| `GET/POST /work-terms`, `GET/PATCH/DELETE …/:id`            | Effective-dated terms; deleting the last remaining one is refused (422)                         | 200/201/204, 400, 401, 404, 409, 422           |
+| `GET/POST /leave-years`, `GET/PATCH …/:id`                  | Allowance and bought leave per year                                                             | as above                                       |
+| `GET/POST /time-adjustments`, `…/:id`, `…/:id/restore`      | Opening balances, forfeits, corrections                                                         | as above                                       |
+| `GET /time-summaries?from&to&groupBy=day\|week\|month&asOf` | Computed groups (below)                                                                         | 200, 401, 422 (over 366 days, `to` ≤ `from`)   |
+| `GET /time-balances?asOf`                                   | Balances (below)                                                                                | 200, 401, 422                                  |
+| `GET/POST /public-holidays`, `…/:id`, `…/:id/restore`       | Core: list by range, manual add, delete                                                         | as above                                       |
+| `POST /public-holiday-imports`                              | `{ year }`: adds the missing bundled England and Wales dates for that year                      | 200 (nothing new), 201, 401, 422               |
 
+- **`time-summaries` groups** carry:
+  - `targetMinutes`, `creditedMinutes`, `workedMinutes`, `leaveMinutes`,
+    `bankHolidayMinutes`;
+  - `rawFlexiMinutes`, `convertedMinutes`, `flexiMinutes`;
+  - `toilMinutes`, `toilTakenMinutes`, `toilUnusedMinutes`;
+  - `overtimePaidMinutes`, `overtimeUnpaidMinutes`;
+  - `flexiBalanceEndMinutes`;
+  - `conversion` (`OFF | PREVIEW | APPLIED`, week groups only);
+  - `warnings[]` (codes plus dates).
+- **`time-balances`** returns `flexiMinutes`, `toilMonthMinutes`,
+  `leaveRemainingMinutes`, `overtimePaidYearMinutes` and
+  `overtimeUnpaidYearMinutes`.
 - **Ownership** is enforced in the service on every read, update, delete and
-  restore. Another owner's id gets the same 404.
-- **Duplicate dates** and restoring onto an occupied date or week return 409
-  through the existing `P2002` mapping. The web edits existing days with `PATCH`.
-- **Computed read-models** (ADR-0020 §4): the service loads the terms, days,
-  claims, approvals, leave years, adjustments and holidays it needs with bounded,
-  owner-scoped range queries. It extends the range to whole weeks and months so
-  booking and conversion are correct, then calls `@repo/domain`. The web passes
-  `asOf` (today in `Europe/London`), so no `Clock` seam is needed.
-- **Limits in `@repo/types`:** break ≤ 1440 minutes; claim minutes ≤ 10080.
+  restore; another owner's id gets the same 404.
+- **Duplicates:** a second row for a date, or a second active switch for a week,
+  returns 409 through the existing `P2002` mapping. The web edits days with
+  `PATCH`.
+- **The switch** is a single reversible toggle, so it has no restore endpoint:
+  switching back on is the undo.
+- **Computed read-models** (ADR-0020 §4): the service widens the requested range
+  to whole weeks and whole months, loads owner-scoped rows with bounded range
+  queries, and calls `@repo/domain` with the caller's `asOf`. There is no `Clock`
+  seam.
+- **Limits in `@repo/types`:** break ≤ 1440 minutes.
 
 ### UI
 
@@ -379,60 +449,66 @@ name in the rail state.
 **Week view** (`/hours`):
 
 ```text
-┌ Hours ────────────────────────────── ‹ Week of 5 Oct 2026 › [This week] ┐ ┌ This week ──────────────────┐
-│ Day       Start  End    Break  Leave  TOIL taken  Worked  Credited  ⚠ ⋯ │ │ Credited 40:30 of 37:30      │
-│ Mon 5 Oct 08:00  17:30  0:30                        9:00     9:00     ⋯ │ │ Excess   +3:00 over          │
-│ Tue 6 Oct 07:30  18:00  0:30                       10:00    10:00     ⋯ │ │ Claim  TOIL [2:00] OT [0:00] │
-│ Wed 7 Oct 08:00  16:00  0:30                        7:30     7:30     ⋯ │ │        [Save claim]          │
-│ Thu 8 Oct 08:00  17:00  0:15 → 0:30                 8:30     8:30     ⋯ │ │ To flexi +1:00               │
-│ Fri 9 Oct 08:00  13:30                              5:30     5:30     ⋯ │ ├ Balances (to today) ─────────┤
-│ Sat 10 Oct —                                                          ⋯ │ │ Flexi         +3:12          │
-│ Sun 11 Oct —                                                          ⋯ │ │ TOIL Oct      6:30 of 7:30   │
-└─────────────────────────────────────────────────────────────────────────┘ │ Overtime (yr) 1:00 unpaid    │
-                                                                            │ Leave left    120:00         │
-                                                                            └──────────────────────────────┘
+┌ Hours ─────────────────────────────────────── ‹ Week of 5 Oct 2026 › [Go to today] ┐ ┌ This week ───────────────────────┐
+│ Day        Start  End    Break        Leave  TOIL taken  Worked  Flexi  Converted ⚠ ⋯│ │ Credited 40:30 of 37:30 target   │
+│ Mon 5 Oct  08:00  17:30  0:30                             9:00  +0:40   0:50        ⋯│ │ Week flexi +3:00 → 0:00          │
+│ Tue 6 Oct  07:30  18:00  0:30                            10:00  +0:40   1:50        ⋯│ │ [on] Convert this week's excess  │
+│ Wed 7 Oct  08:00  16:00  0:30                             7:30   0:00               ⋯│ │   TOIL 1:00 · overtime 2:00      │
+│ Thu 8 Oct  08:00  17:00  0:15 → 0:30                      8:30  +0:40   0:20        ⋯│ │   (unpaid) · applied Fri 9 Oct   │
+│ Fri 9 Oct  08:00  13:30                                   5:30  −2:00               ⋯│ ├ Balances (to today) ─────────────┤
+│ Sat 10 Oct —                                                                        ⋯│ │ Flexi          +3:12             │
+│ Sun 11 Oct —                                                                        ⋯│ │ TOIL October   7:30 of 7:30      │
+└──────────────────────────────────────────────────────────────────────────────────────┘ │ Overtime 2026  2:00 unpaid       │
+                                                                                         │ Leave left     120:00            │
+                                                                                         └──────────────────────────────────┘
 ```
 
 - **Layout:** a page header (one `<h1>` "Hours", the week navigator, and "Go to
-  today" as the one primary action, which focuses today's Start field). Then a
-  CSS grid: a full-bleed day table, and a fixed-width aside that stacks below
-  the table when the reflow floor is reached.
-- **Table:** a real `<table>` with one row per day (seven rows) and a row header
-  per date. Bank holidays show a badge ("Bank holiday · 7:30 credited"). There
-  is no `role="grid"`: cells hold ordinary inputs, and Tab order is the keyboard
-  model. Numeric columns are right-aligned with tabular numerals. After a claim,
-  a TOIL/OT column shows each day's allocation.
+  today" as the primary action, which focuses today's Start field). Then a CSS
+  grid: a full-bleed day table, and a fixed-width aside that stacks below the
+  table when the reflow floor is reached.
+- **Table:** a real `<table>` with seven day rows and a row header per date.
+  - Bank holidays show a badge ("Bank holiday · 7:30 credited").
+  - Flexi and Converted columns are right-aligned with tabular numerals.
+    Converted appears only when the switch is on, and reads "(preview)" before
+    settlement.
+  - There is no `role="grid"`: Tab order through ordinary inputs is the keyboard
+    model.
 - **Rows are small forms.** Tab moves Start → End → Break → Leave → TOIL taken →
   row menu. **Enter saves the row**; **Esc reverts** it. A changed row shows
-  "Unsaved" and a Save button, and the view blocks navigation while rows are
-  unsaved (UX_STANDARDS.md → Forms). Saving an empty row that was never saved
-  does nothing. Validation runs on blur and save, with errors inline.
-- **`TimeInput`** primitive: a text input with a "24-hour, e.g. 08:30" hint
-  linked by `aria-describedby`. It parses on blur. An end earlier than the start
-  shows a "+1 day" tag that screen readers also hear. A duration input for break,
-  leave and TOIL taken accepts `0:30`, `30m`, `7.5h` and shows `h:mm`.
-- **Warnings** use a ⚠ icon with text in the row ("Below 7:30 minimum", "Before
-  07:00") and a list in the aside. There is no colour-only meaning. Warnings
-  never block saving.
-- **Claim panel** in the aside: the week excess; TOIL and overtime duration
-  inputs, limited to the excess (inline error above it); "Save claim"; and a
-  preview of the allocation and what stays in flexi, computed live with
-  `@repo/domain`. When the terms are eligible it also shows the month's
-  approval state, with an "Approve paid overtime for October" toggle.
-- **Row menu (⋯)**, mirrored by a right-click menu: Clear day, Mark bank holiday
-  as worked (holidays only). Clear day soft-deletes the row, shows "Day cleared ·
-  Undo" for 8 seconds, and moves focus to the next row. Deleting a claim works
-  the same way. There are no single-key shortcuts.
-- **Totals** are computed in the browser from saved data plus unsaved rows, and
-  re-read from `time-summaries` and `time-balances` after each save. A polite
-  live region in the aside announces updated totals after a save, not on every
-  keystroke.
+  "Unsaved" and a Save button, and navigation is blocked while rows are unsaved
+  (UX_STANDARDS.md → Forms). Validation runs on blur and save, with errors
+  inline.
+- **Inputs:** `TimeInput` (a "24-hour, e.g. 08:30" hint via `aria-describedby`,
+  parse on blur, an announced "+1 day" tag) and a duration input (`0:30`, `30m`,
+  `7.5h` → `h:mm`).
+- **Warnings** use a ⚠ icon with text in the row ("Below 5:30 minimum", "Before
+  07:00") and a list in the aside. Warnings never block saving.
+- **Aside, This week:**
+  - credited vs target, and the week's flexi before and after conversion;
+  - the **"Convert this week's excess to TOIL and overtime" switch**. It is a
+    single reversible toggle, so it saves immediately with a quiet "Saved", as
+    UX_STANDARDS.md allows. Switching it back is the undo, so there is no toast;
+  - with the switch on, a live summary: TOIL, overtime paid or unpaid, and
+    "preview until Fri 9 Oct" or "applied Fri 9 Oct";
+  - "Nothing to convert" when the week is net zero or negative.
+- **Aside, Balances:** flexi, TOIL this month (with the cap), overtime this year
+  (paid and unpaid), and leave remaining.
+- **Edits after settlement:** after the save, an info toast (4s) names the
+  recalculated week and months (rule 11), and the polite live region in the aside
+  announces it.
+- **Row menu (⋯)**, mirrored by right-click: Clear day, Mark bank holiday as
+  worked. Clear day soft-deletes the row, shows "Day cleared · Undo" for 8
+  seconds, and moves focus to the next row. There are no single-key shortcuts.
+- **Totals** are computed in the browser with `@repo/domain` from saved data plus
+  unsaved rows, then re-read from `time-summaries` and `time-balances` after each
+  save.
 - **States:**
   - loading: skeleton rows at the final height (after 300ms);
-  - no work terms yet: "Set your working terms to start tracking hours", linking
-    to settings;
-  - weeks before the tracking start: "Tracking starts on 7 Sep 2026";
-  - empty week: the seven editable rows plus "No time recorded this week";
+  - no work terms yet: "Set your working terms to start tracking hours", with a
+    link to settings;
+  - before the tracking start: "Tracking starts on 7 Sep 2026";
+  - empty week: seven editable rows plus "No time recorded this week";
   - error: an inline table error with Retry that keeps the header;
   - partial: rows loaded but totals failed, so an error with Retry in the aside
     only;
@@ -443,26 +519,32 @@ name in the rail state.
 - A page header with presets (This month, Last month, This year, Custom) and
   "Download CSV" as the primary action.
 - A table with one row per week or month:
-  - credited, worked, leave, bank holidays;
-  - variance, flexi at the end;
-  - TOIL allocated, taken and converted;
-  - overtime paid and unpaid.
+  - target, credited, worked, leave, bank holidays;
+  - flexi, converted;
+  - TOIL, TOIL taken, TOIL unused;
+  - overtime paid and unpaid;
+  - flexi balance at the end.
 - A totals row, warning badges with text, and a leave-year strip (allowance, used,
   remaining).
 - The empty range state reads "No time recorded between these dates".
 
 **Settings** (`/hours/settings`, tab in the URL):
 
-- **Terms:** an explicit-save form for new terms from a Monday: weekly hours,
-  working days and minimums, break threshold and minimum, band, overtime
-  eligibility, TOIL cap, maximum leave per day, and flexi caps. Earlier terms are
-  listed read-only, with delete and undo.
+- **Terms:** an explicit-save form for new terms from a Monday:
+  - a per-weekday grid with two labelled columns, **Flexi target** ("counts
+    towards flexi") and **Minimum** ("warning only"). Clearing a target makes
+    the day non-working;
+  - break threshold and minimum; the band;
+  - **Paid overtime allowed** (off by default, "When off, all overtime is
+    recorded as unpaid");
+  - the TOIL cap, the maximum leave per day, and flexi caps.
+  - Earlier terms are listed read-only, with delete and undo.
 - **Leave:** a row per year with the allowance and a bought-leave toggle, and
   used and remaining hours.
 - **Balances:** opening flexi, TOIL and leave-used adjustments on the tracking
   start date; confirmed forfeits.
-- **Holidays:** a list by year, "Add bank holidays for <year>", manual add, and
-  delete with undo.
+- **Holidays:** a list by year, "Add England and Wales bank holidays for
+  <year>", manual add, and delete with undo.
 
 **Command palette** (declared in the manifest; active once the palette is
 built, outside this feature):
@@ -477,28 +559,27 @@ built, outside this feature):
 
 - **Choice:** `temporal-polyfill` (FullCalendar), not `@js-temporal/polyfill`.
   - It is spec-compliant and about **20 kB gzipped**.
-  - `@js-temporal/polyfill` is the proposal champions' reference implementation.
-    It is noticeably larger and slower, and its own documentation has not
-    positioned it for production use.
+  - `@js-temporal/polyfill`, the proposal champions' reference implementation,
+    is noticeably larger and slower, and its own documentation has not positioned
+    it for production use.
   - Both expose the same `Temporal` API, so switching costs one import.
-- **Native Temporal:** Firefox shipped it in 139 (2025), and Chromium in 144
-  (early 2026). Node 24 does not have it, so the API needs a polyfill.
-  - For identical behaviour in both apps and in tests, `@repo/domain` always uses
-    the polyfill through one module (`core/time/temporal.ts`), never
-    `globalThis.Temporal`.
-  - Switching to native is a one-file change once Node and both browsers have
-    it. Re-check versions at slice 3.
+- **Native Temporal:** Firefox shipped it in 139 (2025) and Chromium in 144
+  (early 2026). Node 24 does not have it.
+  - `@repo/domain` always imports the polyfill through one module
+    (`core/time/temporal.ts`), never `globalThis.Temporal`, so behaviour is
+    identical in both apps and in tests.
+  - Moving to native is a one-file change. Re-check versions at slice 3.
 - **Bundle:** the polyfill and the engine load only in the `/hours` route chunks
-  (`autoCodeSplitting`), not in the shell or sign-in. Slice 3 records the
-  measured chunk size in the PR against FRONTEND_QUALITY.md's budgets.
+  (`autoCodeSplitting`). Slice 3 records the measured chunk size in the PR against
+  FRONTEND_QUALITY.md's budgets.
 
 ### Export
 
 Backups are not built yet (PRODUCT.md → Next), so export comes early:
 
-- **CSV** (client-side, the shown range): days (date, start, end, break
-  recorded and deducted, worked, leave, TOIL taken, credited, in `h:mm` and
-  decimal hours) and, with the summary slice, week and month rows. It uses a
+- **CSV** (client-side, the shown range): days (date, start, end, break recorded
+  and deducted, worked, leave, TOIL taken, credited, flexi, converted, in `h:mm`
+  and decimal hours) and, with the summary slice, week and month rows. It uses a
   unit-tested CSV builder with quoting and a formula-injection guard.
 - **JSON:** `pnpm data:export`, the server CLI command DATABASE.md plans,
   following the `cli/` pattern (ADR-0018). It writes every owned domain table.
@@ -512,9 +593,8 @@ Backups are not built yet (PRODUCT.md → Next), so export comes early:
 - **Built here because hours needs them first:**
   - the sidebar and tool registry, and `lib/preferences.ts`;
   - the Tooltip, Toast (with undo), DropdownMenu/ContextMenu, Skeleton, Tabs,
-    `TimeInput` and duration input primitives;
-  - the template's restore endpoint and transaction-capable repositories (both
-    in BACKLOG.md);
+    Switch, `TimeInput` and duration input primitives;
+  - the template's restore endpoint and transaction-capable repositories;
   - the generator's `--tool`/`--core` flags;
   - `packages/domain`.
 - **Not built here:** the command palette (PRODUCT.md → Later); the app shell's
@@ -525,8 +605,10 @@ Backups are not built yet (PRODUCT.md → Next), so export comes early:
 
 ## Slices
 
-Each slice is one PR that leaves `main` releasable and ships its tests. Slices
-3 onwards wait for final approval and answers to the open questions.
+Each slice is one PR that leaves `main` releasable and ships its tests. The
+simpler model (a switch instead of claims, no approvals table or API, one
+overtime setting) removes work from slices 5, 6 and 10. The count stays at ten,
+because each remaining slice is still a reviewable unit.
 
 1. **Tool registry and sidebar:** `ToolManifest`, `app/tools.ts` (Home only),
    the sidebar (expanded or rail, persisted, applied before first paint),
@@ -538,43 +620,42 @@ Each slice is one PR that leaves `main` releasable and ships its tests. Slices
    (BACKEND_ARCHITECTURE, REFERENCE_FEATURE, FRONTEND_ARCHITECTURE, API.md).
    Tests: the template's restore e2e; CI template verification.
 3. **Calculation engine:** `packages/domain` (Turborepo, lint, Vitest),
-   `core/time` on `temporal-polyfill`, the `hours/` rules 1–14 and allocation,
-   the parser and formatter. Tests: the full unit matrix. Reviews:
-   security-reviewer (new dependency).
+   `core/time` on `temporal-polyfill`, `hours/` rules 1–14 with levelling, the
+   before/after diff for rule 11, the parser and formatter. Tests: the full unit
+   matrix, including both worked examples. Reviews: security-reviewer (new
+   dependency).
 4. **Settings API:** `work-terms`, `leave-years`, `time-adjustments`, and core
-   `public-holidays` with the bundled import; migration 1. Tests: API e2e for
-   every status code, ownership 404, 409 version and duplicate, 422 rules
-   (non-Monday, last terms, import year). Reviews: database-architect first.
-   Split the core holidays into their own PR if the diff is large.
-5. **Settings UI:** the settings route and its four tabs; the Tabs, Toast and
-   DropdownMenu primitives; `TimeInput` and the duration input. Tests: component
-   tests for the inputs and forms; Playwright + axe for setting terms, a leave
-   year with bought leave, holidays import, and undo.
-6. **Work days, claims and approvals API:** `work-days`, `extra-time-claims`,
-   `overtime-approvals`; migration 2. Tests: API e2e for CRUD and restore,
-   duplicate date 409, the past-midnight collision 422, BST-night instants,
-   a claim over the excess 422, and ownership.
-7. **Week view:** `/hours?week`, the seven day-row forms, live day totals,
-   warnings, Clear day with undo, and the Hours manifest in the sidebar. Tests: a
-   keyboard-only Playwright journey (enter a week, a night shift, leave, undo)
-   with axe at 1280 and 400% zoom.
+   `public-holidays` with the bundled England and Wales import; migration 1.
+   Tests: API e2e for every status code, ownership 404, 409 version and
+   duplicate, 422 rules (non-Monday, minimum without target, last terms, import
+   year). Reviews: database-architect first. Split holidays into their own PR if
+   the diff is large.
+5. **Settings UI:** four tabs (the targets and minimums grid, paid overtime
+   allowed, leave year, balances, holidays); the Tabs, Toast, DropdownMenu and
+   Switch primitives; `TimeInput` and the duration input. Tests: component tests
+   for the inputs and forms; Playwright + axe for setting terms, bought leave, a
+   holidays import, and undo.
+6. **Work days and excess conversions API:** `work-days` and
+   `excess-conversions`; migration 2. Tests: API e2e for CRUD and restore;
+   duplicate date and duplicate switch 409; night-shift collision 422;
+   BST-night instants; rule 4's limits 422; non-Monday 422; ownership.
+7. **Week view:** `/hours?week`, the seven day-row forms, live worked and day
+   flexi, warnings, Clear day with undo, and the Hours manifest in the sidebar.
+   Tests: a keyboard-only Playwright journey (enter a week, a night shift, leave,
+   undo) with axe at 1280 and 400% zoom.
 8. **Export:** CSV of days for the shown range, and `pnpm data:export`. Tests:
    CSV builder unit tests; a CLI test against the `_test` database. Reviews:
    security-reviewer.
 9. **Summaries and balances API:** `time-summaries` and `time-balances` on
-   `@repo/domain`. Tests: API e2e for range 422, week and month
-   grouping, a straddling week, the TOIL cap and month-end conversion,
-   paid/unpaid classification, and ownership (another owner's rows never
-   counted).
-10. **Aside, claims and summary view:** week totals and balances, the claim
-    panel with allocation preview and month approval, `/hours/summary` with URL
-    range, and summary CSV. Tests: Playwright + axe for claiming TOIL, approving
-    a month and reading the summary; browser totals equal API totals for the
-    seeded worked-example week.
-
-That is ten slices, one fewer than before. The simpler one-row-per-day model
-removes the overlap constraint, and holidays and leave fold into the settings
-and week slices.
+   `@repo/domain`. Tests: API e2e for range 422; week and month grouping; the
+   cross-month example; the TOIL cap; month-end conversion; paid/unpaid by
+   effective date; preview vs applied by `asOf`; ownership (another owner's rows
+   never counted).
+10. **Aside and summary view:** the This week and Balances panels, the conversion
+    switch with its preview and applied states, the recalculation toast,
+    `/hours/summary` with URL range, and summary CSV. Tests: Playwright + axe for
+    switching conversion on and off, an edit after settlement, and reading the
+    summary; browser totals equal API totals for the seeded worked-example week.
 
 **Follow-ups outside this branch:**
 
@@ -590,85 +671,90 @@ and week slices.
 
 ## Decisions & open questions
 
-### Answered by the owner (2026-09-16)
+### Answered by the owner (2026-09-16, first round)
 
 1. **Contracted time.** "i work 37.5hrs per week (mon to fri) but the hours can
    vary per day. Would say a minimum of 5.5hrs on a friday and minimum of 7.5hrs
-   mon to thur". Flexi is **weekly** credited time vs 37:30. The daily minimums
-   (7:30 Mon–Thu, 5:30 Fri) only raise warnings. Weekly hours, working days and
-   minimums are effective-dated settings.
+   mon to thur". The minimums only warn; hours, working days and minimums are
+   effective-dated settings. The daily flexi target is refined in round 2,
+   answer 4.
 2. **Extra time.** "time goes to flex balance and can go negative. time only
    counts as overtime when marked. there should be a setting that lets the user
    toggle if they are eligible for overtime or not. if they are not eligible
    then it goes to unpaid overtime.. maximum amount of toil is 7.5hrs a month and
    it must be taken in the same month. only toil accrued and not used in the same
    month does not roll over and is then converted to overtime (paid or unpaid
-   depending on eligibility and permission)". Built as rules 6 and 9–11 and
-   `overtime_eligible`.
-3. **Overtime reward:** TOIL or paid overtime, hour for hour, in hours only (no
+   depending on eligibility and permission)". Built as rules 5–10.
+3. **Overtime reward:** TOIL or overtime, hour for hour, in hours only (no
    money).
-4. **Marking with one start and end per day.** "calculation runs to calculate
-   overtime / toil over the week and then assigns it to days based on best place
-   to average hours". Reconciled with answer 2 as **rule 7** (a week-level claim
-   allocated by levelling), which waits for confirmation (open question 1).
-5. **TOIL cap:** TOIL over 7:30 in a calendar month, and unused TOIL at month
-   end, become overtime, paid or unpaid by eligibility and approval. "Permission"
-   is modelled cheaply as a month-level approval (open question 2).
+4. **Allocation to days.** "calculation runs to calculate overtime / toil over
+   the week and then assigns it to days based on best place to average hours".
+   Built as the levelling rule (rule 6).
+5. **TOIL cap:** TOIL over 7:30 in a calendar month, and TOIL unused at month
+   end, become overtime (rules 7–8).
 6. **Breaks:** record actual breaks; spans over 6:00 have at least 0:30
    deducted; the threshold and minimum are settings.
 7. **Period:** calendar month.
 8. **Caps and carry-over:** flexi caps are settings, unset by default; a warning
-   when one is crossed; a forfeit only on confirmation.
+   when crossed; a forfeit only on confirmation.
 9. **Leave.** "leave is based on hours with no minimum per day. max leave per day
    is 7.5hrs. current leave allowance is 247.5hrs per year jan to dec. and this
    includes the uk bank holiday (i.e. 25 x 7.5hrs core + 8 x 7.5hr bank holidays.
    there is an option to purchase an additional 5 \* 7.5hrs day leave a year".
-   - Bought leave is a per-year toggle adding 37:30.
-   - Bank holidays deduct from the allowance.
-   - The region is England and Wales (8 days) by assumption (open question 3).
+   Bought leave is a per-year toggle adding 37:30.
 10. **Working band:** warn outside it; default 07:00–19:00, editable.
-11. **Recording:** one start, end and break per day, so `work_days` has one row
-    per date. The overlap constraint and `btree_gist` are dropped.
-12. **Activity:** none for now ("leave what time was spent on for now"). Notes
-    are dropped too; a nullable note can be added later without a breaking
-    change.
-13. **Architecture:** ADR-0020 approved as drafted. It stays Proposed until
-    final approval.
+11. **Recording:** one start, end and break per day (`work_days`, one row per
+    date).
+12. **Activity:** none for now ("leave what time was spent on for now"); notes
+    are dropped too.
+13. **Architecture:** ADR-0020 approved as drafted; it stays Proposed until final
+    approval.
 14. **Calculation engine:** "Shared package on Temporal": `@repo/domain` on
-    `temporal-polyfill` (see [Temporal and bundle impact](#temporal-and-bundle-impact)).
+    `temporal-polyfill`.
+
+### Answered by the owner (2026-09-16, second round)
+
+1. **How a week's extra time becomes TOIL or overtime: "One toggle per week".**
+   With the switch on, all of the week's net excess at settlement becomes TOIL
+   up to the monthly cap, and the rest becomes overtime, spread over days by
+   levelling. With it off, the week stays as flexi. This replaces per-week minute
+   claims, so there is no claim to clamp: a later edit simply recomputes the
+   excess (rules 6 and 11).
+2. **Permission for paid overtime.** "toggle again. i.e. i'm currently not
+   contractually allowed paid overtime but this might change in the future".
+   Modelled as the effective-dated `paidOvertimeAllowed` in work terms, off by
+   default and merged with the earlier eligibility toggle, because both decide
+   the same thing: paid or unpaid. Per-month approvals are removed (rule 9).
+3. **Bank holidays:** England and Wales (8 a year), bundled, deducted from the
+   leave allowance at 7:30 each.
+4. **When flexi counts: "Day by day".** Each working day accrues credited time
+   minus a 7:30 target (37:30 a week). The 5:30 Friday minimum stays a separate,
+   warning-only setting. The week settles on its last working day, where the
+   switch applies (rules 5–6).
 
 ### Open questions
 
-1. **How a week's extra time becomes TOIL or overtime.** Recommended: the owner
-   claims an amount per week, and it is allocated to days by levelling (rule 7).
-   Alternatives:
-   - automatic: the whole week's excess becomes TOIL (up to the cap), then
-     overtime, and the owner un-marks any that should stay flexi;
-   - the owner marks TOIL or overtime on individual days, and the tool only
-     checks the week total against the excess;
-   - a whole-week toggle: all of the week's excess goes to TOIL or overtime,
-     allocated by levelling.
-2. **What "permission" for paid overtime means.** Recommended: approval per
-   calendar month (one toggle covering claimed, capped and converted overtime).
-   Alternatives: approval per weekly claim (conversions then need an origin
-   rule); no approval (eligible means paid).
-3. **Bank holiday region.** Recommended: England and Wales (8 a year).
-   Alternatives: Scotland; Northern Ireland.
-4. **When a week's flexi counts.** Recommended: booked when the week ends, on its
-   Sunday, with the current week shown as progress. Alternative: counted day by
-   day as the week goes, against 7:30 a working day, with the remainder settled
-   on Friday.
+None block approval. One consequence to confirm:
+
+1. **TOIL from the earlier month in a week that spans two months.** As briefed,
+   converted minutes count in the month of the day they are allocated to
+   (rule 7). Because the week settles after that month has ended, TOIL allocated
+   to its last days becomes overtime straight away (the cross-month example:
+   2:00 on 28 Sep becomes unpaid overtime). Recommended: keep it, since it
+   matches "must be taken in the same month" and keeps each month's figures to
+   its own dates. Alternative: book the week's TOIL in the settlement day's month
+   (the flexi reduction stays on the allocated days), so all of it can still be
+   taken.
 
 ### Stated defaults (not asked; change on request)
 
-- Work terms and the tracking start take effect on a Monday. Each week uses the
-  terms in force on its Monday.
-- A night shift counts wholly to its start date.
-- Leave and TOIL taken are recorded only on working days.
-- Claimed minutes cannot exceed the week's excess when saved. Later edits clamp
-  the claim with a warning.
-- TOIL is allocated before overtime. On an allocation tie the latest date wins.
+- Terms take effect from a Monday; the tracking start is the first terms' date.
+- A night shift counts wholly to its row's date.
+- Leave, TOIL taken and bank holiday credit are only on working days, and
+  together are at most that day's target.
+- Levelling tie-break: the latest date first.
 - TOIL taken but not earned by month end becomes a flexi debit, with a warning.
+- Today counts towards flexi only once it has a row.
 - Exact minutes, no rounding; `h:mm` display.
 
 ## As-built notes

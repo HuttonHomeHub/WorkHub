@@ -71,7 +71,8 @@ import each feature's manifest. Shared layers still never import features.
 - **Tool-owned** is the default. An entity starts in the tool that creates it.
 - **Core** holds records that are facts about the owner's work and are not
   specific to one tool's rules, **and** that a second tool needs. Today core is
-  only `users`. The hours tracker adds the first core entity, public holidays,
+  only `users`. The hours tracker adds the first core entity, public holidays (England and
+  Wales, bundled),
   because calendar facts belong to no single tool.
 - **Promote on second use.** When a second tool needs a tool-owned entity, move
   it to core in its own PR before the second tool uses it. Because names never
