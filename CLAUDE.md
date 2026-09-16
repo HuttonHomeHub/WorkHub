@@ -22,10 +22,8 @@ link to the canonical document instead of restating a rule.
   and GHCR images.
 - **Does not exist:** domain features or models, passkeys, backups, the sidebar,
   command palette, background jobs, caching, file storage, OpenTelemetry.
-- The operations documents (ARCHITECTURE, DEPLOYMENT, DEVELOPMENT) still
-  describe parts of the old generic starter until their rewrite; ARCHITECTURE.md
-  carries a **"Pending rewrite (ADR-0019)"** banner. Where they conflict with
-  `docs/PRODUCT.md`, PRODUCT.md wins.
+- The standards are tailored to this profile (ADR-0019). Where any document
+  conflicts with `docs/PRODUCT.md`, PRODUCT.md wins.
 - **Check before assuming.** Grep for code before referencing it, and check
   `git log origin/main` before relying on anything in this file.
 
@@ -89,12 +87,14 @@ pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm docs:check
   3. the API port variable is `API_PORT` (default 3000), not `PORT`.
 - **Accounts:** `pnpm db:seed` (dev account `dev@example.com` /
   `dev-password-123`), `pnpm user:create`, `pnpm user:reset-password`.
-- **Codespace gotchas:**
+- **Codespace gotchas** ([`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md#codespace-specifics)):
   - Docker blocks container-to-container traffic, so `docker compose up` fails
     at migrate. Run `pnpm dev` against the Postgres container instead.
   - A git worktree needs a full `pnpm install`; filtered installs leave packages
     unlinked, and the git hooks need `node_modules`.
-- Setup and everyday commands: `docs/DEVELOPMENT.md`.
+  - Restart dev servers by port, never with `pkill -f <pattern>`.
+- Setup and everyday commands: `docs/DEVELOPMENT.md`; the server:
+  `docs/OPERATIONS.md`.
 
 ## 6. Git & PR mechanics
 
@@ -142,7 +142,8 @@ pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm docs:check
 | Feature template                     | [`docs/REFERENCE_FEATURE.md`](docs/REFERENCE_FEATURE.md)                                                   |
 | Tests and CI jobs                    | [`docs/TESTING.md`](docs/TESTING.md)                                                                       |
 | Local development                    | [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md)                                                               |
-| Releases and deployment              | [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)                                                                 |
+| Versioning and releases              | [`docs/RELEASING.md`](docs/RELEASING.md)                                                                   |
+| Self-hosting runbook, backups        | [`docs/OPERATIONS.md`](docs/OPERATIONS.md)                                                                 |
 | Delivery process                     | [`docs/PROCESS.md`](docs/PROCESS.md)                                                                       |
 | Feature docs                         | [`docs/features/`](docs/features/README.md)                                                                |
 | Architectural decisions (immutable)  | [`docs/adr/`](docs/adr/)                                                                                   |

@@ -137,7 +137,7 @@ sequenceDiagram
 
 Two immutable images (`web`, `api`) published to GHCR and promoted through
 environments. The reference deployment is self-hosted Docker Compose behind the
-operator's reverse proxy (`docker-compose.prod.yml`, [DEPLOYMENT.md](DEPLOYMENT.md));
+operator's reverse proxy (`docker-compose.prod.yml`, [OPERATIONS.md](OPERATIONS.md));
 the container-first foundation keeps other platforms open.
 
 ## 10. Cross-cutting principles

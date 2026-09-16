@@ -193,7 +193,7 @@ backlog item. Follow the pattern above as soon as a feature needs a transaction.
    that has been applied anywhere but your machine.
 
 In production the compose `migrate` service runs `prisma migrate deploy`, and the
-API starts only after it succeeds ([DEPLOYMENT.md](DEPLOYMENT.md)). The app is
+API starts only after it succeeds ([OPERATIONS.md](OPERATIONS.md#routine-upgrade)). The app is
 briefly unavailable during a deploy; for one owner that is accepted, so
 migrations do not need to be backward-compatible with the previous image.
 

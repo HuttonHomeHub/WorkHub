@@ -32,7 +32,7 @@ implemented everywhere; each is tracked in [BACKLOG.md](BACKLOG.md) or PRODUCT.m
 - Every Nest route is URI-versioned: `/api/v1/...` (the default version is `1`).
 - **There is no major-version process.** The web and API images are released
   together at one version and deployed on one `IMAGE_TAG`
-  ([DEPLOYMENT.md](DEPLOYMENT.md)), so the only client is always in lockstep
+  ([RELEASING.md](RELEASING.md#the-configuration-invariants)), so the only client is always in lockstep
   with the server. A breaking change updates the web client in the same PR.
 - The **OpenAPI contract diff is the review** of every API change (below). A
   breaking change is an escalation trigger ([PROCESS.md](PROCESS.md)) and is

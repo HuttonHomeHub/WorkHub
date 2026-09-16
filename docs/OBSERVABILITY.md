@@ -126,8 +126,8 @@ When something feels slow, measure before changing anything
 Container logs use Docker's `json-file` driver capped at 10 MB × 5 files per
 service (`docker-compose.prod.yml`); read them with
 `docker compose -f docker-compose.prod.yml logs api`. Anything longer-lived is
-the owner's choice of log shipping. Deployment procedures are in
-[DEPLOYMENT.md](DEPLOYMENT.md).
+the owner's choice of log shipping. Log queries, monitoring setup and the other
+server procedures are in [OPERATIONS.md](OPERATIONS.md#logs).
 
 ## Deferred: OpenTelemetry
 

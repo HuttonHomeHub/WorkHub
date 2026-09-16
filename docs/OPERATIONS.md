@@ -372,6 +372,11 @@ The database volume `workhub-db-data` is the **only** stateful part of the stack
 The rest can be rebuilt from the images, the compose file and
 `.env.production` (kept in the password manager).
 
+The volume name is pinned in `docker-compose.prod.yml` so it doesn't depend on
+the compose project name. **Never rename it, and never run `wh down -v`:** under
+a new name compose creates an empty volume, and the app starts against an empty
+database without complaint.
+
 > **Status.** Automated backups are **planned, not built** (PRODUCT.md
 > [Next](PRODUCT.md#next)). Until they exist, take manual backups before every
 > upgrade and regularly, and copy them off the host yourself.

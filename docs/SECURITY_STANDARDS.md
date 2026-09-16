@@ -160,7 +160,9 @@ As shipped in `apps/api/src/app.setup.ts` and `auth.instance.ts`:
   and Better Auth's `ipAddress.trustedProxies` (its limiter's client IP), so
   `X-Forwarded-For` from any other peer is ignored and a client cannot pick its
   own rate-limit bucket (`apps/api/test/trust-proxy.e2e-spec.ts`).
-- Use IPs or CIDRs only. Deployment detail is in [DEPLOYMENT.md](DEPLOYMENT.md).
+- Use IPs or CIDRs only. Proxy set-up, including proxies on another host and
+  Docker networks outside `172.16.0.0/12`, is in
+  [OPERATIONS.md](OPERATIONS.md#reverse-proxy).
 
 ## Security headers
 
@@ -183,15 +185,16 @@ As shipped in `apps/api/src/app.setup.ts` and `auth.instance.ts`:
 - **On the server** the secrets live in `.env.production` next to the compose
   file, owned by the deploying user with **mode 600**. Generate them with
   `openssl rand -base64 32` (`BETTER_AUTH_SECRET`) and
-  `openssl rand -base64 24` (`POSTGRES_PASSWORD`).
+  `openssl rand -hex 32` (`POSTGRES_PASSWORD` — hex, because compose places it
+  inside `DATABASE_URL`, where a `/` from base64 breaks the URL).
 - **`BETTER_AUTH_SECRET`:** production refuses a value shorter than 32
   characters or containing a placeholder marker (`dev-insecure`, `change-me`,
   `changeme`, `<openssl`, `example`). **Rotating it signs every session out** —
   that is the way to force re-authentication everywhere.
 - **`POSTGRES_PASSWORD`** is applied only when the database volume is first
-  initialised. To rotate it, change the role's password first
-  (`ALTER USER app WITH PASSWORD '…'` in the db container), then update
-  `.env.production` and recreate the `migrate` and `api` containers.
+  initialised. To rotate it, change the role's password first, then update
+  `.env.production` and recreate the `migrate` and `api` containers
+  ([OPERATIONS.md](OPERATIONS.md#rotate-postgres_password)).
 - **One database role.** The compose files give `migrate` and `api` the same
   `POSTGRES_USER`, which the Postgres image creates as a superuser that owns the
   schema. A separate runtime role with data-only privileges is a backlog item;
@@ -226,8 +229,8 @@ them is part of login hardening (BACKLOG.md).
 
 Images run as non-root users with health checks; production exposes only the web
 container's port, bound to `127.0.0.1` by default, and Postgres has no host port.
-Host, proxy and backup hardening are documented in
-[DEPLOYMENT.md](DEPLOYMENT.md).
+Host, proxy, secret rotation and backup procedures are in
+[OPERATIONS.md](OPERATIONS.md). Further container hardening is a backlog item.
 
 ## Data protection
 
