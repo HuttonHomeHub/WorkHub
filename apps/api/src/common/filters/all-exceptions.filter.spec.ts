@@ -8,6 +8,8 @@ interface Captured {
   status?: number;
   body?: unknown;
   headers: Record<string, string>;
+  /** The first argument (the structured fields) of the filter's warn log call. */
+  warned?: Record<string, unknown> | undefined;
 }
 
 /** Runs the filter against a fake Express request/response and captures the reply. */
@@ -38,9 +40,10 @@ function run(
 
   const filter = new AllExceptionsFilter();
   // Keep test output quiet; the log calls themselves are asserted below.
-  vi.spyOn(filter['logger'], 'warn').mockImplementation(() => undefined);
+  const warn = vi.spyOn(filter['logger'], 'warn').mockImplementation(() => undefined);
   vi.spyOn(filter['logger'], 'error').mockImplementation(() => undefined);
   filter.catch(exception, host);
+  captured.warned = warn.mock.calls[0]?.[0] as Record<string, unknown> | undefined;
   return captured;
 }
 
@@ -54,6 +57,11 @@ describe('AllExceptionsFilter', () => {
     const error = new Prisma.PrismaClientKnownRequestError('Inconsistent column data', {
       code: 'P2023',
       clientVersion: 'test',
+      // The shape Prisma 6 gives a malformed UUID; `message` quotes the input.
+      meta: {
+        modelName: 'User',
+        message: 'Error creating UUID, invalid character: … found `S` at 25',
+      },
     });
 
     const reply = run(error);
@@ -62,6 +70,13 @@ describe('AllExceptionsFilter', () => {
     expect(reply.body).toEqual({
       error: { code: 'BAD_REQUEST', message: 'The request contains a malformed value.' },
     });
+    // Logged so a server-side bug behind the 400 stays visible, without the value.
+    expect(reply.warned).toMatchObject({
+      code: 'BAD_REQUEST',
+      prismaCode: 'P2023',
+      prismaModel: 'User',
+    });
+    expect(JSON.stringify(reply.warned)).not.toContain('invalid character');
   });
 
   it.each([

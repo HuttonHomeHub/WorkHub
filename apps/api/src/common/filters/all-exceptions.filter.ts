@@ -181,12 +181,15 @@ export class AllExceptionsFilter implements ExceptionFilter {
       // Inconsistent column data: a value Prisma cannot convert to the column's
       // type, such as a malformed UUID. Boundary validation (ParseUuidPipe,
       // IsCursor) should stop these first; this keeps a missed one a 400
-      // rather than a 500 (docs/API.md → Status codes).
+      // rather than a 500 (docs/API.md → Status codes). A server-side bug can
+      // cause it too, so the warn line names the Prisma code and model.
+      // `meta.message` is left out: it quotes part of the rejected value.
       case 'P2023':
         return {
           status: HttpStatus.BAD_REQUEST,
           code: 'BAD_REQUEST',
           message: 'The request contains a malformed value.',
+          log: { prismaCode: error.code, prismaModel: error.meta?.modelName },
         };
       case 'P2002':
         return {

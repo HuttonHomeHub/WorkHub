@@ -111,7 +111,10 @@ throw 400, the global `ValidationPipe` is configured with
 `errorHttpStatusCode: 422`, and a domain `ValidationError` maps to 422.
 Prisma's `P2023` (a value that cannot be converted to the column's type, such as
 a malformed UUID) also maps to 400, as a backstop for a value that slips past
-boundary validation.
+boundary validation. The trade-off: a server-side bug that passes a bad value
+would also look like a 400, so the filter logs each one at `warn` with
+`prismaCode` and `prismaModel` (not the value). A `P2023` in the logs means a
+missing boundary check or a bug — investigate it.
 
 ## Error codes
 
