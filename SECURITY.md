@@ -1,60 +1,24 @@
-# Security Policy
+# Security policy
 
-We take the security of WorkHub and its users' sensitive data seriously.
-
-## Supported versions
-
-While the project is pre-1.0, only the latest release on `main` receives
-security fixes. This table will be maintained as versions are released.
-
-| Version              | Supported      |
-| -------------------- | -------------- |
-| `main` (unreleased)  | ✅             |
-| `< 1.0` pre-releases | ⚠️ latest only |
+WorkHub is a private, self-hosted app maintained by one person.
 
 ## Reporting a vulnerability
 
-**Please do not open a public issue for security vulnerabilities.**
-
-Report privately via GitHub's
+**Please do not open a public issue.** Report it privately through GitHub's
 [**Report a vulnerability**](https://github.com/HuttonHomeHub/WorkHub/security/advisories/new)
-(Security → Advisories). If you cannot use that channel, contact a maintainer
-directly.
+form (Security → Advisories), with:
 
-Please include:
+- what the issue is and its impact;
+- steps to reproduce or a proof of concept;
+- the affected version or commit.
 
-- a description of the issue and its impact,
-- steps to reproduce or a proof of concept,
-- affected component/version, and
-- any suggested remediation.
+Reports are handled on a **best-effort basis** — there is no guaranteed response
+time or disclosure timeline. Only the latest release is fixed. Please give a
+reasonable chance to fix the issue before disclosing it, and do not access data
+that is not yours or degrade a running instance while testing.
 
-### What to expect
+## Security standards
 
-- **Acknowledgement** within 3 business days.
-- An initial **assessment** within 7 business days.
-- Coordinated disclosure: we will agree a timeline with you and credit you
-  (unless you prefer to remain anonymous) once a fix is released.
-
-Please act in good faith: give us reasonable time to remediate before public
-disclosure, and avoid privacy violations, data destruction, or service
-degradation while testing.
-
-## Security practices in this repository
-
-- **Secrets** are never committed. Configuration is supplied via environment
-  variables / a secrets manager. `.env` is git-ignored; `.env.example` documents
-  the shape only.
-- **Static analysis:** CodeQL runs on every push/PR and weekly.
-- **Secret scanning & push protection** are expected to be enabled on the repo.
-- **Dependency updates** are automated via Dependabot; security updates are
-  prioritised.
-- **Input validation** at every boundary (DTO validation + Prisma parameterised
-  queries). No hand-built SQL.
-- **Transport & headers:** HTTPS in all deployed environments; Helmet (API) and
-  hardened nginx headers (web).
-- **Authentication:** Better Auth with hashed credentials and secure, http-only,
-  same-site cookies; CSRF protection on state-changing requests.
-- **Least privilege:** scoped database roles, non-root container users, and
-  minimally-scoped CI tokens.
-
-See [`docs/SECURITY_STANDARDS.md`](docs/SECURITY_STANDARDS.md) for the full security requirements.
+How WorkHub is secured — authentication, sessions, ownership, secrets, proxy
+trust, rate limiting — is in
+[`docs/SECURITY_STANDARDS.md`](docs/SECURITY_STANDARDS.md).
