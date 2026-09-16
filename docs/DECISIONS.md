@@ -10,6 +10,54 @@ get an ADR instead (and may be linked from here).
 
 ---
 
+### 2026-09-16 — Backend standards defaults
+
+**Decision.** The backend standards are tailored to one owner and one API
+instance (ADR-0019), with these defaults for choices the owner delegated:
+
+- **Validation:** API DTOs stay on `class-validator`; environment, CLI and web
+  use Zod; rules both apps enforce live in `@repo/types`. Revisit at the NestJS
+  12 migration (TECH_DEBT.md), where Standard Schema could unify them.
+- **Pagination:** cursor-based stays, with an optional `meta.total` for desktop
+  tables and a maximum `limit` of 200 (100 today; the code change is in
+  BACKLOG.md). The list search parameter is `q`.
+- **Status codes:** 400 for a request that cannot be interpreted (malformed JSON,
+  path id or cursor), 422 for a well-formed request that breaks a rule — as the
+  code already behaves.
+- **Soft delete:** user-facing domain entities soft-delete; purging is a manual
+  "empty trash", never automatic; uniqueness uses partial unique indexes on
+  active rows.
+- **Transactions:** the service opens `prisma.$transaction` and passes the
+  transaction client to repository methods that take an optional client.
+- **Migrations:** forward-only with a backup before every deploy, and a
+  data-preserving plan plus a dry run on a restored copy for destructive or
+  data-transforming changes. Expand/contract is dropped.
+- **Coverage:** no percentage anywhere; coverage is a local diagnostic, not a
+  gate. Adding a CI coverage gate would be a separate, escalated change.
+- **API versioning:** keep `/api/v1`; web and API deploy in lockstep on one
+  `IMAGE_TAG`, so there is no major-version process — the OpenAPI contract diff
+  is the review.
+- **Test layers:** API e2e against a real `_test` Postgres database is the
+  primary backend layer; unit tests only for real logic; no mocked-repository
+  tests for pass-through CRUD.
+- **Auth security events** go to the structured logs instead of an audit log.
+
+**Why.** The previous standards described a multi-tenant SaaS: an audit log and
+actor columns, expand/contract for zero-downtime rollouts, queues, caches and
+object storage drawn as live, load and SLO targets, and an unenforced 80%
+coverage rule. They also left real gaps — transactions, time handling, error
+details, cursor validation, session policy, test database isolation.
+
+**Consequences.** [API.md](API.md), [DATABASE.md](DATABASE.md),
+[SECURITY_STANDARDS.md](SECURITY_STANDARDS.md), [TESTING.md](TESTING.md),
+[OBSERVABILITY.md](OBSERVABILITY.md), [PERFORMANCE.md](PERFORMANCE.md),
+[BACKEND_ARCHITECTURE.md](BACKEND_ARCHITECTURE.md) and
+[REFERENCE_FEATURE.md](REFERENCE_FEATURE.md) are rewritten, `SECURITY.md` becomes
+a short disclosure policy, and the reference template drops `created_by` and
+`updated_by`. Gaps found while checking the code against the docs are
+BACKLOG.md items. `pnpm docs:check` rejects the removed terms outside historical
+records.
+
 ### 2026-09-15 — Right-size the process and agents for a solo developer
 
 **Decision.** Replace the team delivery process with the four change classes,

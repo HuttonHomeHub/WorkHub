@@ -16,18 +16,24 @@ Assume an adversarial client. You review; you never edit.
 ## Reference
 
 `docs/PRODUCT.md` and ADR-0019 (they win over any document marked "Pending
-rewrite"), `docs/SECURITY_STANDARDS.md` (canonical rules), `SECURITY.md`,
+rewrite"), `docs/SECURITY_STANDARDS.md` (canonical rules), `docs/API.md` (status codes,
+payload limits), `docs/OBSERVABILITY.md` (auth events), `SECURITY.md`,
 `docs/DEPLOYMENT.md` (proxy and secrets), ADR-0003 (Better Auth), ADR-0016
 (ownership), ADR-0017 (shared validation), ADR-0018 (closed sign-up).
 
 ## Checklist
 
-- **Authentication:** the global guard covers the route, or `@Public()` has a
-  written justification; sign-up stays closed unless `AUTH_SIGNUP_ENABLED`.
-- **Sessions & passkeys:** cookies http-only, secure, same-site; session
-  lifetime and idle timeout as documented; sign-out everywhere revokes
-  sessions; passkey registration requires an authenticated session; recovery
-  only through the server CLI.
+- **Authentication:** the global guard covers the route, or `@Public()` is
+  added to the inventory in `docs/SECURITY_STANDARDS.md` with a reason; sign-up
+  stays closed unless `AUTH_SIGNUP_ENABLED`; Swagger stays off in production.
+- **Required before exposure:** auth changes keep the login-hardening items on
+  track and never regress them once built — passkeys as a second factor
+  (registration needs a session, recovery only through the server CLI), an
+  explicit session lifetime and idle timeout, sign out everywhere, a per-account
+  brute-force posture. Flag any change that claims public readiness without
+  them.
+- **Sessions:** cookies http-only, `Secure` under https, `SameSite=Lax`; a
+  password reset or passkey change revokes the account's sessions.
 - **Ownership (ADR-0016):** every loaded row passes `principal.owns(row)` before
   read, update or delete; lists filter by `ownerId`; creates take the owner from
   the session, never the body; another owner's row is the **same 404** as a
@@ -38,7 +44,8 @@ rewrite"), `docs/SECURITY_STANDARDS.md` (canonical rules), `SECURITY.md`,
   `$queryRawUnsafe` or string-built SQL; no unsanitised HTML rendering.
 - **Secrets:** none in code, tests, logs or images; production refuses short or
   placeholder secrets (`BETTER_AUTH_SECRET` ≥ 32 characters, no `change-me` /
-  `example`); `.env.example` holds placeholders only.
+  `example`); `.env.example` holds placeholders only; the rotation steps in
+  `docs/SECURITY_STANDARDS.md` stay true.
 - **Proxy trust:** `AUTH_TRUSTED_PROXIES` drives both Better Auth's client IP and
   Express `trust proxy`; it lists IPs/CIDRs only; a change cannot let a client
   spoof `X-Forwarded-For`.
@@ -47,7 +54,12 @@ rewrite"), `docs/SECURITY_STANDARDS.md` (canonical rules), `SECURITY.md`,
 - **Headers & CSRF:** Helmet on the API and nginx headers on web are not
   weakened; Better Auth's origin check and `CORS_ORIGINS` stay strict.
 - **Errors & logs:** safe messages, no stack traces to clients; no secrets,
-  passwords, tokens or session IDs logged.
+  passwords, tokens, cookies or typed-in emails logged. Auth changes emit the
+  auth security events in `docs/OBSERVABILITY.md` — there is no audit log and
+  no actor columns (ADR-0019); do not ask for them.
+- **Database role:** migrate and api share one role today (a backlog item);
+  flag anything that widens database exposure (a host port, a role with more
+  rights).
 - **New dependencies:** needed, maintained, reasonably sized; no install scripts
   or broad permissions without reason.
 

@@ -1,189 +1,196 @@
-# Backend Architecture
+# Backend architecture
 
-> **Pending rewrite (ADR-0019).** Parts of this document assume BullMQ + Redis jobs, a Redis cache, S3 object storage and OpenTelemetry, which ADR-0019 defers — where it conflicts with [PRODUCT.md](PRODUCT.md), PRODUCT.md wins.
+> How the API (`apps/api`) is put together: modules and layers, dependency
+> injection, the request lifecycle, configuration, errors, and where
+> transactions, time and deferred infrastructure fit. Backed by ADR-0008
+> (modular monolith), ADR-0014/0015 (the reference template) and ADR-0017
+> (shared contracts). The rules themselves live in their canonical documents:
+> [API.md](API.md), [DATABASE.md](DATABASE.md),
+> [SECURITY_STANDARDS.md](SECURITY_STANDARDS.md),
+> [OBSERVABILITY.md](OBSERVABILITY.md) and [TESTING.md](TESTING.md).
 
-> **Status:** implemented (infrastructure) + design. This document defines the
-> architecture the API (`apps/api`) follows. The reusable infrastructure (config,
-> Prisma, guards, filters, interceptors, health, bootstrap) is live in
-> `apps/api/src/`; the **feature** patterns are demonstrated by the non-shipping
-> template in [`apps/api/examples/reference-feature/`](../apps/api/examples/reference-feature/)
-> (ADR-0014). Backed by ADRs [0008](adr/0008-backend-modular-monolith.md)–[0014](adr/0014-reference-feature-as-non-shipping-template.md),
-> [0003](adr/0003-authentication-with-better-auth.md),
-> [0016](adr/0016-owner-based-access-individual-accounts.md), and
-> [0017](adr/0017-shared-contracts-and-generated-api-client.md).
+## Shape
 
-## Guiding principles
+A **NestJS 11 modular monolith** on Express 5, run as **one instance** in Docker
+Compose next to PostgreSQL (ADR-0019). There is no worker, cache or object store.
+Features are generated from the reference template (`pnpm gen:feature`,
+[REFERENCE_FEATURE.md](REFERENCE_FEATURE.md)); none exist yet.
 
-Correctness · Security-by-default · Clear boundaries · Testability ·
-Observability · Simplicity. **Optimise for long-term maintainability**; design
-for the next decade, not the next sprint.
+```text
+apps/api/src/
+├── main.ts                 # bootstrap: Pino logger, configureApp, Swagger (non-prod), shutdown hooks, listen
+├── app.setup.ts            # HTTP wiring shared with e2e tests: trust proxy, Helmet, Better Auth, body parsing, CORS, prefix, versioning
+├── app.module.ts           # root module: global logger, throttler, pipe, interceptor, filter, guards
+├── config/                 # Zod env schema, .env path, typed AppConfigService
+├── prisma/                 # PrismaService — the database client
+├── common/
+│   ├── auth/               # Better Auth instance, AuthContextService (the auth seam), Principal
+│   ├── guards/             # AuthenticationGuard (deny by default)
+│   ├── decorators/         # @Public(), @CurrentUser()
+│   ├── filters/            # AllExceptionsFilter → { error } envelope
+│   ├── interceptors/       # TransformInterceptor → { data, meta } envelope
+│   ├── errors/             # domain errors: NotFound, Conflict, Forbidden, Validation
+│   ├── dto/                # PaginationQueryDto, Paginated
+│   ├── openapi/            # ApiDataResponse / ApiPaginatedResponse, document builder
+│   └── validation/         # ParseUuidPipe (accepts UUID v7)
+├── health/                 # /health, /health/ready (Terminus)
+├── me/                     # GET /api/v1/me
+├── public-config/          # GET /api/v1/config
+├── cli/                    # user create / reset-password, db seed (no HTTP server)
+├── generate-openapi.ts     # writes openapi.json for pnpm contract:generate
+└── modules/<feature>/      # generated features (none yet)
+```
 
-## Application architecture (ADR-0008)
-
-A **modular monolith** built with **NestJS**. One deployable artifact, composed
-of feature modules with strict internal layering.
+## Layers
 
 ```mermaid
 flowchart TD
-  subgraph HTTP
-    C[Controller<br/>routing · DTO validation · OpenAPI · status codes]
-  end
-  subgraph Domain
-    S[Service<br/>business logic · transactions · authz policy]
-  end
-  subgraph Data
-    R[Repository / PrismaService<br/>queries only]
-  end
+  C["Controller<br/>route · DTO binding · status code · OpenAPI · response DTO"]
+  S["Service<br/>ownership · business rules · transaction boundary · logging"]
+  R["Repository<br/>Prisma queries · soft-delete filter · optimistic lock"]
   DB[(PostgreSQL)]
   C --> S --> R --> DB
-  S -. enqueue .-> Q[[BullMQ / Redis]]
-  S -. cache-aside .-> K[(Redis cache)]
-  S -. files .-> O[(Object storage)]
+  S -. "opens $transaction, passes tx" .-> R
 ```
 
-## Module boundaries & dependency rules
+- **Controller** — thin: binds validated DTOs, injects the principal with
+  `@CurrentUser()`, calls one service method, maps the entity to a response DTO.
+  No business logic, no Prisma.
+- **Service** — authorises (`principal.owns(row)`), applies rules, owns the
+  transaction boundary, logs, and throws **domain errors** — never HTTP
+  exceptions.
+- **Repository** — the only Prisma consumer. Every read goes through the
+  soft-delete filter.
+- **Dependencies point inward** (controller → service → repository). A feature
+  never imports another feature's internals; it uses that module's exported
+  service. Cross-cutting code lives in `common/`; cross-app contracts in
+  `@repo/types`.
 
-- **Feature modules** own a slice of the domain (`modules/<feature>/`). Each
-  exposes a small public surface (exported providers); internals stay private.
-- **Dependencies point inward:** controller → service → repository. Nothing
-  depends on the controller; the repository is the only Prisma consumer.
-- **No feature imports another feature's internals.** Cross-feature needs go
-  through an exported service or shared code (`common/`, `@repo/types`).
-- **`common/`** holds cross-cutting infrastructure (guards, filters,
-  interceptors, decorators, pipes, base DTOs, Prisma, auth context).
-- These boundaries make modules the seams along which the monolith could later
-  be split.
+## Dependency injection
 
-## Service structure & dependency injection
+- Constructor injection throughout; providers are stateless singletons.
+- **Seams exist only where they earn their keep.** Today there is one:
+  `AuthContextService`, which resolves the principal from Better Auth and which
+  e2e tests override to act as a user. Add a seam when a second implementation
+  or a test needs one — not in advance:
+  - a `Clock` provider **(planned)** for code whose rules depend on "now"
+    ([DATABASE.md](DATABASE.md#time));
+  - a storage service over the backed-up volume, when a feature first stores
+    files (ADR-0019).
+- Better Auth is built by a factory (`createAuth`) and injected by the
+  `AUTH_INSTANCE` token; `AuthModule` and `AppConfigModule` are global.
 
-- **Constructor injection** everywhere (NestJS DI). Services are stateless and
-  singleton-scoped.
-- **Depend on abstractions for infrastructure** — `StorageService`,
-  `CacheService`, `AuthContextService`, a `Clock` — via interfaces/abstract
-  classes and provider tokens, so implementations are swappable and trivially
-  faked in tests.
-- **Thin controllers, thin workers.** HTTP controllers and BullMQ processors
-  both delegate to services; business logic lives in exactly one place.
+## Request lifecycle
 
-## Validation
-
-- **Request validation** with `class-validator` + `class-transformer` DTOs,
-  enforced by a **global `ValidationPipe`** configured `whitelist: true`,
-  `forbidNonWhitelisted: true`, `transform: true`. Unknown properties are
-  rejected; payloads are coerced to typed instances.
-- **DTOs are the request contract** and the source of OpenAPI schemas
-  (`@nestjs/swagger`). Validation failures return **422** with field-level
-  detail (see `docs/API.md`).
-- **Environment/config validation** with **Zod** at startup — the app refuses to
-  boot with invalid configuration (fail fast).
-- Validate at the boundary; services may assume validated input.
-- **Rules the web also enforces** (e.g. password and name length) come from
-  `@repo/types` and are enforced by the API too (ADR-0017).
-
-## API contract (ADR-0017)
-
-- Controllers document responses with the envelope-aware decorators; the
-  committed `apps/api/openapi.json` and the web's client types are regenerated
-  with `pnpm contract:generate` and drift-checked in CI. Conventions:
-  [`API.md`](API.md).
-
-## Error handling
-
-- A **global exception filter** maps everything to the standard `ApiError`
-  envelope (`docs/API.md`): a stable `code`, a safe `message`, optional
-  `details`. **No stack traces or internals** ever reach the client.
-- **Domain errors** are typed exceptions (e.g. `NotFoundError`,
-  `ConflictError`) mapped to the right HTTP status; **Prisma errors** are mapped
-  (unique violation → 409, not-found → 404) by the same global
-  `AllExceptionsFilter`.
-- **4xx = expected** (logged at `warn`/`info`); **5xx = incidents** (logged at
-  `error` with correlation ID and reported to telemetry).
-- Never swallow errors; fail loud in dev, degrade gracefully in prod.
-
-## Configuration
-
-- **12-factor:** all config via environment, typed and validated through
-  `@nestjs/config` + a Zod schema, exposed by a typed config service. Code never
-  reads `process.env` directly.
-- **No secrets in the repo** (`SECURITY.md`); `.env.example` documents shape.
-  Distinct config per environment via the platform's secret manager.
-
-## Background processing (ADR-0009)
-
-- **BullMQ + Redis** for async/scheduled work. Producers enqueue from services;
-  **processors live in the owning module** and delegate to services.
-- Jobs are **durable, retried with backoff, and idempotent**; terminal failures
-  go to a failed/dead-letter set. Repeatable jobs handle scheduled work.
-- Jobs carry the correlation ID; the worker can be split into its own
-  deployment later without code changes.
-
-## Caching strategy (ADR-0010)
-
-- **Cache-aside** behind a `CacheService` (Redis). Read-through on miss,
-  **invalidate on write**. Namespaced, versioned keys; explicit per-use-case
-  TTLs; no unbounded caches.
-- **Correctness first:** cache only what tolerates its TTL's staleness; never
-  cache authoritative computed results beyond safe bounds. **Cache only when
-  profiling justifies it** (`docs/PERFORMANCE.md`).
-
-## File storage strategy (ADR-0011)
-
-- **Object storage (S3-compatible)** behind a `StorageService`. **Metadata in
-  Postgres, bytes in the bucket.** Clients transfer via short-lived
-  **pre-signed URLs**; large payloads never stream through the API. Private
-  buckets, random keys, server-side content-type/size validation.
-
-## Authentication (ADR-0003)
-
-- **Better Auth**, cookie-based sessions (secure, http-only, same-site). A
-  global authentication guard resolves the **principal** from the session via an
-  `AuthContextService` seam; unauthenticated requests get **401**. Tokens are
-  never exposed to client JS. State-changing requests are CSRF-protected.
-  `/api/auth/*` is Better Auth's own handler, mounted before the Nest router in
-  `app.setup.ts`; its rate limiting is Better Auth's
-  ([`SECURITY_STANDARDS.md`](SECURITY_STANDARDS.md#rate-limiting--abuse-protection)).
-
-## Authorisation (ADR-0016)
-
-- **Owner-based access**, **deny-by-default**; services are the authorisation
-  layer. The rules (creates, lists, loaded rows, same-404) are defined once in
-  [`SECURITY_STANDARDS.md` → Authorisation](SECURITY_STANDARDS.md#authorisation--ownership-adr-0016)
-  and demonstrated by `findOwnedOrThrow` in the reference template.
-  `@Public()` opts an endpoint out of authentication.
-
-## Observability (ADR-0013)
-
-- **Structured JSON logs (Pino)** with a **correlation ID** on every log and
-  response, sensitive fields redacted. **Metrics + traces via OpenTelemetry**
-  (auto-instrumented HTTP/Prisma/Redis/BullMQ). **Liveness/readiness** via
-  `@nestjs/terminus`. Full detail in [`OBSERVABILITY.md`](OBSERVABILITY.md).
-
-## Request lifecycle (with cross-cutting concerns)
+Order matters, because Express middleware registered in `configureApp` runs
+before anything Nest registers at `app.init()`:
 
 ```mermaid
 sequenceDiagram
-  participant Cl as Client
-  participant MW as Correlation + Pino
-  participant G as Authentication guard
-  participant Ct as Controller (ValidationPipe)
-  participant Sv as Service (authz, tx)
-  participant Pr as Prisma
-  participant F as Exception filter
+  participant Cl as Browser (via proxy, nginx)
+  participant EX as Express: trust proxy · Helmet
+  participant BA as Better Auth (/api/auth/*)
+  participant MW as Body parsers · CORS · pino-http
+  participant G as Guards: Throttler → Authentication
+  participant P as Pipes: ValidationPipe · ParseUuidPipe
+  participant Ct as Controller → Service → Repository
+  participant I as TransformInterceptor
+  participant F as AllExceptionsFilter
 
-  Cl->>MW: HTTP request (cookie)
-  MW->>G: attach correlationId, logger
-  G->>Ct: principal established
-  Ct->>Sv: validated DTO
-  Sv->>Pr: query/command (in transaction if needed)
-  Pr-->>Sv: typed rows
-  Sv-->>Ct: domain result
-  Ct-->>Cl: 2xx { data, meta }
-  Note over G,F: any thrown error → filter → { error } envelope + logged
+  Cl->>EX: request
+  alt path starts with /api/auth/
+    EX->>BA: handled and answered here (no envelope, no request log)
+  else every other route
+    EX->>MW: parse JSON (100 kB), CORS, correlation id + request log
+    MW->>G: rate limit per IP, then principal from the session (401 if none)
+    G->>P: validate body, query, path ids (422 / 400)
+    P->>Ct: typed DTOs
+    Ct-->>I: DTO or Paginated
+    I-->>Cl: { data, meta? }
+  end
+  Note over G,F: any thrown error → filter → { error } + log (warn for 4xx, error for 5xx)
 ```
 
-## Related standards
+## Configuration
 
-- [`API.md`](API.md) · [`DATABASE.md`](DATABASE.md) ·
-  [`SECURITY_STANDARDS.md`](SECURITY_STANDARDS.md) ·
-  [`OBSERVABILITY.md`](OBSERVABILITY.md) · [`PERFORMANCE.md`](PERFORMANCE.md) ·
-  [`TESTING.md`](TESTING.md) · [`REFERENCE_FEATURE.md`](REFERENCE_FEATURE.md)
+- **Zod schema** in `config/env.validation.ts` is the single definition of every
+  variable, its default and its production rules (for example
+  `BETTER_AUTH_SECRET` ≥ 32 characters and no placeholder). `ConfigModule`
+  validates at startup and the app refuses to boot on bad configuration.
+- **Typed access** through `AppConfigService`. Product code never reads
+  `process.env`; the exceptions are entry points that set defaults before the
+  module graph loads (`cli/bootstrap.ts`, `generate-openapi.ts`) and the seed's
+  production guard.
+- **Where values come from:**
+  - `pnpm dev` and tests: the repository-root `.env` (created by
+    `scripts/setup.sh`), loaded by `ConfigModule` from `ENV_FILE_PATH`
+    (`../../.env`, relative to `apps/api`). A missing file is skipped, and
+    variables already in the environment always win.
+  - CLI scripts (`pnpm user:*`, `pnpm db:seed`): `node --env-file-if-exists=../../.env`.
+  - Containers: the real environment from compose and `.env.production`.
+- Adding a variable: the schema, a getter on `AppConfigService`, `.env.example`,
+  and the compose files if production needs it.
+
+## Errors
+
+- Services throw the domain errors in `common/errors/domain-errors.ts`;
+  `AllExceptionsFilter` maps them, Nest `HttpException`s and known Prisma errors
+  (`P2025` → 404, `P2002` → 409) to the error envelope. Everything else becomes a
+  generic 500 and is logged with its stack.
+- Status and code rules are in [API.md](API.md#status-codes). Known mapping gaps
+  (a malformed cursor's Prisma `P2023`, an oversized body) return 500 today and
+  are backlog items.
+
+## Validation
+
+API DTOs use `class-validator` with the global `ValidationPipe`; the
+environment, CLI and web use Zod; rules both apps enforce are constants in
+`@repo/types`. The rules are in [API.md](API.md#validation-errors) and
+[SECURITY_STANDARDS.md](SECURITY_STANDARDS.md#input-validation). The split is
+revisited at the NestJS 12 migration, where Standard Schema support could unify
+it ([TECH_DEBT.md](TECH_DEBT.md), DECISIONS.md 2026-09-16).
+
+## Transactions and time
+
+- **Transactions:** the service opens `prisma.$transaction` and passes the
+  transaction client to repository methods that accept one — the standard for new
+  code, defined in [DATABASE.md](DATABASE.md#transactions).
+- **Time:** instants in UTC, calendar dates as `date`, local-day rules in
+  `Europe/London`, and a planned `Clock` seam — [DATABASE.md](DATABASE.md#time).
+
+## Authentication and authorisation
+
+Better Auth handles `/api/auth/*`; `AuthenticationGuard` protects every other
+route unless `@Public()`; services enforce ownership on every row (ADR-0016).
+All of it is specified in [SECURITY_STANDARDS.md](SECURITY_STANDARDS.md).
+
+## Logging and health
+
+Pino with correlation IDs, and `/health` / `/health/ready` via Terminus —
+[OBSERVABILITY.md](OBSERVABILITY.md). `main.ts` enables shutdown hooks, so on
+`docker compose stop` the app closes the HTTP server and the Prisma connection
+cleanly.
+
+## API contract
+
+Controllers document the envelope with `ApiDataResponse` /
+`ApiPaginatedResponse`; `pnpm contract:generate` builds the app without a
+database, writes `apps/api/openapi.json`, and regenerates the web's types in
+`@repo/types`. CI fails on drift ([API.md](API.md#openapi-contract-adr-0017)).
+
+## CLI
+
+`cli/user.ts` and `cli/seed.ts` boot the module graph as an application context
+(no HTTP server) through `runWithAuthContext` and use Better Auth's own
+password hashing (ADR-0018). New operational commands — the planned data export,
+passkey recovery — follow the same pattern.
+
+## Deferred infrastructure
+
+Not built, and not drawn above. When a feature first needs one, use the defaults
+in ADR-0019 ([PRODUCT.md](PRODUCT.md#deferred-infrastructure)): pg-boss or an
+in-process scheduler for background work, no shared cache, a backed-up Docker
+volume behind a storage service for files, and OpenTelemetry only when logs stop
+being enough. ADR-0009, 0010 and 0011 keep their reasoning (idempotent jobs,
+cache invalidation, storage behind an interface); adopting the infrastructure
+they name would need a new ADR.
