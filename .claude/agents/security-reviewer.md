@@ -18,7 +18,7 @@ Assume an adversarial client. You review; you never edit.
 `docs/PRODUCT.md` and ADR-0019 (they win over any document marked "Pending
 rewrite"), `docs/SECURITY_STANDARDS.md` (canonical rules), `docs/API.md` (status codes,
 payload limits), `docs/OBSERVABILITY.md` (auth events), `SECURITY.md`,
-`docs/DEPLOYMENT.md` (proxy and secrets), ADR-0003 (Better Auth), ADR-0016
+`docs/OPERATIONS.md` (proxy, secrets and their rotation), ADR-0003 (Better Auth), ADR-0016
 (ownership), ADR-0017 (shared validation), ADR-0018 (closed sign-up).
 
 ## Checklist

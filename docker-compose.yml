@@ -5,7 +5,7 @@
 #
 # This compose file is intended for LOCAL DEVELOPMENT ONLY: it builds images
 # from the working tree and exposes Postgres on the host. Production runs the
-# immutable GHCR images via docker-compose.prod.yml (see docs/DEPLOYMENT.md).
+# immutable GHCR images via docker-compose.prod.yml (see docs/OPERATIONS.md).
 #
 # Everything is served through the web container on http://localhost:8080 —
 # the SPA and the API share one origin (nginx proxies /api/* to the api

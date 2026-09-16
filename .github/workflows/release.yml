@@ -39,9 +39,10 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       # Changesets either opens/updates a release PR that bumps versions and
-      # updates CHANGELOG.md, or — when such a PR is merged — publishes the
-      # release: our packages are private, so "publish" only creates the
-      # `@repo/api@X.Y.Z` / `@repo/web@X.Y.Z` git tags. See docs/DEPLOYMENT.md.
+      # updates each package's CHANGELOG.md, or — when such a PR is merged —
+      # publishes the release: our packages are private, so "publish" only
+      # creates the `@repo/api@X.Y.Z` / `@repo/web@X.Y.Z` git tags. See
+      # docs/RELEASING.md.
       # Needs the repo setting "Allow GitHub Actions to create and approve pull
       # requests" (Settings → Actions → General).
       - name: Create release pull request or publish

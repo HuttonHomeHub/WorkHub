@@ -62,40 +62,14 @@ git clone https://github.com/HuttonHomeHub/WorkHub.git && cd WorkHub
 pnpm dev
 ```
 
-Then open <http://localhost:5173> and sign in as **dev@example.com** /
-**dev-password-123** — `setup.sh` seeds that development account. Public
-sign-up is off: create real accounts with `pnpm user:create` (ADR-0018).
+Then open <http://localhost:5173> and sign in with the development account that
+`setup.sh` seeds and prints ([`docs/DEVELOPMENT.md` → Accounts](docs/DEVELOPMENT.md#accounts-no-email)).
+Public sign-up is off (ADR-0018).
 
-Or run the full stack in containers (served at <http://localhost:8080>,
-migrations applied automatically):
-
-```bash
-cp .env.example .env
-docker compose up -d
-```
-
-Production deployment (pinned GHCR images behind your own reverse proxy) is
-covered in [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) and
-[`docker-compose.prod.yml`](docker-compose.prod.yml).
-
-## 🧑‍💻 Common commands
-
-| Command                     | Description                                    |
-| --------------------------- | ---------------------------------------------- |
-| `pnpm dev`                  | Run all apps in watch mode (Turborepo)         |
-| `pnpm build`                | Build all packages/apps                        |
-| `pnpm lint`                 | Lint the whole workspace                       |
-| `pnpm format`               | Format with Prettier                           |
-| `pnpm typecheck`            | Type-check the whole workspace                 |
-| `pnpm test`                 | Run unit tests                                 |
-| `pnpm test:e2e`             | Run end-to-end tests                           |
-| `pnpm changeset`            | Record a change to the running app for release |
-| `pnpm gen:feature <entity>` | Generate a backend feature from the template   |
-| `pnpm contract:generate`    | Regenerate the OpenAPI contract + client types |
-| `pnpm docs:check`           | Check docs for broken links and stale terms    |
-| `pnpm db:seed`              | (Re)create the dev account (never production)  |
-| `pnpm user:create`          | Create an account (`--email`, `--name`)        |
-| `pnpm user:reset-password`  | Reset a password and sign out its sessions     |
+Everyday commands, accounts, the full stack in containers and Codespace
+specifics are in [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md). Running WorkHub
+on your own server (pinned GHCR images behind your reverse proxy) is in
+[`docs/OPERATIONS.md`](docs/OPERATIONS.md).
 
 ## 📚 Documentation
 
@@ -109,7 +83,7 @@ covered in [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) and
 | [`docs/BACKEND_ARCHITECTURE.md`](docs/BACKEND_ARCHITECTURE.md)   | Backend architecture & patterns         |
 | [`docs/DATABASE.md`](docs/DATABASE.md)                           | Database standards & philosophy         |
 | [`docs/SECURITY_STANDARDS.md`](docs/SECURITY_STANDARDS.md)       | Security engineering standards          |
-| [`docs/OBSERVABILITY.md`](docs/OBSERVABILITY.md)                 | Logging, metrics, tracing, health       |
+| [`docs/OBSERVABILITY.md`](docs/OBSERVABILITY.md)                 | Logging, health and alerts              |
 | [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md)                     | Performance standards                   |
 | [`docs/REFERENCE_FEATURE.md`](docs/REFERENCE_FEATURE.md)         | The canonical backend feature template  |
 | [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md)                 | Design tokens, theming, components      |
@@ -119,13 +93,11 @@ covered in [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) and
 | [`docs/API.md`](docs/API.md)                                     | REST/OpenAPI conventions                |
 | [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md)                     | Local dev environment guide             |
 | [`docs/TESTING.md`](docs/TESTING.md)                             | Test strategy and tooling               |
-| [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)                       | Release & deployment                    |
+| [`docs/RELEASING.md`](docs/RELEASING.md)                         | Versioning, releases and images         |
+| [`docs/OPERATIONS.md`](docs/OPERATIONS.md)                       | Self-hosting runbook                    |
 | [`docs/adr/`](docs/adr/)                                         | Architecture Decision Records           |
 | [`.claude/agents/`](.claude/agents/README.md)                    | Claude Code review and planning agents  |
 | [`SECURITY.md`](SECURITY.md)                                     | Reporting vulnerabilities               |
-
-Some standards documents predate the product decisions and carry a "pending
-rewrite" banner; where they conflict, [`docs/PRODUCT.md`](docs/PRODUCT.md) wins.
 
 ## 📄 License
 

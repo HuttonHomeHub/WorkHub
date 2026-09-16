@@ -72,7 +72,8 @@ multi-currency support:
   - an explicit session policy (lifetime, idle timeout, sign-out everywhere);
   - a brute-force posture for the auth routes behind the proxy;
   - strong, generated secrets.
-- **Images** are built for amd64 and arm64 and published to GHCR.
+- **Images** are published to GHCR for amd64 today; arm64 (multi-arch) is
+  planned — see Next.
 - **Releases** use Changesets. Only changes to the running app get a changeset;
   a release is cut when the owner wants to deploy.
 
@@ -140,8 +141,8 @@ candidates are in [BACKLOG.md](BACKLOG.md).
 
 ### Now
 
-- `M` Standards rewrite: process and agents (step 3), frontend and UX (step 4),
-  backend (step 5), operations docs (step 6) — ADR-0019's follow-up PRs.
+- Nothing in progress. The ADR-0019 standards rewrite (steps 3–6) is done; the
+  next item comes from Next.
 
 ### Next
 

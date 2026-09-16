@@ -24,10 +24,11 @@ The agents and their output contract are in `.claude/agents/README.md`.
    - `apps/api/prisma/schema.prisma` or `apps/api/prisma/migrations/**` →
      **database-architect**.
    - `.github/**`, `**/Dockerfile`, `docker-compose*.yml`, nginx config,
-     `.changeset/config.json` → **devops-reviewer**.
+     `.changeset/config.json`, `docs/OPERATIONS.md`, `docs/RELEASING.md` →
+     **devops-reviewer**.
    - Behaviour changed without matching tests, or a bug fix without a
      regression test → **test-engineer**.
-   - Docs-only changes need no agent; `pnpm docs:check` covers them.
+   - Other docs-only changes need no agent; `pnpm docs:check` covers them.
 3. **Run the chosen agents in parallel** (one message, several Agent calls).
    Give each the base ref, the changed paths, and the feature doc or ADR if any.
 4. **Verify each Blocking finding** before acting: read the cited code, run the

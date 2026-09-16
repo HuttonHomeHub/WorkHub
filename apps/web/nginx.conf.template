@@ -6,7 +6,7 @@
 #
 # The SPA calls the API on relative /api/* paths and this proxy forwards them,
 # so the static bundle contains no environment-specific URL — the same
-# immutable image runs everywhere (see docs/DEPLOYMENT.md). The operator's
+# immutable image runs everywhere (see docs/ARCHITECTURE.md). The owner's
 # reverse proxy terminates TLS and forwards plain HTTP to this container.
 
 # Preserve the original scheme from an upstream reverse proxy; fall back to

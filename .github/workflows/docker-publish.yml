@@ -1,6 +1,6 @@
 name: Publish container images
 
-# Three ways in (see docs/DEPLOYMENT.md):
+# Three ways in (see docs/RELEASING.md):
 #   - workflow_call from the Release workflow, with the released `version`:
 #     builds both images. This is the normal release path — Changesets pushes
 #     the `@repo/api@X.Y.Z` / `@repo/web@X.Y.Z` tags with GITHUB_TOKEN, and

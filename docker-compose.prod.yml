@@ -8,7 +8,7 @@
 #      X-Forwarded-For / X-Forwarded-Proto. The port binds to localhost by
 #      default; set WEB_BIND_ADDRESS if the proxy runs elsewhere.
 #
-# Design (docs/DEPLOYMENT.md):
+# Design (docs/ARCHITECTURE.md; operations runbook: docs/OPERATIONS.md):
 #   - The ONLY exposed port is the web container's HTTP port. The SPA and the
 #     API share one origin: nginx serves the bundle and proxies /api/* to the
 #     api service, so auth cookies stay first-party and no URLs are baked in.
@@ -90,7 +90,7 @@ services:
       # The single exposed port — point your reverse proxy here. Docker's
       # published ports bypass host firewalls (ufw/firewalld), so bind to
       # localhost unless the proxy must reach it from elsewhere
-      # (WEB_BIND_ADDRESS, docs/DEPLOYMENT.md).
+      # (WEB_BIND_ADDRESS, docs/OPERATIONS.md).
       - '${WEB_BIND_ADDRESS:-127.0.0.1}:${WEB_PORT:-8080}:8080'
 
 volumes:

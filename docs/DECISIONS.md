@@ -10,6 +10,51 @@ get an ADR instead (and may be linked from here).
 
 ---
 
+### 2026-09-16 — Operations documentation defaults
+
+**Decision.** The operations documentation is written for one owner running one
+Compose stack (ADR-0019), with these defaults for choices the owner delegated:
+
+- **Documents:** [OPERATIONS.md](OPERATIONS.md) (the self-hosting runbook) and
+  [RELEASING.md](RELEASING.md) (versioning, the Version Packages PR, image tags)
+  replace `DEPLOYMENT.md`, which mixed both with a multi-environment rollout
+  model that WorkHub does not have.
+- **Reverse proxy examples:** **Caddy** is the primary example (automatic TLS,
+  forwarded headers by default), with a **Traefik** labels snippet as the
+  secondary. Any proxy works if it forwards `X-Forwarded-For` and
+  `X-Forwarded-Proto` and its address is in `AUTH_TRUSTED_PROXIES`.
+- **GHCR package visibility:** recommend making `workhub/api` and `workhub/web`
+  **public**, since the repository is public; `docker login ghcr.io` with a
+  `read:packages` token is documented as the alternative. The owner decides
+  (BACKLOG.md).
+- **Exposure:** WorkHub is **not exposed to the internet** until passkeys, the
+  session policy, the per-account brute-force posture, auth security events and
+  automated backups exist; until then it is reached over a LAN or VPN only.
+- **Database password:** generated with `openssl rand -hex 32`, because compose
+  places it inside `DATABASE_URL` and a `/` from base64 breaks the URL.
+- **Changeset bumps** follow what the owner must do on the server: `patch` for
+  fixes, `minor` for features or any migration, `major` when the upgrade needs
+  more than the routine runbook.
+- **Release notes** are the per-package changelogs Changesets writes
+  (`apps/api/CHANGELOG.md`, `apps/web/CHANGELOG.md`); the root `CHANGELOG.md` is
+  pre-release history. Every `CHANGELOG.md` counts as a historical record for
+  `pnpm docs:check`, so release notes can quote superseded wording.
+
+**Why.** `DEPLOYMENT.md` described staged environments, gradual rollouts and a
+platform secret store, and left the owner without a first-deploy, backup,
+restore or secret-rotation procedure. Checking the docs against the real
+compose, workflow and CLI files also found a database-password recipe that could
+break `DATABASE_URL`, and release notes that would have failed the docs check on
+`main` after the first release.
+
+**Consequences.** ARCHITECTURE.md shows the real topology and trust boundaries,
+DEVELOPMENT.md holds the Codespace specifics, and the devops-reviewer checks
+against OPERATIONS.md and RELEASING.md. Configuration gaps found on the way
+(nginx asset headers, container hardening, health-ordered start-up, Dependabot
+for the Postgres image, workflow timeouts, public source maps, a scripted
+pre-migration dump, the network subnet, image visibility, a production compose
+smoke test) are BACKLOG.md items. `pnpm docs:check` rejects the removed terms.
+
 ### 2026-09-16 — Backend standards defaults
 
 **Decision.** The backend standards are tailored to one owner and one API

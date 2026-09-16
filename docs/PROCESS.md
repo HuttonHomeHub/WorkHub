@@ -75,7 +75,9 @@ scope, dismiss it with a one-line reason in the PR body's _Reviews run_ section.
 
 A release is cut when the owner wants to deploy: `/release` checks readiness,
 confirms with the owner, merges the Version Packages PR, and reports the image
-tag and upgrade steps ([DEPLOYMENT.md](DEPLOYMENT.md)).
+tag and upgrade steps. Versioning and the release mechanics are in
+[RELEASING.md](RELEASING.md); the server-side upgrade is in
+[OPERATIONS.md](OPERATIONS.md#routine-upgrade).
 
 ## Maintenance
 

@@ -9,7 +9,8 @@ description: >-
 
 # Cut a release
 
-Reference: `docs/DEPLOYMENT.md`. Never start this unprompted.
+Reference: `docs/RELEASING.md` (release mechanics and checklist) and
+`docs/OPERATIONS.md` (the server upgrade). Never start this unprompted.
 
 1. **Find the release PR:** `gh pr list --search "chore(release): version packages in:title"`.
    If none exists, there are no pending changesets — say so and stop.
@@ -18,10 +19,12 @@ Reference: `docs/DEPLOYMENT.md`. Never start this unprompted.
    - The release PR has CI: GitHub runs none for PRs opened by `GITHUB_TOKEN`,
      so ask the owner to close and reopen it (or push an empty
      `chore(release): run ci` commit to its branch), then wait for green.
-   - Pending changesets and the proposed `CHANGELOG.md` entries read correctly.
-   - Migrations since the last release reviewed; any destructive migration has a
-     rollback note — and, once backups exist, a **fresh backup taken** before
-     deploying.
+   - The proposed entries in `apps/api/CHANGELOG.md` and `apps/web/CHANGELOG.md`
+     read correctly for the owner, call out anything to do on the server, and
+     the bump matches `docs/RELEASING.md`.
+   - Migrations since the last release reviewed against `docs/DATABASE.md` →
+     Migration safety; the owner knows to **take a backup before upgrading**
+     (required when a migration is included).
    - Relevant docs updated; no open CodeQL high-severity alerts.
 3. **Confirm with the owner** via AskUserQuestion: "Merge the Version Packages PR
    to release X.Y.Z?" — options: release now (recommended when the checklist is
@@ -30,8 +33,9 @@ Reference: `docs/DEPLOYMENT.md`. Never start this unprompted.
 5. **Watch** the Release workflow on `main` (`gh run watch`): the `release` job
    tags `@repo/api@X.Y.Z` and `@repo/web@X.Y.Z`, then the `publish-images` job
    pushes both images to GHCR. Report failures with the log excerpt.
-6. **Report:** the version, `IMAGE_TAG=X.Y.Z` (no `v`), the image names, and the
-   upgrade steps from `docs/DEPLOYMENT.md` — set `IMAGE_TAG` in
-   `.env.production`, then `docker compose -f docker-compose.prod.yml --env-file .env.production pull`
-   and `up -d`; rollback is the previous tag (restore the backup first if a
-   migration was destructive).
+6. **Report:** the version, `IMAGE_TAG=X.Y.Z` (no `v`), the image names, whether
+   the release contains a migration or a compose/env change, and the upgrade
+   steps from `docs/OPERATIONS.md` → Routine upgrade — back up, set `IMAGE_TAG`
+   in `.env.production`, `pull`, `up -d`, check `migrate` exited 0, health
+   check. Rollback is the previous tag, restoring the pre-upgrade dump first if a
+   migration ran.

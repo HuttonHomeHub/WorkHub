@@ -29,8 +29,15 @@ const SKIP_DIRS = new Set([
   'worktrees',
 ]);
 
-// Historical records legitimately describe superseded decisions.
-const HISTORICAL = [/^docs\/adr\//, /^docs\/DECISIONS\.md$/, /^CHANGELOG\.md$/, /^\.changeset\//];
+// Historical records legitimately describe superseded decisions. Every
+// CHANGELOG.md counts: Changesets writes release notes into apps/*/CHANGELOG.md
+// and packages/*/CHANGELOG.md from changesets that may quote superseded wording.
+const HISTORICAL = [
+  /^docs\/adr\//,
+  /^docs\/DECISIONS\.md$/,
+  /(^|\/)CHANGELOG\.md$/,
+  /^\.changeset\//,
+];
 
 const STALE_TERMS = [
   [/\bADR-0012\b/, 'ADR-0012 is superseded — reference ADR-0016 (owner-based access)'],
@@ -55,11 +62,11 @@ const STALE_TERMS = [
   ],
   [
     /hosting platform (is )?(an open decision|undecided)|deliberately undecided/i,
-    'hosting is decided: self-hosted Compose (DEPLOYMENT.md)',
+    'hosting is decided: self-hosted Compose (docs/OPERATIONS.md)',
   ],
   [
     /\bvX\.Y\.Z\b|IMAGE_TAG=v\d/,
-    'releases are tagged @repo/<app>@X.Y.Z and images X.Y.Z, without a v (DEPLOYMENT.md)',
+    'releases are tagged @repo/<app>@X.Y.Z and images X.Y.Z, without a v (docs/RELEASING.md)',
   ],
   [/Blank App/, 'the product is WorkHub, not a generic starter (ADR-0019)'],
   [
@@ -111,8 +118,6 @@ const STALE_TERMS = [
     'layout adapts in CSS; there is no media-query hook (docs/FRONTEND_ARCHITECTURE.md)',
   ],
   // Single-owner backend standards (ADR-0019, DECISIONS.md 2026-09-16).
-  // Deferred to the operations rewrite, still present in ARCHITECTURE.md,
-  // DEPLOYMENT.md or DEVELOPMENT.md: expand/contract, secret manager.
   [
     /\b(BullMQ|Redis)\b/i,
     'no queue or shared cache: pg-boss or an in-process scheduler when needed (ADR-0019)',
@@ -133,6 +138,31 @@ const STALE_TERMS = [
   [
     /80% (line )?coverage|≥ ?80%|coverage (bar|rule)|coverage did not regress/i,
     'there is no coverage percentage; coverage is a local diagnostic (docs/TESTING.md)',
+  ],
+  // Operations docs for one self-hosted Compose stack (DECISIONS.md 2026-09-16).
+  [
+    /DEPLOYMENT\.md/,
+    'DEPLOYMENT.md was replaced by docs/OPERATIONS.md (server) and docs/RELEASING.md (releases)',
+  ],
+  [
+    /expand\/contract/i,
+    'migrations are forward-only with a backup before deploy (docs/DATABASE.md#migration-safety)',
+  ],
+  [
+    /secrets? manager/i,
+    'server secrets live in .env.production, mode 600, copied to a password manager (docs/OPERATIONS.md)',
+  ],
+  [
+    /promot(e|ed|es|ing|ion)\b.{0,30}\b(through|across)\b.{0,15}\benvironments/i,
+    'there is one server; a release is deployed there by IMAGE_TAG (docs/OPERATIONS.md)',
+  ],
+  [
+    /platform[- ]neutral|\borchestrators?\b/i,
+    'WorkHub runs on self-hosted Docker Compose (docs/ARCHITECTURE.md)',
+  ],
+  [
+    /\bstaging\b|gradual(ly)? roll(out|ed out)|\bcanary\b/i,
+    'no staging environment or gradual rollout; upgrades follow docs/OPERATIONS.md',
   ],
 ];
 

@@ -28,7 +28,8 @@ and [`CLAUDE.md`](../CLAUDE.md) links to them.
 | [FRONTEND_QUALITY.md](FRONTEND_QUALITY.md)           | FE budgets, test matrix, error boundaries, logging      |
 | [TESTING.md](TESTING.md)                             | Test layers, test database, CI jobs                     |
 | [DEVELOPMENT.md](DEVELOPMENT.md)                     | Local environment setup and day-to-day workflow         |
-| [DEPLOYMENT.md](DEPLOYMENT.md)                       | Release process, containers, environments               |
+| [RELEASING.md](RELEASING.md)                         | Changesets, the Version Packages PR, image tags         |
+| [OPERATIONS.md](OPERATIONS.md)                       | Self-hosting: deploy, proxy, upgrades, backups, secrets |
 | [BACKLOG.md](BACKLOG.md)                             | Candidate work, not yet scheduled                       |
 | [DECISIONS.md](DECISIONS.md)                         | Lightweight running decision log                        |
 | [TECH_DEBT.md](TECH_DEBT.md)                         | Known debt and remediation intent                       |
