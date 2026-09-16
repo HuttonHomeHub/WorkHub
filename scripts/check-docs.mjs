@@ -87,6 +87,29 @@ const STALE_TERMS = [
     'file removed — see PRODUCT.md (Roadmap), docs/templates/feature.md, docs/DEVELOPMENT.md',
   ],
   [/PROACTIVELY/, 'agents are triggered by /review, not by "PROACTIVELY" descriptions'],
+  // Desktop-only frontend standards (ADR-0019, docs/UX_STANDARDS.md).
+  [/mobile[- ]first/i, 'WorkHub is a desktop app designed for ≥ 1280px (docs/UX_STANDARDS.md)'],
+  [
+    /touch[- ]targets?|\b44px\b/i,
+    'no touch design; pointer targets follow WCAG 2.5.8 (docs/ACCESSIBILITY.md)',
+  ],
+  [
+    /mid-tier (mobile|phone)|(on|over) 4G\b/i,
+    'budgets assume a desktop browser on broadband (docs/FRONTEND_QUALITY.md)',
+  ],
+  [
+    /\b320px\b/,
+    'write the reflow floor as 320 CSS px at 400% zoom, not a design width (docs/ACCESSIBILITY.md)',
+  ],
+  [/\bdrawer\b/i, 'the sidebar collapses to an icon rail, never a drawer (docs/UX_STANDARDS.md)'],
+  [
+    /`sm`\s*[,·]\s*`md`|`sm`[–-]`xl`|`sm \d+rem`/,
+    'phone and tablet breakpoints are gone; verify at 1280, 1920 and 400% zoom (docs/FRONTEND_QUALITY.md)',
+  ],
+  [
+    /useMediaQuery|useBreakpoint/,
+    'layout adapts in CSS; there is no media-query hook (docs/FRONTEND_ARCHITECTURE.md)',
+  ],
 ];
 
 // Agents and skills must be discoverable under the name their file implies.

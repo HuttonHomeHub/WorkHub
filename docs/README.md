@@ -21,10 +21,11 @@ and [`CLAUDE.md`](../CLAUDE.md) links to them.
 | [PERFORMANCE.md](PERFORMANCE.md)                     | Caching, async, query optimisation, scalability         |
 | [REFERENCE_FEATURE.md](REFERENCE_FEATURE.md)         | The canonical backend feature template                  |
 | [API.md](API.md)                                     | REST conventions, versioning, error format, OpenAPI     |
-| [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md)                 | Design tokens, theming, component standards, a11y       |
-| [UX_STANDARDS.md](UX_STANDARDS.md)                   | Project-wide UX principles and page standards           |
-| [COMPONENT_LIBRARY.md](COMPONENT_LIBRARY.md)         | Component authoring, naming, and lifecycle              |
-| [FRONTEND_QUALITY.md](FRONTEND_QUALITY.md)           | FE testing, a11y, perf, bundle, telemetry, logging      |
+| [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md)                 | Design tokens, theming, component specs                 |
+| [UX_STANDARDS.md](UX_STANDARDS.md)                   | Desktop shell, keyboard, feedback, forms, URL state     |
+| [ACCESSIBILITY.md](ACCESSIBILITY.md)                 | WCAG 2.2 AA checklist and how to verify it              |
+| [COMPONENT_LIBRARY.md](COMPONENT_LIBRARY.md)         | Component authoring, naming, keyboard contracts         |
+| [FRONTEND_QUALITY.md](FRONTEND_QUALITY.md)           | FE budgets, test matrix, error boundaries, logging      |
 | [TESTING.md](TESTING.md)                             | Test strategy, tooling, coverage expectations           |
 | [DEVELOPMENT.md](DEVELOPMENT.md)                     | Local environment setup and day-to-day workflow         |
 | [DEPLOYMENT.md](DEPLOYMENT.md)                       | Release process, containers, environments               |

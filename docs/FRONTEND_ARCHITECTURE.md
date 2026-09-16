@@ -1,114 +1,152 @@
 # Frontend Architecture
 
-> **Pending rewrite (ADR-0019).** Parts of this document assume mobile-first, small-screen-up responsive layouts — where it conflicts with [PRODUCT.md](PRODUCT.md), PRODUCT.md wins.
-
-> **Status:** implemented (walking skeleton) + design. The app entry,
-> providers, router, auth feature, shell, and base primitives are live in
-> `apps/web/src/` exactly as described here; this remains the blueprint every
-> future frontend change must respect. Decisions here are backed by ADRs
+> How `apps/web` is structured: folders, state, routing, data, forms, errors,
+> auth and theming. Backed by ADRs
 > [0004](adr/0004-frontend-state-management.md)–[0007](adr/0007-forms-and-validation.md).
+> Interaction rules are in [`UX_STANDARDS.md`](UX_STANDARDS.md); tokens in
+> [`DESIGN_SYSTEM.md`](DESIGN_SYSTEM.md); budgets in
+> [`FRONTEND_QUALITY.md`](FRONTEND_QUALITY.md).
+
+**Status:** a walking skeleton. The entry, providers, router, auth and account
+features, a header-only shell and six primitives exist. Anything marked
+**_planned_** is the agreed pattern for when a feature first needs it — it is not
+in the code, so don't cite it as existing.
 
 ## Guiding principles
 
-Consistency · Accessibility · Responsiveness · Maintainability · Performance ·
-Discoverability · Simplicity · Reuse. **Always optimise for long-term
-maintainability over short-term convenience.**
+Consistency · Accessibility · Keyboard-completeness · Maintainability ·
+Performance · Simplicity · Reuse. Optimise for long-term maintainability over
+short-term convenience.
 
 ## Technology summary
 
-| Concern      | Choice                                            | ADR  |
-| ------------ | ------------------------------------------------- | ---- |
-| Framework    | React 19 + TypeScript (Vite)                      | —    |
-| Styling      | Tailwind CSS v4 + design tokens + shadcn/ui + CVA | 0006 |
-| Routing      | TanStack Router (file-based, type-safe)           | 0005 |
-| Server state | TanStack Query                                    | 0004 |
-| Client state | React local state · Context · Zustand (as needed) | 0004 |
-| Forms        | React Hook Form + Zod                             | 0007 |
-| Icons        | Lucide (`lucide-react`)                           | —    |
-| Testing      | Vitest + Testing Library; Playwright (e2e)        | —    |
+| Concern      | Choice                                              | ADR  |
+| ------------ | --------------------------------------------------- | ---- |
+| Framework    | React 19 + TypeScript (Vite)                        | —    |
+| Styling      | Tailwind CSS v4 + design tokens + shadcn/ui + CVA   | 0006 |
+| Routing      | TanStack Router (file-based, type-safe)             | 0005 |
+| Server state | TanStack Query                                      | 0004 |
+| Client state | React local state · Context · Zustand (when needed) | 0004 |
+| Forms        | React Hook Form + Zod                               | 0007 |
+| API client   | `openapi-fetch` typed by the committed contract     | 0017 |
+| Icons        | Lucide (`lucide-react`)                             | —    |
+| Testing      | Vitest + Testing Library; Playwright + axe (e2e)    | —    |
 
 ## Folder structure
 
-A **feature-first** structure. Code is grouped by _what it does for the user_,
-not by technical type. Cross-feature reuse lives in shared layers.
+Feature-first: code is grouped by what it does for the owner, not by technical
+type. This is what exists today, plus the folders a feature adds.
 
 ```text
-apps/web/src/
-├── main.tsx                # App entry: providers + router mount
-├── app/                    # App-wide composition
-│   ├── providers.tsx       #   Query client, theme, router, error boundary
-│   └── router.tsx          #   Router instance & type registration
-├── routes/                 # File-based routes (TanStack Router)
-│   ├── __root.tsx          #   Root layout (providers-aware shell)
-│   ├── _authed/            #   Layout route guarded by auth (app shell)
-│   └── (public)/           #   Public routes (sign-in, etc.)
-├── features/               # FEATURE modules (the bulk of the app)
-│   └── <feature>/
-│       ├── components/     #   Feature-scoped components
-│       ├── api/            #   Query/mutation hooks + query keys
-│       ├── hooks/          #   Feature-scoped hooks
-│       ├── schemas/        #   Zod schemas for this feature
-│       └── index.ts        #   Public surface of the feature
-├── components/             # SHARED, app-agnostic components
-│   ├── ui/                 #   Design-system primitives (shadcn/ui, generated)
-│   └── layout/             #   App shell: sidebar, header, page scaffolds
-├── hooks/                  # Shared hooks (useMediaQuery, useTheme, …)
-├── lib/                    # Framework-agnostic helpers
-│   ├── api/                #   Typed API client, fetch wrapper, error mapping
-│   ├── query/              #   Query client factory, key helpers, defaults
-│   ├── utils.ts            #   cn() and small pure helpers
-│   └── telemetry.ts        #   Logging / telemetry facade (planned)
-├── config/                 # Runtime config (env access, constants) (planned)
-├── styles/                 # globals.css (design tokens) + any base styles
-└── test/                   # Test setup and utilities
-e2e/                        # Playwright specs
+apps/web/
+├── index.html                # Pre-paint theme script
+├── e2e/                      # Playwright journeys (auth.spec.ts, global-setup.ts)
+└── src/
+    ├── main.tsx              # Creates the query client + router, mounts providers
+    ├── app/
+    │   ├── providers.tsx     # RootErrorBoundary → ThemeProvider → QueryClientProvider
+    │   └── router.tsx        # createRouter: route tree, context, preload defaults
+    ├── routes/               # File-based routes (routeTree.gen.ts is generated)
+    │   ├── __root.tsx        # Outlet + notFoundComponent
+    │   ├── _authed.tsx       # Auth guard layout → AppShell
+    │   ├── _authed/index.tsx # Signed-in home
+    │   └── (public)/         # sign-in.tsx, sign-up.tsx
+    ├── features/
+    │   ├── auth/             # api/ (session, auth-client, auth-config), components/, schemas/
+    │   └── account/          # api/me.ts
+    │       └── index.ts      # A feature's public surface
+    ├── components/
+    │   ├── ui/               # Primitives: alert, button, card, form, input, label
+    │   └── layout/           # app-shell.tsx
+    ├── hooks/                # use-theme.tsx
+    ├── lib/
+    │   ├── api/client.ts     # apiClient, ApiRequestError, unwrap()
+    │   ├── query/client.ts   # createQueryClient() with cache defaults
+    │   └── utils.ts          # cn()
+    ├── styles/globals.css    # Design tokens
+    └── test/setup.ts         # Vitest + jest-dom setup
 ```
 
-**Why:** feature-first modules keep related code together, make ownership and
-deletion easy, and stop the "components/ dumping ground" anti-pattern. Shared
-layers (`components/ui`, `lib`, `hooks`) hold only genuinely reusable code.
-Dependencies flow **features → shared**, never shared → features, and never
-feature → feature (share via a shared layer or `@repo/types`).
+A feature grows `components/`, `api/`, `hooks/` and `schemas/` as it needs them,
+and exports only through `index.ts`. File names are kebab-case.
+
+There is **no** `config/` folder, `lib/telemetry.ts` or media-query hook. Client
+env access and client error reporting will get a home when they are first needed
+(FRONTEND_QUALITY.md → Client error reporting).
+
+**Dependency direction:** features → shared (`components`, `hooks`, `lib`), never
+the reverse, and never feature → feature — share through a shared layer or
+`@repo/types`.
 
 ## Component organisation
 
-Three tiers (details in [`COMPONENT_LIBRARY.md`](COMPONENT_LIBRARY.md)):
+Three tiers ([`COMPONENT_LIBRARY.md`](COMPONENT_LIBRARY.md)):
 
-1. **Primitives** (`components/ui/`) — design-system building blocks (Button,
-   Input, Dialog…). Accessible, themeable, no business logic. Owned as source.
-2. **Composites / layout** (`components/layout/`, feature `components/`) —
-   assemble primitives into meaningful UI (PageHeader, DataTable, ItemCard).
-3. **Route/page components** (`routes/`) — compose data + composites for a
-   screen; contain no reusable logic.
+1. **Primitives** (`components/ui/`) — accessible, themeable, no business logic.
+   Third-party headless libraries are wrapped here.
+2. **Composites and layout** (`components/layout/`, a feature's `components/`).
+3. **Routes** (`routes/`) — compose data and composites for a screen.
 
-## Feature organisation
+## State: where each kind lives (ADR-0004)
 
-Each feature is a self-contained module exposing a small public surface via its
-`index.ts`. Internal files are private. A feature owns its data hooks, schemas,
-and components. Deleting a feature should mean deleting one folder.
+| State                                               | Home                                                  | Status      |
+| --------------------------------------------------- | ----------------------------------------------------- | ----------- |
+| Server data                                         | TanStack Query                                        | implemented |
+| Filters, sort, selection, open tab/pane/dialog      | Router search params                                  | pattern     |
+| Component-local UI                                  | `useState` / `useReducer`                             | implemented |
+| Theme                                               | `ThemeProvider` (Context) + `localStorage`            | implemented |
+| Command palette open state and its command registry | a small Zustand store (`components/command-palette/`) | _planned_   |
+| Sidebar collapsed, pane sizes, table column state   | `localStorage` via one typed preferences helper       | _planned_   |
 
-## Routing strategy (ADR-0005)
+### Persisted UI preferences — _planned_
 
-- **File-based routes** under `routes/`. Nested **layout routes** model the app
-  shell once (`_authed/` renders sidebar + header; children render into it).
-- **Typed params & search.** Path params and search params are validated with
-  schemas; filters/pagination/sort live in typed search params (shareable,
-  reload-safe).
-- **Guards.** `beforeLoad` on the `_authed` layout enforces authentication and
-  redirects unauthenticated users to sign-in with a `redirect` param.
-- **Code splitting.** Routes are lazy by default (per-route chunks); the shell
-  and critical path stay in the initial bundle. See
-  [`FRONTEND_QUALITY.md`](FRONTEND_QUALITY.md).
+Sidebar collapsed state, pane sizes and table column widths/visibility/order are
+**per-browser preferences in `localStorage`**, not server state and not URL
+state. Reasons: one owner, no need to follow them across devices yet, instant on
+first paint, and no API surface. Rules:
 
-## Data fetching & caching (ADR-0004)
+- One typed helper (`lib/preferences.ts`) owns the keys, a version and a
+  Zod-validated read with a default — a corrupt or old value falls back silently.
+- Keys are namespaced (`workhub:sidebar`, `workhub:panes:<route>`,
+  `workhub:table:<id>`).
+- Sidebar state is applied before first paint, like the theme, so the shell does
+  not jump.
+- If the owner later wants preferences to follow them between machines, move them
+  to a server `preferences` resource — that is a Feature, not a tweak.
+
+## Routing (ADR-0005)
+
+- **File-based routes** under `routes/`; `_authed.tsx` is the layout that guards
+  and renders the shell once.
+- **Typed search params** validated with Zod (`sign-in.tsx` does this for
+  `redirect`). URL state rules are in
+  [UX_STANDARDS.md](UX_STANDARDS.md#url-state).
+- **Guards:** `beforeLoad` on `_authed` calls `ensureSession()` and redirects to
+  `/sign-in?redirect=<href>`. Public routes use `beforeLoad` to pre-load the
+  session and `GET /api/v1/config`.
+- **Code splitting:** `autoCodeSplitting: true` in `vite.config.ts` gives each
+  route its own chunk.
+- **Router defaults — implemented:** `defaultPreload: 'intent'` (hover/focus warms
+  a route), `defaultPreloadStaleTime: 0` (the query cache owns freshness),
+  `scrollRestoration: true`, and a root `notFoundComponent`.
+- **Router defaults — _planned_:** `defaultPendingComponent` (a shell-shaped
+  skeleton), `defaultPendingMs: 300` and `defaultPendingMinMs: 300` so nothing
+  flashes, and `defaultErrorComponent` for route-level recovery. Until these land,
+  a failing route blanks up to the root boundary.
+- **Route loaders — _planned_:** no route defines a `loader` today. When a data
+  route lands, its loader calls `queryClient.ensureQueryData(<feature>QueryOptions)`
+  so intent preloading also warms the data, and the component reads the same
+  options with `useQuery`/`useSuspenseQuery`.
+
+## Data fetching and caching (ADR-0004)
 
 **All server data goes through TanStack Query.** Components never fetch in
-`useEffect` or store server data in `useState`.
+`useEffect` or keep server data in `useState`.
 
-- **Query hooks** live in each feature's `api/` folder (e.g. `useMe()`),
-  wrapping a typed API client. UI imports hooks, not `fetch`.
-- **Query keys** use a per-feature factory for consistency and safe
-  invalidation:
+- **Query options** live in a feature's `api/` folder, exported as
+  `queryOptions(...)` plus a hook (`features/account/api/me.ts`), so routes and
+  components share one definition.
+- **Query keys** use a per-feature factory:
 
   ```ts
   export const itemKeys = {
@@ -119,134 +157,160 @@ and components. Deleting a feature should mean deleting one folder.
   };
   ```
 
-- **Caching defaults** (set on the query client, tuned per query as needed):
-  `staleTime` ~30s for lists, longer for rarely-changing reference data;
-  `gcTime` 5m; `refetchOnWindowFocus` on for freshness; retry with backoff on
-  transient errors only (never on 4xx).
-- **Mutations** invalidate or optimistically update affected keys; on error
-  they roll back and surface a toast (see error handling).
-- **Prefetching** via route loaders warms the cache before render for a snappy
-  perceived experience.
-- **The API client** (`lib/api/client.ts`, ADR-0017) is an `openapi-fetch`
-  client typed by the `paths` generated from the API's committed OpenAPI
-  contract, so paths, params, bodies, and responses are compile-checked. It
-  sends same-origin cookies, turns non-2xx responses into `ApiRequestError`
-  (carrying the standard error envelope), and `unwrap()` returns the payload
-  from `{ data }`. Example: `features/account/api/me.ts`.
+- **Defaults** (`lib/query/client.ts`, implemented): `staleTime` 30s, `gcTime`
+  5 minutes, `refetchOnWindowFocus: true` (keeps a background tab fresh — see
+  [UX_STANDARDS.md](UX_STANDARDS.md#multiple-tabs)), retry up to 3 times except
+  for responses below 500, and no mutation retries.
+- **The API client** (`lib/api/client.ts`, ADR-0017) is `openapi-fetch` typed by
+  the generated `paths`: same-origin cookies, non-2xx → `ApiRequestError` with the
+  error envelope, and `unwrap()` returns `data`.
 
-## Form handling (ADR-0007)
+### Optimistic updates and undo — _planned pattern_
 
-React Hook Form + Zod. Every form uses the shared accessible `Form` primitive
-(binds labels/errors, focuses first invalid field, renders an error summary).
-Submissions run through Query mutations. No bespoke form markup.
+Reversible deletes act immediately and offer undo (UX_STANDARDS.md → Feedback).
+With TanStack Query:
+
+1. `onMutate`: cancel the list query, snapshot it, remove the row from the cache,
+   and show the undo toast.
+2. The **mutation is the soft delete** (`DELETE` → `deletedAt` set). **Undo** calls
+   a restore endpoint (the reference template does not generate one yet — see
+   BACKLOG.md) and invalidates the list; it does not rely on delaying the
+   request, so closing the tab never loses a delete the owner saw happen.
+3. `onError`: restore the snapshot and raise an error toast.
+4. `onSettled`: invalidate the affected list and detail keys.
+
+Focus moves to the next row after the removal (ACCESSIBILITY.md).
+
+### Lists and virtualisation — _planned_
+
+Lists above ~200 rows are virtualised (FRONTEND_QUALITY.md) with TanStack
+Virtual inside the owned `DataTable` primitive. Data is paged or cursored from
+the API; the client never fetches an unbounded list to virtualise it.
+
+## Forms (ADR-0007)
+
+React Hook Form + Zod through the shared `Form` primitive
+(`components/ui/form.tsx`), with submissions as Query mutations.
+
+- **Implemented:** `FormField`/`FormItem`/`FormLabel`/`FormControl`/`FormMessage`
+  wire ids, `aria-describedby` and `aria-invalid`; React Hook Form's default
+  `shouldFocusError` moves focus to the first invalid field on submit; server
+  errors render in an `Alert` at the top (`sign-in-form.tsx`).
+- **_Planned_:** an **error summary** listing each failure as a link to its field
+  (ADR-0007 describes one; the primitive does not render it), and a `Button`
+  pending state instead of swapping the label.
+- **Unsaved-changes guard — _planned_:** an explicit-save form with
+  `formState.isDirty` uses TanStack Router's `useBlocker` to confirm in-app
+  navigation, with `enableBeforeUnload` for reload and tab close; the block is
+  released on successful save. Behaviour is specified in
+  [UX_STANDARDS.md](UX_STANDARDS.md#forms).
 
 ## Error handling
 
-Layered, so nothing fails silently and users always get a recoverable state:
-
 ```mermaid
 flowchart TD
-  A[Error occurs] --> B{Where?}
-  B -->|Data fetch/mutation| C[TanStack Query error state]
-  C --> D[Inline error UI / retry action]
-  C --> E[Toast for transient/mutation errors]
-  B -->|Render/runtime| F[React Error Boundary]
-  F --> G[Route-level fallback UI]
-  F --> H[Report to telemetry]
-  B -->|Route load/guard| I[Router errorComponent]
+  A[Error] --> B{Where?}
+  B -->|Query / mutation| C[TanStack Query error state]
+  C --> D[Inline error with retry]
+  C --> E[Toast for mutation failures]
+  B -->|Render / runtime in a route| F[Route errorComponent — planned]
+  B -->|Anything above the router| G[RootErrorBoundary — implemented]
+  B -->|Unknown path| H[notFoundComponent — implemented]
 ```
 
-- **Error boundaries** wrap the app root (implemented) and each route segment
-  (planned); they show a friendly fallback with a retry and report to telemetry
-  once the facade exists ([`TECH_DEBT.md`](TECH_DEBT.md)). See
-  [`FRONTEND_QUALITY.md`](FRONTEND_QUALITY.md).
-- **Query errors** render inline (empty/error states) with a retry; mutation
-  errors also raise a toast. 4xx are treated as expected domain outcomes and
-  mapped to user-facing messages; 5xx are treated as incidents (reported).
-- **Never** swallow errors or show raw messages/stack traces to users.
+- **`RootErrorBoundary`** in `app/providers.tsx` is the only boundary today; it
+  logs to `console.error` and offers a reload. Its comment says route-level errors
+  are handled by the router — that is the target, not the state: no
+  `errorComponent` or `defaultErrorComponent` exists yet
+  ([TECH_DEBT.md](TECH_DEBT.md)).
+- **Query errors** render inline with a retry (`_authed/index.tsx` does this for
+  `useMe`). 4xx are expected outcomes mapped to messages; 5xx are incidents.
+- Never swallow an error or show a raw message or stack trace.
 
 ## Loading states
 
-Consistency in perceived performance:
-
-- **Skeletons** for initial content loads (match final layout to avoid shift).
-- **Inline spinners / disabled + busy** for in-context actions (buttons show a
-  pending state and are disabled while submitting).
-- **Route pending components** for navigation; suspense boundaries for lazy
-  chunks.
-- Optimistic updates where safe, to make interactions feel instant.
-
-Standards for skeletons/empty/loading live in [`DESIGN_SYSTEM.md`](DESIGN_SYSTEM.md).
+Specified once in [UX_STANDARDS.md](UX_STANDARDS.md#timing) and budgeted in
+[FRONTEND_QUALITY.md](FRONTEND_QUALITY.md#performance-budgets): nothing before
+~300ms, skeletons on first load only, pending state on the triggering control.
 
 ## Authentication flow
 
-Cookie-based sessions via Better Auth (see `docs/ARCHITECTURE.md` §6 and
-ADR-0003). The client never stores tokens in JS-accessible storage.
+Cookie sessions via Better Auth (ADR-0003); the client never stores tokens in
+JS-readable storage.
 
 ```mermaid
 sequenceDiagram
-  participant U as User
-  participant R as Router (_authed guard)
-  participant Q as TanStack Query (session)
+  participant O as Owner
+  participant R as Router (_authed beforeLoad)
+  participant Q as TanStack Query
   participant A as API (Better Auth)
 
-  U->>R: Navigate to a protected route (_authed layout)
-  R->>Q: ensure session (beforeLoad)
-  Q->>A: GET /api/auth/get-session (cookie)
-  alt Authenticated
-    A-->>Q: session
-    Q-->>R: ok → render app shell
-  else Not authenticated
-    A-->>Q: 401
-    R-->>U: redirect /sign-in?redirect=<path>
+  O->>R: Open a protected route
+  R->>Q: ensureSession()
+  Q->>A: get-session (cookie)
+  alt Session
+    A-->>Q: user
+    Q-->>R: render AppShell
+  else None
+    A-->>Q: null
+    R-->>O: redirect /sign-in?redirect=<href>
   end
 ```
 
-- A `useSession()` query is the single source of truth for auth state.
-- Sign-in, sign-up, and sign-out are mutations that drop every cached query —
-  all server state is per-user (ADR-0016), so nothing survives an account switch.
-- Guards live on layout routes; components read `useSession()` for conditional
-  UI but never make the trust decision (the API always re-checks).
+- `useSession()` is the single source of truth for auth state in the UI; the API
+  re-checks every request, so guards are UX, not the trust boundary.
+- **Sign-in, sign-up and sign-out remove every cached query**
+  (`queryClient.removeQueries()` in `features/auth/api/session.ts`). Two reasons:
+  guards use `ensureQueryData`, which would otherwise return a cached `null`
+  session straight after signing in; and nothing fetched in one session should be
+  shown after the session changes — a sign-out on a shared machine, or a session
+  that expired and was replaced, must start clean. This holds with one owner.
+- **Cross-tab sign-out — _planned_:** today each tab only notices a sign-out on its
+  next request. Broadcasting it (`BroadcastChannel` or a `storage` event) so other
+  tabs clear their cache and redirect is in [BACKLOG.md](BACKLOG.md).
 
 ## Theme management
 
-- Three modes: **light**, **dark**, **system**. A `ThemeProvider` (Context)
-  stores the preference in `localStorage` and applies/removes the `.dark` class
-  on `<html>`; `system` follows `prefers-color-scheme` live.
-- To avoid a flash of the wrong theme, a tiny inline script in `index.html` sets
-  the class before first paint.
-- Components never branch on theme in JS — tokens flip automatically (ADR-0006).
+- `ThemeProvider` (`hooks/use-theme.tsx`) supports **light, dark and system**,
+  stores the choice in `localStorage` under `theme`, toggles `.dark` on `<html>`,
+  and follows `prefers-color-scheme` live in system mode.
+- An inline script in `index.html` applies the class before first paint.
+- **The shell's control is two-way today:** `ThemeToggle` in `app-shell.tsx`
+  flips light ⇄ dark and cannot return to system. A three-way control is in
+  PRODUCT.md's Next list.
+- Cross-tab theme sync is _planned_ alongside cross-tab sign-out.
+- Components never branch on theme in JS — tokens flip (ADR-0006).
 
-## Responsive strategy
+## Window sizes
 
-- **Mobile-first.** Base styles target small screens; enhance upward with
-  Tailwind breakpoints (`sm 40rem`, `md 48rem`, `lg 64rem`, `xl 80rem`,
-  `2xl 96rem`).
-- **Fluid by default:** relative units, flex/grid, `max-width` containers;
-  avoid fixed pixel widths.
-- **Adaptive navigation:** the sidebar collapses to a drawer/sheet below `lg`.
-- **A `useMediaQuery`/`useBreakpoint` hook** exposes breakpoints to logic when
-  layout alone can't express a change.
-- Layouts, tables, and dialogs each have documented responsive behaviour in
-  [`DESIGN_SYSTEM.md`](DESIGN_SYSTEM.md) and [`UX_STANDARDS.md`](UX_STANDARDS.md).
+WorkHub is designed for windows ≥ 1280px and must reflow down to 320 CSS px (400%
+zoom) — see [UX_STANDARDS.md](UX_STANDARDS.md#window-sizes-and-zoom). Layout
+adapts with CSS (grid, flex, `min()`/`clamp()`, container queries for panes), not
+JavaScript. Don't add viewport-reading hooks for layout.
 
-## Configuration & environment
+**Today:** `_authed.tsx` hides the account email below Tailwind's `sm` width
+(`hidden sm:inline`) — a leftover phone breakpoint that removes content at high
+zoom. Removing it is in [BACKLOG.md](BACKLOG.md).
 
-- Only `VITE_`-prefixed variables reach the client bundle. Access them through
-  `config/` (a typed, validated accessor), never `import.meta.env` scattered
-  across the code. No secrets in the client (see `SECURITY.md`).
+## Configuration
 
-## Dependency & import rules
+Only `VITE_`-prefixed variables reach the bundle, and there are none today: the
+API is same-origin (the Vite proxy in dev, nginx in production) and runtime
+settings come from `GET /api/v1/config`. When a client env value is first needed,
+read it through one typed, validated module rather than scattered
+`import.meta.env`. No secrets in the client
+([SECURITY_STANDARDS.md](SECURITY_STANDARDS.md)).
 
-- `features → shared`, never the reverse; no `feature → feature` imports.
-- Use the `@/` alias for intra-app imports and `@repo/types` for shared
-  contracts. Import order and grouping are enforced by ESLint.
-- The design system is imported from `components/ui`; app code never reaches
-  into Radix/shadcn internals directly.
+## Import rules
+
+- `features → shared` only; no feature → feature imports.
+- `@/` for intra-app imports, `@repo/types` for shared contracts; import order is
+  enforced by ESLint.
+- App code imports primitives from `components/ui`, never Radix, cmdk, TanStack
+  Table or react-resizable-panels directly.
 
 ## Testing
 
-Per [`FRONTEND_QUALITY.md`](FRONTEND_QUALITY.md) and [`TESTING.md`](TESTING.md):
-component tests with Testing Library (query by role/label), hook tests, and
-Playwright journeys (including automated accessibility checks) for critical
-paths.
+Strategy and tooling: [TESTING.md](TESTING.md). The browser and viewport matrix:
+[FRONTEND_QUALITY.md](FRONTEND_QUALITY.md#test-matrix). Component tests query by
+role and label.
