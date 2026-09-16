@@ -168,6 +168,11 @@ const STALE_TERMS = [
     /Purpose and domain: \*\*TBD\*\*|\bpurpose (is )?TBD\b|\*\*TBD\.\*\* The domain/i,
     'the purpose is set (docs/PRODUCT.md, ADR-0020)',
   ],
+  // The app shell's sidebar, skip link and content width (hours tracker slice 1).
+  [
+    /max-w-5xl|hidden sm:inline|header-only shell|no sidebar component|today the shell is header \+ content/i,
+    'the shell has the tools sidebar, a skip link and content up to --width-page (docs/UX_STANDARDS.md)',
+  ],
 ];
 
 // Agents and skills must be discoverable under the name their file implies.

@@ -18,14 +18,14 @@ targets) and language switching (one locale, `en-GB`).
 Five checks cover almost everything below. Name the ones you ran, and the ones
 you did not, in the PR body.
 
-| Check                   | How                                                                                                                                    |
-| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| **Automated (axe)**     | `expectNoA11yViolations(page)` in a Playwright journey (`apps/web/e2e/auth.spec.ts`) — tags `wcag2a wcag2aa wcag21a wcag21aa wcag22aa` |
-| **Lint**                | `pnpm lint` runs `eslint-plugin-jsx-a11y`; violations fail CI                                                                          |
-| **Keyboard-only pass**  | Unplug the mouse. Tab through the whole screen, operate every control, open and close every overlay, and watch where focus goes        |
-| **400% zoom**           | Browser zoom to 400% at a 1280×800 window (≈ 320 CSS px wide), or resize the viewport to 320×800 — see **Reflow** below                |
-| **Contrast**            | Measure the rendered colours (DevTools colour picker, or an OKLCH-aware contrast tool) in **both** themes — do not eyeball it          |
-| **Screen-reader smoke** | NVDA on Windows or Orca on Linux: read the page top to bottom, then operate the changed control                                        |
+| Check                   | How                                                                                                                                  |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| **Automated (axe)**     | `expectNoA11yViolations(page)` (`apps/web/e2e/support.ts`) in a Playwright journey — tags `wcag2a wcag2aa wcag21a wcag21aa wcag22aa` |
+| **Lint**                | `pnpm lint` runs `eslint-plugin-jsx-a11y`; violations fail CI                                                                        |
+| **Keyboard-only pass**  | Unplug the mouse. Tab through the whole screen, operate every control, open and close every overlay, and watch where focus goes      |
+| **400% zoom**           | Browser zoom to 400% at a 1280×800 window (≈ 320 CSS px wide), or resize the viewport to 320×800 — see **Reflow** below              |
+| **Contrast**            | Measure the rendered colours (DevTools colour picker, or an OKLCH-aware contrast tool) in **both** themes — do not eyeball it        |
+| **Screen-reader smoke** | NVDA on Windows or Orca on Linux: read the page top to bottom, then operate the changed control                                      |
 
 Automated tools catch roughly a third of real failures. The keyboard pass is the
 one that catches the rest — do it for every interactive change.
@@ -40,7 +40,8 @@ one that catches the rest — do it for every interactive change.
 - [ ] **Landmarks:** `<header>`, `<nav>`, `<main>`, and a labelled `<nav>` per
       navigation region when there is more than one. (1.3.1)
 - [ ] **Skip link** (or an equivalent bypass) so the sidebar can be skipped on
-      every page. (2.4.1 — _planned_, see BACKLOG.md)
+      every page. The app shell's "Skip to main content" does this for signed-in
+      pages. (2.4.1)
 - [ ] Page `<title>` and the `<h1>` describe the view. (2.4.2)
 - [ ] Reading and DOM order match the visual order. (1.3.2)
 

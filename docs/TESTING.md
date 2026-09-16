@@ -101,7 +101,10 @@ passes on a machine without a database. **(planned)** In CI a missing
   querying by accessible role and name.
 - Playwright journeys start the API and web dev servers (`playwright.config.ts`),
   create their account in `e2e/global-setup.ts`, and call
-  `expectNoA11yViolations(page)` on every screen (`e2e/auth.spec.ts`).
+  `expectNoA11yViolations(page)` (`e2e/support.ts`) on every screen. A journey
+  that tests layout sets its viewport with `test.use({ viewport })`, as
+  `e2e/app-shell.spec.ts` does for 1280×800, 1920×1080 and the 320 CSS px
+  reflow floor.
 - Which browsers, viewports, keyboard-only and 400%-zoom journeys are required is
   in [FRONTEND_QUALITY.md](FRONTEND_QUALITY.md#test-matrix).
 
@@ -131,13 +134,14 @@ change to a CI gate, and so an escalation ([PROCESS.md](PROCESS.md)).
 [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) runs three jobs on every
 pull request and push to `main`; all must pass.
 
-| Job                                                | Steps                                                                                                                                                                                                                                                                       |
-| -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **quality** — Format, lint, typecheck & unit tests | Install; Prisma client; `pnpm format:check`; `pnpm docs:check`; `pnpm lint`; `pnpm typecheck`; `pnpm test`; `pnpm build`; `pnpm contract:generate` then `git diff --exit-code` on the contract and generated types (ADR-0017)                                               |
-| **template** — Verify feature template             | `bash scripts/verify-template.sh`                                                                                                                                                                                                                                           |
-| **e2e** — End-to-end tests                         | A `postgres:17-alpine` service with database `app_test`; Prisma client; `prisma:deploy`; install **Chromium only**; `pnpm test:e2e` (API e2e and Playwright on the `chromium` project at the default Desktop Chrome viewport); then `bash scripts/verify-template.sh --e2e` |
+| Job                                                | Steps                                                                                                                                                                                                                                                                                                      |
+| -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **quality** — Format, lint, typecheck & unit tests | Install; Prisma client; `pnpm format:check`; `pnpm docs:check`; `pnpm lint`; `pnpm typecheck`; `pnpm test`; `pnpm build`; `pnpm contract:generate` then `git diff --exit-code` on the contract and generated types (ADR-0017)                                                                              |
+| **template** — Verify feature template             | `bash scripts/verify-template.sh`                                                                                                                                                                                                                                                                          |
+| **e2e** — End-to-end tests                         | A `postgres:17-alpine` service with database `app_test`; Prisma client; `prisma:deploy`; install **Chromium only**; `pnpm test:e2e` (API e2e and Playwright on the `chromium` project; journeys that set no viewport run at the default Desktop Chrome size); then `bash scripts/verify-template.sh --e2e` |
 
-CI runs no Firefox project and no explicit 1280×800 / 1920×1080 viewports yet —
+CI runs no Firefox project, and only the app shell journey sets the 1280×800 /
+1920×1080 viewports —
 standing debt in [TECH_DEBT.md](TECH_DEBT.md), scheduled in PRODUCT.md's Next
 list. CodeQL runs in its own workflow ([SECURITY_STANDARDS.md](SECURITY_STANDARDS.md#dependencies)).
 

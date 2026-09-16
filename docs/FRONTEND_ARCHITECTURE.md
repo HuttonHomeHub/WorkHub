@@ -8,7 +8,7 @@
 > [`FRONTEND_QUALITY.md`](FRONTEND_QUALITY.md).
 
 **Status:** a walking skeleton. The entry, providers, router, auth and account
-features, a header-only shell and six primitives exist. Anything marked
+features, the app shell with its tools sidebar, and seven primitives exist. Anything marked
 **_planned_** is the agreed pattern for when a feature first needs it — it is not
 in the code, so don't cite it as existing.
 
@@ -39,16 +39,17 @@ type. This is what exists today, plus the folders a feature adds.
 
 ```text
 apps/web/
-├── index.html                # Pre-paint theme script
-├── e2e/                      # Playwright journeys (auth.spec.ts, global-setup.ts)
+├── index.html                # Pre-paint theme and sidebar-state script
+├── e2e/                      # Playwright journeys (auth, app-shell), support.ts, global-setup.ts
 └── src/
     ├── main.tsx              # Creates the query client + router, mounts providers
     ├── app/
-    │   ├── providers.tsx     # RootErrorBoundary → ThemeProvider → QueryClientProvider
-    │   └── router.tsx        # createRouter: route tree, context, preload defaults
+    │   ├── providers.tsx     # RootErrorBoundary → ThemeProvider → QueryClientProvider → TooltipProvider
+    │   ├── router.tsx        # createRouter: route tree, context, preload defaults
+    │   └── tools.ts          # The tool registry: manifests in sidebar order (ADR-0020)
     ├── routes/               # File-based routes (routeTree.gen.ts is generated)
     │   ├── __root.tsx        # Outlet + notFoundComponent
-    │   ├── _authed.tsx       # Auth guard layout → AppShell
+    │   ├── _authed.tsx       # Auth guard layout → AppShell (with app/tools.ts)
     │   ├── _authed/index.tsx # Signed-in home
     │   └── (public)/         # sign-in.tsx, sign-up.tsx
     ├── features/
@@ -56,12 +57,14 @@ apps/web/
     │   └── account/          # api/me.ts
     │       └── index.ts      # A feature's public surface
     ├── components/
-    │   ├── ui/               # Primitives: alert, button, card, form, input, label
-    │   └── layout/           # app-shell.tsx
+    │   ├── ui/               # Primitives: alert, button, card, form, input, label, tooltip
+    │   └── layout/           # app-shell.tsx (skip link, header, main), sidebar.tsx
     ├── hooks/                # use-theme.tsx
     ├── lib/
     │   ├── api/client.ts     # apiClient, ApiRequestError, unwrap()
     │   ├── query/client.ts   # createQueryClient() with cache defaults
+    │   ├── preferences.ts    # Persisted UI preferences (localStorage)
+    │   ├── tool-manifest.ts  # ToolManifest and ToolCommand types
     │   └── utils.ts          # cn()
     ├── styles/globals.css    # Design tokens
     └── test/setup.ts         # Vitest + jest-dom setup
@@ -77,6 +80,26 @@ env access and client error reporting will get a home when they are first needed
 **Dependency direction:** features → shared (`components`, `hooks`, `lib`), never
 the reverse, and never feature → feature — share through a shared layer or
 `@repo/types`.
+
+## Tools and the sidebar (ADR-0020)
+
+WorkHub is one app made of tools. The web side of a tool is a feature folder
+plus a **manifest** that tells the shell about it.
+
+- **`ToolManifest`** (`lib/tool-manifest.ts`): `{ id, label, icon, path,
+commands }`: a kebab-case tool id (`core` is reserved), a sentence-case
+  label, a Lucide icon, the tool's home route (a typed router path) and its
+  palette commands (`{ id, label }`, "Go to <tool>" first).
+- **A tool exports its manifest** from `features/<tool>/tool.ts`.
+- **`app/tools.ts` is the registry:** it lists the manifests in sidebar order.
+  `app/` is the composition root, like `routes/`, so it is the one shared place
+  that imports features. Home belongs to no tool, so its manifest is declared
+  in `app/tools.ts` itself.
+- **The sidebar** (`components/layout/sidebar.tsx`) renders one link per
+  manifest; `routes/_authed.tsx` passes the registry to `AppShell`. A tool's
+  link is `aria-current="page"` on every route under its path, whatever the
+  search params.
+- The command palette will read the same manifests when it is built.
 
 ## Component organisation
 
@@ -96,9 +119,10 @@ Three tiers ([`COMPONENT_LIBRARY.md`](COMPONENT_LIBRARY.md)):
 | Component-local UI                                  | `useState` / `useReducer`                             | implemented |
 | Theme                                               | `ThemeProvider` (Context) + `localStorage`            | implemented |
 | Command palette open state and its command registry | a small Zustand store (`components/command-palette/`) | _planned_   |
-| Sidebar collapsed, pane sizes, table column state   | `localStorage` via one typed preferences helper       | _planned_   |
+| Sidebar collapsed                                   | `localStorage` via `lib/preferences.ts`               | implemented |
+| Pane sizes, table column state                      | `localStorage` via `lib/preferences.ts`               | _planned_   |
 
-### Persisted UI preferences — _planned_
+### Persisted UI preferences
 
 Sidebar collapsed state, pane sizes and table column widths/visibility/order are
 **per-browser preferences in `localStorage`**, not server state and not URL
@@ -107,10 +131,16 @@ first paint, and no API surface. Rules:
 
 - One typed helper (`lib/preferences.ts`) owns the keys, a version and a
   Zod-validated read with a default — a corrupt or old value falls back silently.
+  `readPreference(name)` and `writePreference(name, value)` store
+  `{ "version": 1, "value": … }`; unavailable or full storage never throws. Add a
+  preference by adding its name, shape, key and default there.
 - Keys are namespaced (`workhub:sidebar`, `workhub:panes:<route>`,
   `workhub:table:<id>`).
 - Sidebar state is applied before first paint, like the theme, so the shell does
-  not jump.
+  not jump: the inline script in `index.html` sets `data-sidebar` on `<html>`,
+  `AppShell` keeps it in sync, and CSS variants (`sidebar-rail:`,
+  `sidebar-expanded:`, DESIGN_SYSTEM.md → Layout) do the rest. Keep that
+  script's parsing in step with the helper.
 - If the owner later wants preferences to follow them between machines, move them
   to a server `preferences` resource — that is a Feature, not a tweak.
 
@@ -288,9 +318,9 @@ zoom) — see [UX_STANDARDS.md](UX_STANDARDS.md#window-sizes-and-zoom). Layout
 adapts with CSS (grid, flex, `min()`/`clamp()`, container queries for panes), not
 JavaScript. Don't add viewport-reading hooks for layout.
 
-**Today:** `_authed.tsx` hides the account email below Tailwind's `sm` width
-(`hidden sm:inline`) — a leftover phone breakpoint that removes content at high
-zoom. Removing it is in [BACKLOG.md](BACKLOG.md).
+The one width condition the shell uses is 48rem (Tailwind's `md`): below it the
+sidebar is always the rail and the header wraps and stops sticking
+([UX_STANDARDS.md](UX_STANDARDS.md#app-shell)). It is CSS, not a viewport hook.
 
 ## Configuration
 

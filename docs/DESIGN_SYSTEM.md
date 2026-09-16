@@ -46,19 +46,19 @@ Authored in **OKLCH** for perceptual uniformity and predictable light/dark pairs
 Every colour is semantic, so `.dark` on `<html>` flips the whole app. The table
 records the roles; `globals.css` holds the values.
 
-| Role                                | Light                             | Dark                         | Use                                                       |
-| ----------------------------------- | --------------------------------- | ---------------------------- | --------------------------------------------------------- |
-| `background` / `foreground`         | `oklch(1 0 0)` / `0.145`          | `oklch(0.145 0 0)` / `0.985` | Page surface and default text                             |
-| `card`, `popover` (+ `-foreground`) | same as background                | `oklch(0.205 0 0)`           | Raised surfaces, overlays                                 |
-| `primary` / `-foreground`           | `oklch(0.51 0.18 255)`            | `oklch(0.65 0.17 255)`       | Primary actions, active state                             |
-| `secondary`, `accent`, `muted`      | `oklch(0.97 0 0)`                 | `oklch(0.269 0 0)`           | Secondary surfaces, hover, selection                      |
-| `muted-foreground`                  | `oklch(0.556 0 0)`                | `oklch(0.708 0 0)`           | Meta text                                                 |
-| `destructive`                       | `oklch(0.577 0.245 27.325)`       | `oklch(0.52 0.2 22.216)`     | Errors, destructive actions                               |
-| `success` / `warning` / `info`      | see `globals.css`                 | see `globals.css`            | Status                                                    |
-| `border` / `input`                  | `oklch(0.922 0 0)`                | `oklch(1 0 0 / 10%)` / `15%` | Lines, field borders                                      |
-| `ring`                              | = `primary`                       | = `primary`                  | Focus indicator                                           |
-| `chart-1…5`                         | blue, teal, green, amber, magenta | brightened                   | Categorical series                                        |
-| `sidebar*`                          | `oklch(0.985 0 0)` surface        | `oklch(0.205 0 0)`           | Navigation shell (tokens exist; no sidebar component yet) |
+| Role                                | Light                             | Dark                         | Use                                                             |
+| ----------------------------------- | --------------------------------- | ---------------------------- | --------------------------------------------------------------- |
+| `background` / `foreground`         | `oklch(1 0 0)` / `0.145`          | `oklch(0.145 0 0)` / `0.985` | Page surface and default text                                   |
+| `card`, `popover` (+ `-foreground`) | same as background                | `oklch(0.205 0 0)`           | Raised surfaces, overlays                                       |
+| `primary` / `-foreground`           | `oklch(0.51 0.18 255)`            | `oklch(0.65 0.17 255)`       | Primary actions, active state                                   |
+| `secondary`, `accent`, `muted`      | `oklch(0.97 0 0)`                 | `oklch(0.269 0 0)`           | Secondary surfaces, hover, selection                            |
+| `muted-foreground`                  | `oklch(0.556 0 0)`                | `oklch(0.708 0 0)`           | Meta text                                                       |
+| `destructive`                       | `oklch(0.577 0.245 27.325)`       | `oklch(0.52 0.2 22.216)`     | Errors, destructive actions                                     |
+| `success` / `warning` / `info`      | see `globals.css`                 | see `globals.css`            | Status                                                          |
+| `border` / `input`                  | `oklch(0.922 0 0)`                | `oklch(1 0 0 / 10%)` / `15%` | Lines, field borders                                            |
+| `ring`                              | = `primary`                       | = `primary`                  | Focus indicator                                                 |
+| `chart-1…5`                         | blue, teal, green, amber, magenta | brightened                   | Categorical series                                              |
+| `sidebar*`                          | `oklch(0.985 0 0)` surface        | `oklch(0.205 0 0)`           | Navigation shell: the sidebar (`components/layout/sidebar.tsx`) |
 
 **Rules:**
 
@@ -147,7 +147,7 @@ The single most important change from the generic starter: **32px, not 36px.**
 | `--row-height`             | 32px  | Table and list rows                                  |
 | `--row-height-comfortable` | 40px  | Rows with two lines of content                       |
 | `--icon-button`            | 32px  | Square icon-only buttons                             |
-| `--header-height`          | 48px  | App header                                           |
+| `--header-height`          | 48px  | App header (**implemented**, see Layout)             |
 
 - 32px still satisfies WCAG 2.5.8 (24×24 CSS px) with room to spare; the focus
   ring and padding are what must not shrink.
@@ -155,35 +155,49 @@ The single most important change from the generic starter: **32px, not 36px.**
   `input.tsx` is fixed at `h-9`. Retuning the defaults to 32px, and giving
   `Input` the same size variants as `Button`, is part of the app-shell work.
 
-### Layout — proposed
+### Layout — partly implemented
 
 Prose widths and pane sizes are decisions, not ad-hoc classes
-([UX_STANDARDS.md](UX_STANDARDS.md#app-shell)).
+([UX_STANDARDS.md](UX_STANDARDS.md#app-shell)). Implemented tokens are plain
+custom properties on `:root`, used as `w-(--sidebar-width)` or
+`max-w-(--width-prose)`.
 
-| Token                 | Value  | Meaning                                       |
-| --------------------- | ------ | --------------------------------------------- |
-| `--sidebar-width`     | 240px  | Expanded sidebar                              |
-| `--sidebar-rail`      | 56px   | Collapsed icon rail                           |
-| `--header-height`     | 48px   | Sticky header                                 |
-| `--width-prose`       | 72ch   | Reading text and single-column settings       |
-| `--width-form`        | 880px  | Forms with side-by-side fields                |
-| `--width-page`        | 1600px | Cap for the whole content region above 2560px |
-| `--pane-list-min`     | 280px  | List pane minimum                             |
-| `--pane-list-default` | 380px  | List pane default                             |
-| `--pane-detail-min`   | 480px  | Detail pane minimum, below which panes stack  |
+| Token                 | Value  | Meaning                                       | Status      |
+| --------------------- | ------ | --------------------------------------------- | ----------- |
+| `--sidebar-width`     | 240px  | Expanded sidebar                              | implemented |
+| `--sidebar-rail`      | 56px   | Collapsed icon rail                           | implemented |
+| `--header-height`     | 48px   | Sticky header, and the page's scroll padding  | implemented |
+| `--width-prose`       | 72ch   | Reading text and single-column settings       | implemented |
+| `--width-form`        | 880px  | Forms with side-by-side fields                | proposed    |
+| `--width-page`        | 1600px | Cap for the whole content region above 2560px | implemented |
+| `--pane-list-min`     | 280px  | List pane minimum                             | proposed    |
+| `--pane-list-default` | 380px  | List pane default                             | proposed    |
+| `--pane-detail-min`   | 480px  | Detail pane minimum, below which panes stack  | proposed    |
 
-### Z-index — proposed
+**Sidebar variants — implemented.** `globals.css` defines two custom variants
+for the shell, driven by `data-sidebar` on `<html>` (set before first paint):
 
-Six levels, defined once. Never write a numeric `z-` utility at a call site.
+- `sidebar-rail:` applies when the sidebar is collapsed, **or** at any width
+  below 48rem (Tailwind's `md`; a 1280px window reaches it at 200% zoom), where
+  the sidebar is always the rail;
+- `sidebar-expanded:` applies when it is expanded at 48rem or wider.
 
-| Token         | Value | Layer                                              |
-| ------------- | ----- | -------------------------------------------------- |
-| `--z-base`    | 0     | Page content                                       |
-| `--z-sticky`  | 10    | Sticky table headers, pane handles                 |
-| `--z-header`  | 20    | App header and sidebar                             |
-| `--z-popover` | 40    | Dropdowns, popovers, tooltips, context menus       |
-| `--z-modal`   | 50    | Dialogs, AlertDialogs, the palette, their overlays |
-| `--z-toast`   | 60    | Toaster — always above a dialog                    |
+Use them only inside the shell, for the rail's width, its hidden labels and its
+tooltips.
+
+### Z-index — partly implemented
+
+Six levels, defined once. Never write a numeric `z-` utility at a call site; use
+`z-(--z-header)`.
+
+| Token         | Value | Layer                                                   | Status      |
+| ------------- | ----- | ------------------------------------------------------- | ----------- |
+| `--z-base`    | 0     | Page content                                            | proposed    |
+| `--z-sticky`  | 10    | Sticky table headers, pane handles                      | proposed    |
+| `--z-header`  | 20    | App header and sidebar                                  | implemented |
+| `--z-popover` | 40    | Dropdowns, popovers, tooltips, context menus, skip link | implemented |
+| `--z-modal`   | 50    | Dialogs, AlertDialogs, the palette, their overlays      | proposed    |
+| `--z-toast`   | 60    | Toaster — always above a dialog                         | proposed    |
 
 ### Motion — proposed as CSS variables
 
@@ -287,14 +301,15 @@ contract and a test.
 
 ### Implemented
 
-| Component  | Spec                                                                                                                                                                                                                                                                                                      |
-| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Button** | Variants `default \| secondary \| outline \| ghost \| destructive \| link`; sizes `sm \| default \| lg \| icon`. One primary per view; icon-only needs `aria-label`. **Missing:** a pending state (spinner + `disabled` + `aria-busy`) — forms swap the label instead (BACKLOG.md).                       |
-| **Input**  | `h-9` today (→ 32px), `border-input`, `aria-invalid:border-destructive`, focus ring. **Missing:** size variants matching `Button`.                                                                                                                                                                        |
-| **Label**  | Radix label, 14px/500, `peer-disabled` styling. Always bound to a control.                                                                                                                                                                                                                                |
-| **Card**   | `card` surface, `radius-xl`, `shadow-sm`, `p-6`. Slots: `CardHeader`/`CardTitle` (`<h2>`)/`CardDescription`/`CardContent`/`CardFooter`. At compact density, `p-4` is the better default — revisit with the density retune.                                                                                |
-| **Alert**  | `role="alert"`, variants `default \| destructive`, with `AlertTitle`/`AlertDescription`. Used for view- and form-level errors.                                                                                                                                                                            |
-| **Form**   | React Hook Form + Zod (ADR-0007): `Form`/`FormField`/`FormItem`/`FormLabel`/`FormControl`/`FormDescription`/`FormMessage`, wiring ids, `aria-describedby` and `aria-invalid`. **Missing:** the error summary and first-invalid-field focus that FRONTEND_ARCHITECTURE and ADR-0007 describe (BACKLOG.md). |
+| Component   | Spec                                                                                                                                                                                                                                                                                                                          |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Button**  | Variants `default \| secondary \| outline \| ghost \| destructive \| link`; sizes `sm \| default \| lg \| icon`. One primary per view; icon-only needs `aria-label`. **Missing:** a pending state (spinner + `disabled` + `aria-busy`) — forms swap the label instead (BACKLOG.md).                                           |
+| **Input**   | `h-9` today (→ 32px), `border-input`, `aria-invalid:border-destructive`, focus ring. **Missing:** size variants matching `Button`.                                                                                                                                                                                            |
+| **Label**   | Radix label, 14px/500, `peer-disabled` styling. Always bound to a control.                                                                                                                                                                                                                                                    |
+| **Card**    | `card` surface, `radius-xl`, `shadow-sm`, `p-6`. Slots: `CardHeader`/`CardTitle` (`<h2>`)/`CardDescription`/`CardContent`/`CardFooter`. At compact density, `p-4` is the better default — revisit with the density retune.                                                                                                    |
+| **Alert**   | `role="alert"`, variants `default \| destructive`, with `AlertTitle`/`AlertDescription`. Used for view- and form-level errors.                                                                                                                                                                                                |
+| **Tooltip** | `@radix-ui/react-tooltip`: `TooltipProvider` (once, in `app/providers.tsx`, 400ms delay), `Tooltip`, `TooltipTrigger`, `TooltipContent` (`popover` surface, border, `shadow-md`, 12px, `--z-popover`, portalled). Names icon-only controls; opens on hover **and** focus; Esc closes; never the only place information lives. |
+| **Form**    | React Hook Form + Zod (ADR-0007): `Form`/`FormField`/`FormItem`/`FormLabel`/`FormControl`/`FormDescription`/`FormMessage`, wiring ids, `aria-describedby` and `aria-invalid`. **Missing:** the error summary and first-invalid-field focus that FRONTEND_ARCHITECTURE and ADR-0007 describe (BACKLOG.md).                     |
 
 ### Planned
 
@@ -303,7 +318,6 @@ third-party headless library as an owned primitive in `components/ui/`.
 
 | Component                                                    | Spec                                                                                                                                                                                                                                                              |
 | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Tooltip**                                                  | Radix. Names icon-only controls; opens on hover **and** focus; ~400ms delay; never the only place information lives.                                                                                                                                              |
 | **Kbd**                                                      | Renders a shortcut (`⌘K` / `Ctrl K`) in `font-mono` at `text-meta` with a bordered chip. Used in the palette trigger and menu items.                                                                                                                              |
 | **DropdownMenu / ContextMenu**                               | Radix. Arrow keys, typeahead, Esc, focus return. Every context menu is mirrored by a visible "⋯" button (UX_STANDARDS.md).                                                                                                                                        |
 | **Dialog / AlertDialog**                                     | Radix modal: focus trap, Esc, focus return, labelled by title, scroll lock. `AlertDialog` **only** for irreversible actions; its confirm button names the action.                                                                                                 |
