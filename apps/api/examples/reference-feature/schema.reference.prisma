@@ -2,7 +2,8 @@
 // `pnpm gen:feature <entity>` renames it and appends it to
 // apps/api/prisma/schema.prisma, adding the `User` back-relation. Follows
 // docs/DATABASE.md: snake_case columns, UUID v7, timestamptz, soft delete,
-// auditing, optimistic-locking version, owner-scoped indexes (ADR-0016).
+// created/updated timestamps, optimistic-locking version, owner-scoped indexes
+// (ADR-0016). No actor (who-changed-it) columns: WorkHub has one owner (ADR-0019).
 //
 // `owner` is a real foreign key to users.id. ON DELETE CASCADE because owner_id
 // is true ownership (ADR-0016): deleting an account erases the user's data
@@ -23,8 +24,6 @@ model ReferenceItem {
   version     Int                 @default(1)
   createdAt   DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt   DateTime            @updatedAt @map("updated_at") @db.Timestamptz(3)
-  createdBy   String?             @map("created_by") @db.Uuid
-  updatedBy   String?             @map("updated_by") @db.Uuid
   deletedAt   DateTime?           @map("deleted_at") @db.Timestamptz(3)
 
   owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)

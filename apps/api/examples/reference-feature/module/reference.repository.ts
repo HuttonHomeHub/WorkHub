@@ -61,10 +61,10 @@ export class ReferenceRepository {
     return result.count;
   }
 
-  async softDelete(id: string, deletedBy: string): Promise<void> {
+  async softDelete(id: string): Promise<void> {
     await this.prisma.referenceItem.update({
       where: { id },
-      data: { deletedAt: new Date(), updatedBy: deletedBy },
+      data: { deletedAt: new Date() },
     });
   }
 }

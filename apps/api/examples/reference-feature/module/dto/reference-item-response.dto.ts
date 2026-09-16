@@ -2,8 +2,8 @@ import { ApiProperty } from '@nestjs/swagger';
 import { ReferenceItemStatus, type ReferenceItem } from '@prisma/client';
 
 /**
- * Public representation of a reference item. Internal/audit columns
- * (`deletedAt`, `createdBy`, `updatedBy`) are intentionally NOT exposed.
+ * Public representation of a reference item. Internal columns (`deletedAt`)
+ * are intentionally NOT exposed.
  */
 export class ReferenceItemResponseDto {
   @ApiProperty({ format: 'uuid' })

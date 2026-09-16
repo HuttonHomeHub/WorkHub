@@ -16,7 +16,7 @@ import { ReferenceRepository } from './reference.repository';
  * use case: authorise, apply rules, delegate persistence to the repository, and
  * log. It contains NO HTTP concerns (that's the controller) and NO raw Prisma
  * queries (that's the repository). Demonstrates owner-scoped authorisation
- * (anti-IDOR, ADR-0016), auditing, optimistic locking, and cursor pagination.
+ * (anti-IDOR, ADR-0016), optimistic locking, soft delete, and cursor pagination.
  * See docs/REFERENCE_FEATURE.md.
  */
 @Injectable()
@@ -34,9 +34,6 @@ export class ReferenceService {
       ownerId: principal.userId,
       name: dto.name,
       description: dto.description ?? null,
-      // Auditing: attribute the write to the acting principal.
-      createdBy: principal.userId,
-      updatedBy: principal.userId,
     };
     if (dto.status !== undefined) data.status = dto.status;
 
@@ -88,7 +85,6 @@ export class ReferenceService {
 
     const data: Prisma.ReferenceItemUpdateManyMutationInput = {
       version: { increment: 1 },
-      updatedBy: principal.userId,
     };
     if (dto.name !== undefined) data.name = dto.name;
     if (dto.description !== undefined) data.description = dto.description;
@@ -110,7 +106,7 @@ export class ReferenceService {
   async remove(principal: Principal, id: string): Promise<void> {
     await this.findOwnedOrThrow(principal, id);
 
-    await this.repository.softDelete(id, principal.userId);
+    await this.repository.softDelete(id);
     this.logger.info(
       { referenceItemId: id, userId: principal.userId },
       'reference item soft-deleted',

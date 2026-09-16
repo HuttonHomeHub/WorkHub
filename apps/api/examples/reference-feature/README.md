@@ -44,7 +44,7 @@ deliberate — see the replacement table in `scripts/gen-feature.mjs`.
 Layered controller → service → **repository**; validated DTOs; standard
 `{ data, meta }` / `{ error }` envelopes documented in OpenAPI; cursor
 pagination + filtering + sorting; **owner-scoped** authorisation (anti-IDOR,
-ADR-0016) with a real `owner` foreign key; soft delete; auditing; optimistic
+ADR-0016) with a real `owner` foreign key; soft delete; timestamps; optimistic
 locking; structured logging with correlation IDs; and unit + API (Supertest)
 tests. The standard-by-standard map is in
 [`docs/REFERENCE_FEATURE.md`](../../../../docs/REFERENCE_FEATURE.md).

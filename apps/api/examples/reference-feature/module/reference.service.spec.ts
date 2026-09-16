@@ -21,8 +21,6 @@ function makeItem(overrides: Partial<ReferenceItem> = {}): ReferenceItem {
     version: 1,
     createdAt: new Date('2026-01-01T00:00:00Z'),
     updatedAt: new Date('2026-01-01T00:00:00Z'),
-    createdBy: USER,
-    updatedBy: USER,
     deletedAt: null,
     ...overrides,
   };
@@ -62,7 +60,7 @@ describe('ReferenceService', () => {
   });
 
   describe('create', () => {
-    it('creates an item owned by the caller with audit fields', async () => {
+    it('creates an item owned by the caller', async () => {
       repository.create.mockResolvedValue(makeItem());
 
       const result = await service.create(owner, { name: 'Example' });
@@ -73,8 +71,6 @@ describe('ReferenceService', () => {
           ownerId: USER,
           name: 'Example',
           description: null,
-          createdBy: USER,
-          updatedBy: USER,
         }),
       );
     });
@@ -112,7 +108,7 @@ describe('ReferenceService', () => {
       expect(repository.updateIfVersionMatches).toHaveBeenCalledWith(
         ITEM_ID,
         1,
-        expect.objectContaining({ name: 'New', version: { increment: 1 }, updatedBy: USER }),
+        expect.objectContaining({ name: 'New', version: { increment: 1 } }),
       );
     });
 
@@ -141,7 +137,7 @@ describe('ReferenceService', () => {
 
       await service.remove(owner, ITEM_ID);
 
-      expect(repository.softDelete).toHaveBeenCalledWith(ITEM_ID, USER);
+      expect(repository.softDelete).toHaveBeenCalledWith(ITEM_ID);
     });
 
     it("refuses to delete another user's item", async () => {
