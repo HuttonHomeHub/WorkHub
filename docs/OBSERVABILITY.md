@@ -48,7 +48,8 @@ PRODUCT.md's [roadmap](PRODUCT.md#roadmap).
 
 ## Correlation IDs
 
-- `genReqId` takes an inbound `x-correlation-id` header or generates a UUID,
+- `genReqId` takes an inbound `x-correlation-id` header when it matches
+  `^[A-Za-z0-9._-]{1,64}$`, or otherwise generates a UUID,
   uses it as the request id on every log line for that request, and returns it in
   the `x-correlation-id` response header.
 - The exception filter includes it (`correlationId`) when it logs an error, so
