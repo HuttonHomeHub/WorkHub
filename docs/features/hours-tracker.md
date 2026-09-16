@@ -1,10 +1,10 @@
 # Hours tracker
 
-- **Status:** Draft. The owner answered every design question on 2026-09-16
-  ([decisions](#decisions--open-questions)); final approval is pending.
+- **Status:** Approved (2026-09-16). Building from slice 1 of 10
+  ([build order](#slices)).
 - **Change class:** Feature, built on
   [ADR-0020](../adr/0020-modular-tools-over-shared-core-data.md) (Architectural,
-  Proposed; the owner approved it as drafted). Escalation triggers: database
+  Accepted 2026-09-16). Escalation triggers: database
   migrations, ownership code, a new runtime dependency (`temporal-polyfill`),
   and a new workspace package (`@repo/domain`).
 - **Tool id:** `hours` · **Sidebar label:** Hours · **Web root:** `/hours`
@@ -605,10 +605,10 @@ Backups are not built yet (PRODUCT.md → Next), so export comes early:
 
 ## Slices
 
-Each slice is one PR that leaves `main` releasable and ships its tests. The
-simpler model (a switch instead of claims, no approvals table or API, one
-overtime setting) removes work from slices 5, 6 and 10. The count stays at ten,
-because each remaining slice is still a reviewable unit.
+**Build order.** Build the slices in this order: one branch and one PR per
+slice (`feat/hours-<slice>`, or `chore/`/`docs/` where that fits), each shipped
+with `/ship`. Every PR leaves `main` releasable and ships its tests. Update
+_As-built notes_ and PRODUCT.md's Now line (slice _n_ of 10) as each lands.
 
 1. **Tool registry and sidebar:** `ToolManifest`, `app/tools.ts` (Home only),
    the sidebar (expanded or rail, persisted, applied before first paint),
@@ -657,15 +657,10 @@ because each remaining slice is still a reviewable unit.
     switching conversion on and off, an edit after settlement, and reading the
     summary; browser totals equal API totals for the seeded worked-example week.
 
-**Follow-ups outside this branch:**
+**Recorded at approval (2026-09-16):** PRODUCT.md's purpose, glossary, Now and
+feature inventory, and ADR-0020 Accepted. The one-line purpose in CLAUDE.md §1 is
+still to do.
 
-- **PRODUCT.md** (in slice 1, or the PR that approves this doc): replace
-  _Purpose: TBD_ with "WorkHub is a set of modular tools for the owner's
-  construction management and Home Office construction engineering work, with
-  data shared across tools." Add the glossary above; record the Hours tracker in
-  _Now_.
-- **CLAUDE.md** §1: "Purpose and domain: TBD" gets the same wording.
-- **ADR-0020:** Status → Accepted at final approval, with its index row updated.
 - **When slice 10 lands:** Status → Shipped, the feature inventory, as-built
   notes.
 
@@ -707,7 +702,7 @@ because each remaining slice is still a reviewable unit.
     date).
 12. **Activity:** none for now ("leave what time was spent on for now"); notes
     are dropped too.
-13. **Architecture:** ADR-0020 approved as drafted; it stays Proposed until final
+13. **Architecture:** ADR-0020 approved as drafted; Accepted at final
     approval.
 14. **Calculation engine:** "Shared package on Temporal": `@repo/domain` on
     `temporal-polyfill`.
@@ -732,19 +727,18 @@ because each remaining slice is still a reviewable unit.
    warning-only setting. The week settles on its last working day, where the
    switch applies (rules 5–6).
 
+### Answered by the owner (2026-09-16, third round) and approval
+
+1. **TOIL in a week that spans two months: "The day it's allocated to".** TOIL
+   belongs to the month of the day it is placed on. TOIL placed on days in a
+   month that has already closed becomes overtime immediately, as in the
+   cross-month example (rules 7–8).
+2. **Approval:** the owner approved this plan and ADR-0020 on 2026-09-16 ("Approve
+   — start building"). Status is **Approved**; ADR-0020 is **Accepted**.
+
 ### Open questions
 
-None block approval. One consequence to confirm:
-
-1. **TOIL from the earlier month in a week that spans two months.** As briefed,
-   converted minutes count in the month of the day they are allocated to
-   (rule 7). Because the week settles after that month has ended, TOIL allocated
-   to its last days becomes overtime straight away (the cross-month example:
-   2:00 on 28 Sep becomes unpaid overtime). Recommended: keep it, since it
-   matches "must be taken in the same month" and keeps each month's figures to
-   its own dates. Alternative: book the week's TOIL in the settlement day's month
-   (the flexi reduction stays on the allocated days), so all of it can still be
-   taken.
+None.
 
 ### Stated defaults (not asked; change on request)
 

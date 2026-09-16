@@ -1,10 +1,9 @@
 # ADR-0020: Modular tools over shared core data
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-09-16
-- **Deciders:** Project owner (drafted with Claude)
-- **Owner's answer:** approved as drafted on 2026-09-16; Status moves to Accepted at
-  the final approval of the hours tracker plan
+- **Deciders:** Project owner (drafted with Claude); accepted with the hours
+  tracker plan on 2026-09-16
 
 ## Context
 

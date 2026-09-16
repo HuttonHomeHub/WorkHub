@@ -20,6 +20,6 @@ documentation afterwards. The process around them is in
 
 ## Index
 
-| Feature                           | Status | Summary                                                             |
-| --------------------------------- | ------ | ------------------------------------------------------------------- |
-| [Hours tracker](hours-tracker.md) | Draft  | The first tool: daily hours, weekly flexi, TOIL, overtime and leave |
+| Feature                           | Status   | Summary                                                             |
+| --------------------------------- | -------- | ------------------------------------------------------------------- |
+| [Hours tracker](hours-tracker.md) | Approved | The first tool: daily hours, weekly flexi, TOIL, overtime and leave |
