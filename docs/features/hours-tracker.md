@@ -658,8 +658,7 @@ _As-built notes_ and PRODUCT.md's Now line (slice _n_ of 10) as each lands.
     summary; browser totals equal API totals for the seeded worked-example week.
 
 **Recorded at approval (2026-09-16):** PRODUCT.md's purpose, glossary, Now and
-feature inventory, and ADR-0020 Accepted. The one-line purpose in CLAUDE.md §1 is
-still to do.
+feature inventory, ADR-0020 Accepted, and the one-line purpose in CLAUDE.md §1.
 
 - **When slice 10 lands:** Status → Shipped, the feature inventory, as-built
   notes.
