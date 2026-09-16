@@ -1,5 +1,6 @@
 import { createFileRoute, Outlet, redirect, useNavigate } from '@tanstack/react-router';
 
+import { tools } from '@/app/tools';
 import { AppShell } from '@/components/layout/app-shell';
 import { Button } from '@/components/ui/button';
 import { ensureSession, useSession, useSignOut } from '@/features/auth';
@@ -45,9 +46,10 @@ function AuthedLayout() {
   const { data: user } = useSession();
   return (
     <AppShell
+      tools={tools}
       actions={
-        <div className="flex items-center gap-3">
-          <span className="text-muted-foreground hidden text-sm sm:inline">{user?.email}</span>
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="text-muted-foreground min-w-0 text-sm break-all">{user?.email}</span>
           <SignOutButton />
         </div>
       }

@@ -98,14 +98,19 @@ The **target** matrix for user-facing UI work:
 | Zoom      | One **400%-zoom reflow check** at 1280×800 (a 320 CSS px viewport): no page-level horizontal scroll, nothing lost |
 
 **What CI runs today, honestly:** `playwright.config.ts` defines chromium,
-firefox and webkit projects locally but **CI runs chromium only, at Playwright's
-default `Desktop Chrome` viewport**, with axe checks in `e2e/auth.spec.ts`. There
-is no keyboard-only journey and no zoom check yet.
+firefox and webkit projects locally but **CI runs chromium only**. The auth
+journey (`e2e/auth.spec.ts`) runs at Playwright's default `Desktop Chrome`
+viewport. The app shell journey (`e2e/app-shell.spec.ts`) sets **1280×800 and
+1920×1080** itself, covers the shell by keyboard (skip link, sidebar toggle,
+tool links), and checks reflow at **320×200 CSS px** (a 1280×800 window at
+400%). Axe runs on every state, and once in the dark theme. There is no
+keyboard-only journey through a whole task yet, and the 400% check covers only
+the shell and the signed-in home.
 
 The gap is standing debt, not an exemption
-([TECH_DEBT.md](TECH_DEBT.md)). Closing it — a Firefox project plus explicit
-1280×800 and 1920×1080 viewports in CI, and dropping the unsupported webkit
-project — is in [BACKLOG.md](BACKLOG.md) and PRODUCT.md's Next list. Until then,
+([TECH_DEBT.md](TECH_DEBT.md)). Closing it — a Firefox project in CI, the design
+viewports for every journey, and dropping the unsupported webkit project — is in
+[BACKLOG.md](BACKLOG.md) and PRODUCT.md's Next list. Until then,
 run the wider matrix locally for UI changes and say in the PR what you ran.
 
 Everything else about tests — the layers, the tooling, test data, the CI jobs —

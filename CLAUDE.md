@@ -19,10 +19,11 @@ link to the canonical document instead of restating a rule.
 ## 2. Current state
 
 - **Exists:** email/password sign-in and sessions (Better Auth), closed sign-up
-  with CLI accounts (ADR-0018), a protected shell, `GET /api/v1/me`,
+  with CLI accounts (ADR-0018), a protected shell with the tools sidebar and
+  tool registry (ADR-0020), `GET /api/v1/me`,
   `GET /api/v1/config`, health endpoints, the feature generator, CI, Changesets
   and GHCR images.
-- **Does not exist:** domain features or models, passkeys, backups, the sidebar,
+- **Does not exist:** domain features or models, passkeys, backups, the
   command palette, background jobs, caching, file storage, OpenTelemetry.
 - The standards are tailored to this profile (ADR-0019). Where any document
   conflicts with `docs/PRODUCT.md`, PRODUCT.md wins.

@@ -752,4 +752,49 @@ None.
 
 ## As-built notes
 
-None yet.
+### Slice 1: tool registry and sidebar
+
+- **Registry:** `ToolManifest` and `ToolCommand` are in
+  `apps/web/src/lib/tool-manifest.ts` (a shared layer, so features can import
+  the type). `path` is a typed router path. A command is `{ id, label }` only
+  until the palette decides how commands run. `app/tools.ts` lists Home only;
+  Home belongs to no tool, so its manifest is declared there, not under
+  `features/`.
+- **Sidebar:** `components/layout/sidebar.tsx`, a labelled `<nav>` ("Tools")
+  with a link per manifest. The current tool has `aria-current="page"` (the
+  router's default matching covers sub-pages and search params, and matches `/`
+  exactly), plus a surface, a 500 weight and a marker bar. In the rail the label
+  stays as the link's accessible name (`sr-only`), and a tooltip shows it on
+  hover and focus. The tooltip is controlled and opens only in the rail state,
+  so an expanded link never gets an `aria-describedby`. The header toggle is
+  named "Sidebar", with `aria-expanded` and `aria-controls` on the `<nav>`.
+- **State:** `lib/preferences.ts` stores `workhub:sidebar` as
+  `{ version: 1, value: { collapsed } }`. The inline script in `index.html` sets
+  `data-sidebar` on `<html>` before first paint; the `sidebar-rail:` CSS variant
+  in `globals.css` applies it. `src/pre-paint-script.test.ts` keeps the script's key and
+  version in step with the helper.
+- **Reflow (decided while building):** below 48rem the sidebar is always the
+  rail and the header toggle is hidden. The header wraps and stops sticking, the
+  account email is shown at every width, and long words in the page wrap. Checked
+  at 320×200 CSS px.
+- **Focus after navigation (review fix):** `lib/route-focus.ts`, subscribed in
+  the root route, moves focus to `<main>` (or the first heading on a public
+  page) when a navigation changes the pathname. It does nothing on the initial
+  load or on search-param-only changes, which matters for slice 7's `?week=`.
+- **Shell:** a skip link to `<main>`, `scroll-padding-top` for the sticky header
+  (2.4.11; it assumes a one-line header at 48rem and wider), and content up to `--width-page` instead of the old 1024px cap. The home
+  page caps itself at `--width-prose`.
+- **Tokens:** `--header-height`, `--sidebar-width`, `--sidebar-rail`,
+  `--width-prose`, `--width-page`, `--z-header` and `--z-popover`. No density or
+  motion tokens: the sidebar does not animate.
+- **New dependency:** `@radix-ui/react-tooltip`, wrapped as
+  `components/ui/tooltip.tsx`, with one `TooltipProvider` in `AppShell`, so Radix loads with the signed-in
+  route chunk, not on the sign-in page. Measured with `pnpm build`: initial JS
+  91.2 kB gzipped, and the `_authed` layout chunk 20.3 kB gzipped (within
+  FRONTEND_QUALITY.md's advisory budgets).
+- **Tests:** `app/tools.test.ts`, `lib/preferences.test.ts`,
+  `lib/route-focus.test.tsx`, `src/pre-paint-script.test.ts`,
+  `components/ui/tooltip.test.tsx`, `components/layout/app-shell.test.tsx`, and
+  `e2e/app-shell.spec.ts`. That spec covers 1280×800 and 1920×1080 (expanded,
+  rail with tooltips, persistence including the pre-paint script alone, keyboard
+  use, axe in light and dark) and reflow at 320×200.

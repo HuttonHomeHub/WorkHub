@@ -162,7 +162,7 @@ candidates are in [BACKLOG.md](BACKLOG.md).
 
 ### Now
 
-- `L` [Hours tracker](features/hours-tracker.md) (building: slice 1 of 10) — the
+- `L` [Hours tracker](features/hours-tracker.md) (slice 1 of 10 done — tool registry and sidebar; paused before slice 2) — the
   first tool, on the modular-tools structure of ADR-0020.
 
 ### Next
@@ -170,9 +170,10 @@ candidates are in [BACKLOG.md](BACKLOG.md).
 - `M` Backups: nightly dump, encrypted off-site copy, restore drill, data export.
 - `L` Login hardening — passkeys, session policy, brute-force posture; required
   before the first public deployment.
-- `L` App shell: sidebar rail, density, layout, z-index and motion tokens (32px
-  controls), three-way theme, router pending and error states, skip link and
-  landmarks — per UX_STANDARDS.md and DESIGN_SYSTEM.md.
+- `L` App shell: density tokens (32px controls), the remaining layout, z-index
+  and motion tokens, three-way theme, router pending and error states — per
+  UX_STANDARDS.md and DESIGN_SYSTEM.md. The sidebar rail, skip link, landmarks
+  and content width shipped with the hours tracker's slice 1.
 - `M` CI: Docker image build, Firefox e2e at 1280×800 and 1920×1080, multi-arch
   (amd64 + arm64) images.
 

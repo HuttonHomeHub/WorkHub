@@ -17,7 +17,7 @@ export const Route = createFileRoute('/_authed/')({
 function Home() {
   const me = useMe();
   return (
-    <div className="grid gap-6">
+    <div className="grid max-w-(--width-prose) grid-cols-1 gap-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">
           Welcome{me.data ? `, ${me.data.name}` : ''}

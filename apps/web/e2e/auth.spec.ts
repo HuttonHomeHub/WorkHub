@@ -1,7 +1,7 @@
-import AxeBuilder from '@axe-core/playwright';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 import { E2E_USER } from './fixtures';
+import { expectNoA11yViolations } from './support';
 
 /**
  * The critical auth journey (docs/TESTING.md): closed sign-up → sign-in →
@@ -9,13 +9,6 @@ import { E2E_USER } from './fixtures';
  * (docs/FRONTEND_QUALITY.md — a11y is a merge requirement). The account comes
  * from `global-setup.ts` because public sign-up is off by default (ADR-0018).
  */
-
-async function expectNoA11yViolations(page: Page): Promise<void> {
-  const results = await new AxeBuilder({ page })
-    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
-    .analyze();
-  expect(results.violations).toEqual([]);
-}
 
 function uniqueEmail(): string {
   return `e2e-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.com`;
