@@ -64,6 +64,12 @@ for (const viewport of [
       expect(await widthOf(main)).toBe(viewport.width - SIDEBAR_WIDTH);
       await expectNoPageHorizontalScroll(page);
       await expectNoA11yViolations(page);
+
+      // And in the dark theme (the default `system` theme follows the OS).
+      // Reduced motion, so axe does not sample colours mid-transition.
+      await page.emulateMedia({ colorScheme: 'dark', reducedMotion: 'reduce' });
+      await expect(page.locator('html')).toHaveClass(/\bdark\b/);
+      await expectNoA11yViolations(page);
     });
 
     test('collapses to the rail with tooltips, and restores it before first paint', async ({

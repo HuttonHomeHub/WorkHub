@@ -52,9 +52,9 @@ function SidebarLink({ tool }: { tool: ToolManifest }) {
       <TooltipTrigger asChild>
         <Link
           to={tool.path}
-          // Home (`/`) would otherwise match every route; a tool stays current
-          // on its sub-pages and whatever its search params are.
-          activeOptions={{ exact: tool.path === '/', includeSearch: false }}
+          // The router's default matching marks a tool current on its sub-pages
+          // whatever their search params, and matches `/` only exactly
+          // (covered by app-shell.test.tsx).
           className={cn(
             'relative flex h-8 items-center gap-3 rounded-md px-3 text-sm outline-none',
             'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
