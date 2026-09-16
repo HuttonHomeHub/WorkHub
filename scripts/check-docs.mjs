@@ -164,6 +164,10 @@ const STALE_TERMS = [
     /\bstaging\b|gradual(ly)? roll(out|ed out)|\bcanary\b/i,
     'no staging environment or gradual rollout; upgrades follow docs/OPERATIONS.md',
   ],
+  [
+    /Purpose and domain: \*\*TBD\*\*|\bpurpose (is )?TBD\b|\*\*TBD\.\*\* The domain/i,
+    'the purpose is set (docs/PRODUCT.md, ADR-0020)',
+  ],
 ];
 
 // Agents and skills must be discoverable under the name their file implies.

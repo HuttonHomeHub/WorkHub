@@ -7,7 +7,9 @@ link to the canonical document instead of restating a rule.
 
 - A private, self-hosted web app for **one owner**, used in **desktop browsers**
   (Chromium, Firefox; designed for ≥ 1280px), internet-facing behind the owner's
-  reverse proxy. Purpose and domain: **TBD**.
+  reverse proxy. Purpose: modular tools for the owner's construction management
+  and Home Office construction engineering work
+  ([`docs/PRODUCT.md`](docs/PRODUCT.md#purpose), ADR-0020).
 - Stack: Turborepo + pnpm, TypeScript strict on Node 24, React 19 + Vite +
   Tailwind v4 + shadcn/ui, NestJS 11, PostgreSQL 17 + Prisma, Better Auth.
 - Locale is fixed: en-GB, GBP as integer pence, Europe/London.

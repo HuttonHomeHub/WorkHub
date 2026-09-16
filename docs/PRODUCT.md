@@ -7,13 +7,13 @@
 
 ## Purpose
 
-**TBD.** The domain has not been chosen yet.
+WorkHub is a set of modular tools that help the owner do and manage their job in
+construction management and Home Office construction engineering, with data
+shared across tools ([ADR-0020](adr/0020-modular-tools-over-shared-core-data.md)).
 
-WorkHub is one product, not a starter: a private, self-hosted web app for a
-single owner, built on a TypeScript monorepo (React + NestJS + PostgreSQL). Today
-it is a walking skeleton — sign-in, a protected shell and `/api/v1/me` — waiting
-for its first domain feature. When the purpose is decided, replace this section
-and fill in the glossary below.
+It is one product, not a starter: a private, self-hosted web app for a single
+owner, built on a TypeScript monorepo (React + NestJS + PostgreSQL). The first
+tool is the [hours tracker](features/hours-tracker.md).
 
 ## Users
 
@@ -115,21 +115,42 @@ Not built; use these defaults when a feature first needs one (ADR-0019):
 
 ## Glossary
 
-Placeholder — define domain terms here once the purpose is known, and use them
-consistently in code, UI copy and docs.
+Use these terms consistently in code, UI copy and docs. Tool-specific detail
+lives in each tool's feature doc; the hours tracker's rules are in
+[features/hours-tracker.md](features/hours-tracker.md).
+
+| Term                          | Meaning                                                                                                                                |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| **Tool**                      | A self-contained part of WorkHub with its own sidebar entry, routes, API modules and data, such as Hours (ADR-0020).                   |
+| **Core data**                 | Records more than one tool needs, such as bank holidays. Tools read them; core never depends on a tool (ADR-0020).                     |
+| **Work terms**                | The owner's effective-dated working settings: flexi targets, daily minimums, break rule, working band, caps and paid overtime allowed. |
+| **Flexi target**              | The time a working day is expected to credit: 7:30 Mon–Fri, so 37:30 a week. Drives the flexi calculation.                             |
+| **Daily minimum**             | The least time to work on a day (7:30 Mon–Thu, 5:30 Fri). Raises a warning only; it never changes a number.                            |
+| **Flexi**                     | Credited time minus the flexi target, accrued day by day into a balance that can go negative.                                          |
+| **TOIL**                      | Time off in lieu, converted from excess flexi. It must be taken in the calendar month it is placed in.                                 |
+| **TOIL cap**                  | The most TOIL a calendar month can hold: 7:30. Converted time beyond it becomes overtime.                                              |
+| **Overtime (paid or unpaid)** | Converted time over the TOIL cap, or TOIL unused at month end. Paid when paid overtime is allowed on that date, otherwise unpaid.      |
+| **Paid overtime allowed**     | A work terms setting, off by default, that makes overtime paid from its effective date.                                                |
+| **Leave year and allowance**  | Leave runs 1 January to 31 December against an allowance in hours: 247:30, which includes bank holidays.                               |
+| **Bought leave**              | An optional extra 37:30 of leave added to a single leave year.                                                                         |
+| **Bank holiday credit**       | 7:30 credited on a working day that is an England and Wales bank holiday, and deducted from the leave allowance.                       |
+| **Working band**              | The expected window for work, 07:00–19:00 by default. Time outside it raises a warning.                                                |
+| **Settlement**                | The point at which a week's excess conversion applies: the week's last working day, Friday by default.                                 |
+| **Excess conversion**         | A per-week switch. When on, the week's positive flexi at settlement becomes TOIL up to the cap, then overtime, spread across days.     |
 
 ## Feature inventory
 
 What exists today:
 
-| Area        | Capability                                                        |
-| ----------- | ----------------------------------------------------------------- |
-| Auth        | Email/password sign-in and sign-out, sessions (Better Auth)       |
-| Accounts    | CLI create and reset-password; seeded `dev@example.com` locally   |
-| Web         | Protected shell with a theme toggle                               |
-| API         | `GET /api/v1/me`, `GET /api/v1/config`, health endpoints, OpenAPI |
-| Feature kit | `pnpm gen:feature` from the reference template (ADR-0015)         |
-| Delivery    | CI (quality, template, e2e), Changesets, GHCR images              |
+| Area        | Capability                                                                 |
+| ----------- | -------------------------------------------------------------------------- |
+| Auth        | Email/password sign-in and sign-out, sessions (Better Auth)                |
+| Accounts    | CLI create and reset-password; seeded `dev@example.com` locally            |
+| Web         | Protected shell with a theme toggle                                        |
+| API         | `GET /api/v1/me`, `GET /api/v1/config`, health endpoints, OpenAPI          |
+| Feature kit | `pnpm gen:feature` from the reference template (ADR-0015)                  |
+| Delivery    | CI (quality, template, e2e), Changesets, GHCR images                       |
+| Hours tool  | Hours tracker — **in progress** ([feature doc](features/hours-tracker.md)) |
 
 Not built: domain features, passkeys, backups, the sidebar and command palette.
 
@@ -141,8 +162,8 @@ candidates are in [BACKLOG.md](BACKLOG.md).
 
 ### Now
 
-- Nothing in progress. The ADR-0019 standards rewrite (steps 3–6) is done; the
-  next item comes from Next.
+- `L` [Hours tracker](features/hours-tracker.md) (building: slice 1 of 10) — the
+  first tool, on the modular-tools structure of ADR-0020.
 
 ### Next
 
@@ -157,6 +178,5 @@ candidates are in [BACKLOG.md](BACKLOG.md).
 
 ### Later
 
-- `L` First domain feature (purpose TBD).
 - `M` Command palette (Ctrl/Cmd+K).
 - `S` Error-code catalogue for API errors.
