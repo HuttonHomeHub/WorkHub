@@ -43,3 +43,4 @@ future maintainers (human or AI) the _why_, not just the _what_.
 | [0017](0017-shared-contracts-and-generated-api-client.md)  | Shared contracts, generated API client    | Accepted                           |
 | [0018](0018-closed-signup-cli-account-management.md)       | Closed sign-up, CLI account management    | Accepted                           |
 | [0019](0019-workhub-single-owner-desktop-app.md)           | WorkHub: single-owner desktop web app     | Accepted                           |
+| [0020](0020-modular-tools-over-shared-core-data.md)        | Modular tools over shared core data       | Proposed                           |
