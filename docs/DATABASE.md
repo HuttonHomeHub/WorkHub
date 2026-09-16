@@ -1,133 +1,259 @@
-# Database Standards
+# Database standards
 
-> **Pending rewrite (ADR-0019).** Parts of this document assume `created_by`/`updated_by` columns, an append-only audit log, multiple tenants and multiple currencies — where it conflicts with [PRODUCT.md](PRODUCT.md), PRODUCT.md wins.
+> The canonical home of WorkHub's schema, migration and query rules:
+> **PostgreSQL 17 + Prisma 6**. `apps/api/prisma/schema.prisma` is the source of
+> truth for the model; the reference template
+> (`apps/api/examples/reference-feature/schema.reference.prisma`) shows a domain
+> table that follows every rule here. HTTP-facing shapes are in
+> [API.md](API.md); layering is in [BACKEND_ARCHITECTURE.md](BACKEND_ARCHITECTURE.md).
 
-> Standards and philosophy for the WorkHub data layer: **PostgreSQL 17 + Prisma**.
-> The schema in [`apps/api/prisma/schema.prisma`](../apps/api/prisma/schema.prisma)
-> is the single source of truth for the data model. See ADR-0008.
+WorkHub has one owner, one API instance and one database at personal scale
+([PRODUCT.md](PRODUCT.md)). The data is the one thing that cannot be rebuilt, so
+the rules favour integrity and safe change over throughput. Rules marked
+**(planned)** are the standard for new code but not yet implemented; each has a
+[BACKLOG.md](BACKLOG.md) item.
 
-## Philosophy
+## Principles
 
-1. **The database is a long-lived asset.** Data outlives code; schema decisions
-   are made carefully and are hard to reverse. Model for correctness first.
-2. **The database enforces integrity.** Constraints, foreign keys, and types are
-   guardrails in the database, not just in application code — the DB is the last
-   line of defence for data correctness.
-3. **Migrations are the only way to change schema.** No manual edits to any
-   environment; every change is a reviewed, versioned, committed migration.
-4. **Access only through Prisma.** No hand-built SQL strings; parameterised
-   queries always (also a security control — see `docs/SECURITY_STANDARDS.md`).
-5. **Exact numeric data uses exact types.** If the app handles money, store it as
-   integer minor units with an explicit currency — never floats (see
-   [`API.md`](API.md)).
+1. **The database enforces integrity.** Foreign keys, `NOT NULL`, `CHECK` and
+   unique constraints are the last line of defence, not an afterthought to
+   validation.
+2. **Migrations are the only way to change the schema** — reviewed, committed,
+   applied by `prisma migrate deploy`. Never edit a database by hand.
+3. **Prisma only, parameterised always.** Raw SQL goes through the tagged
+   template `$queryRaw`/`$executeRaw`; never `$queryRawUnsafe` or string
+   concatenation ([SECURITY_STANDARDS.md](SECURITY_STANDARDS.md#injection-and-output)).
+4. **Repositories are the only Prisma consumers** (ADR-0008), with the one
+   exception for opening transactions described below.
+5. **Measure before optimising** (see [Queries](#queries-and-indexes)).
 
-## Naming conventions
+## Naming
 
-- **Tables:** plural `snake_case` (`reference_items`, `users`).
-- **Columns:** `snake_case` (`created_at`, `owner_id`).
-- **Primary keys:** `id`, **UUID v7** (time-ordered) where possible for good
-  index locality without exposing counts.
-- **Foreign keys:** `<referenced_singular>_id` (`user_id`); a domain row's owning user is `owner_id` (ADR-0016).
-- **Indexes:** `idx_<table>_<cols>`; **unique:** `uq_<table>_<cols>`;
-  **checks:** `ck_<table>_<rule>`.
-- **Enums:** `snake_case` type, `SCREAMING_SNAKE_CASE` values.
-- **Booleans:** positive (`is_active`), not negated.
-- In Prisma models we use `@@map`/`@map` so Prisma's `camelCase` fields map to
-  `snake_case` columns, keeping both idioms clean.
+- **Tables:** plural `snake_case` (`time_entries`); **columns:** `snake_case`.
+  Prisma fields stay `camelCase` and map with `@map` / `@@map`.
+- **Primary key:** `id`. **Foreign keys:** `<singular>_id`; the owning user is
+  always `owner_id` (ADR-0016).
+- **Indexes** `idx_<table>_<cols>`, **unique** `uq_<table>_<cols>`, **checks**
+  `ck_<table>_<rule>` — where you name them in SQL. Prisma's generated names are
+  acceptable for indexes it declares.
+- **Enums:** PascalCase type in Prisma, `SCREAMING_SNAKE_CASE` values.
+- **Booleans** are positive: `is_billable`, not `is_not_billable`.
 
-## Migrations
+## Standard columns
 
-- Generated and applied with **Prisma Migrate**. Locally: `prisma migrate dev`;
-  in CI/prod: `prisma migrate deploy` (before the new app version serves
-  traffic).
-- **Committed and reviewed.** Migration SQL is part of the PR and read in review.
-- **Expand/contract for zero-downtime:** add new nullable columns/tables first
-  (expand), backfill, switch reads/writes, then remove the old (contract) in a
-  later release — never a breaking rename in one step.
-- **Forward-only in production.** "Rollback" = a new compensating migration plus
-  redeploying the previous image; destructive changes are gated and reviewed
-  with extra care.
-- Migrations are deterministic and independent of application code state.
+Every **domain** table carries:
 
-## Indexes
+| Column       | Prisma                                                  | Purpose                                               |
+| ------------ | ------------------------------------------------------- | ----------------------------------------------------- |
+| `id`         | `String @id @default(uuid(7)) @db.Uuid`                 | UUID v7: time-ordered, good index locality, no counts |
+| `owner_id`   | `String @map("owner_id") @db.Uuid` + relation to `User` | Ownership (ADR-0016); every query filters by it       |
+| `created_at` | `DateTime @default(now()) @db.Timestamptz(3)`           | When the row was created                              |
+| `updated_at` | `DateTime @updatedAt @db.Timestamptz(3)`                | Maintained by Prisma on every update                  |
+| `deleted_at` | `DateTime? @db.Timestamptz(3)`                          | [Soft delete](#soft-delete)                           |
+| `version`    | `Int @default(1)`                                       | [Optimistic locking](#optimistic-locking)             |
 
-- **Index every column used in a `WHERE`, `JOIN`, `ORDER BY`, or foreign key.**
-- Composite indexes follow the **leftmost-prefix** rule; order columns by
-  selectivity/usage. Add **partial indexes** for common filtered queries (e.g.
-  `WHERE deleted_at IS NULL`).
-- Unique constraints for natural keys; back them with unique indexes.
-- Indexes are not free (write cost, storage) — **add them for real query
-  patterns, and measure** (`EXPLAIN ANALYZE`); remove unused ones.
+**No `created_by`/`updated_by` columns and no audit-log table.** With one owner
+they only ever name the same user (ADR-0019). Security-relevant events go to the
+structured logs instead ([OBSERVABILITY.md](OBSERVABILITY.md#auth-security-events)).
 
-## Constraints
+The four Better Auth tables (`users`, `sessions`, `accounts`, `verifications`)
+follow the naming and type rules but not the domain columns: the library owns
+their rows. Check Better Auth's upgrade notes before renaming anything in them.
 
-- **Foreign keys** on every relationship, with explicit `ON DELETE` behaviour
-  (usually `RESTRICT`; `CASCADE` only for true ownership/composition).
-- **`NOT NULL`** by default; nullable is a deliberate decision.
-- **`CHECK`** constraints for domain rules (e.g. non-negative amounts, valid
-  enum ranges) — enforce invariants in the DB, not only in code.
-- **Unique** constraints for anything that must be unique (scoped where relevant,
-  e.g. unique name per owner).
+## Data types
 
-## Relationships
+| Data                         | Type                               | Notes                                                                                                                    |
+| ---------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| An **instant** (happened at) | `timestamptz(3)`                   | Stored in UTC; sent as ISO-8601 with `Z` ([API.md](API.md#dates-money-and-other-values))                                 |
+| A **calendar date**          | `@db.Date`                         | A due date or a day worked — no time or zone. Never store a date as midnight in a `timestamptz`                          |
+| **Money**                    | `Int` pence, column `<name>_pence` | GBP only, so **no currency column**. `Int` holds ±£21.4m; use `BigInt` only for a sum that could exceed it. Never floats |
+| A quantity with decimals     | `Decimal @db.Decimal(p, s)`        | Exact (hours, rates). Never `Float` for anything summed or compared                                                      |
+| Text                         | `String` (`text`)                  | Length limits live in DTOs; add `varchar(n)` only for a real external limit                                              |
+| A closed set of values       | Prisma `enum`                      | Adding a value is a migration                                                                                            |
+| Opaque structured data       | `Json`                             | Only when never filtered or joined on; otherwise model columns                                                           |
 
-- Model relationships explicitly with foreign keys; prefer normalised design and
-  denormalise only with a measured reason (documented).
-- Many-to-many via an explicit **join table** with its own audit columns.
-- User-owned data carries its scoping key (`owner_id`, ADR-0016) and is always
-  filtered by it in queries (defence against cross-tenant leaks).
+### Time
 
-## Transactions
+- **Instants are UTC in the database and on the wire;** they become
+  `Europe/London` only when displayed (the web) or when a rule needs a local
+  day.
+- **"Today", "this week", "this month" are Europe/London calendar concepts.**
+  Compute their boundaries in `Europe/London` — across BST changes — then
+  compare against `timestamptz` columns, or compare `date` columns directly.
+- **(planned) A `Clock` seam.** Code that reads the current time will inject a
+  clock provider so tests can fix time ([TESTING.md](TESTING.md#determinism)).
+  Until it exists, `new Date()` is acceptable only in repositories for
+  bookkeeping columns (the template's soft delete does this); business rules
+  that depend on "now" wait for the seam.
 
-- **Wrap multi-step writes in a transaction** (`prisma.$transaction`) so they are
-  atomic; the **service layer owns transaction boundaries**.
-- Keep transactions **short**; do no external I/O (HTTP, queue publish) inside a
-  transaction — publish after commit.
-- Choose isolation deliberately; use appropriate levels for read-modify-write on
-  contended rows (see optimistic locking).
+## Constraints and relationships
 
-## Soft deletes
+- **Foreign key on every relationship**, with a deliberate `onDelete`:
 
-- Default to **soft delete** via a nullable `deleted_at timestamptz`. Deletes set
-  the timestamp; **all queries exclude soft-deleted rows by default** (a Prisma
-  extension/base repository enforces this centrally — never rely on every caller
-  remembering).
-- Unique constraints that must ignore deleted rows use **partial unique indexes**
-  (`WHERE deleted_at IS NULL`).
-- **Hard deletes** are reserved for compliance/erasure requests and are explicit,
-  audited, and rare.
+  | Relationship                               | `onDelete` | Example                                                                   |
+  | ------------------------------------------ | ---------- | ------------------------------------------------------------------------- |
+  | `owner_id` → `users.id`                    | `Cascade`  | The template: deleting the account deletes all the user's data            |
+  | A part that cannot exist without its whole | `Cascade`  | An invoice's lines                                                        |
+  | A reference between independent entities   | `Restrict` | A time entry → its project; the project cannot be hard-deleted while used |
+  | An optional reference                      | `SetNull`  | A task's optional category                                                |
 
-## Auditing
+  Soft delete never fires these rules — only a hard delete (purge) does.
+  Deleting a user is a manual, server-side act; no endpoint or CLI command
+  does it today.
 
-- Every table carries **`created_at`** and **`updated_at`** (`timestamptz`,
-  UTC), maintained automatically.
-- Ownership/change attribution via **`created_by`** / **`updated_by`** (the
-  acting principal) where meaningful.
-- Security- and sensitive changes also emit an **append-only audit-log
-  entry** (who/what/when/before→after) — see `docs/SECURITY_STANDARDS.md`
-  (Audit logging). The audit log is never mutated.
+- **`NOT NULL` by default;** a nullable column is a decision with a meaning
+  (`deleted_at`, an optional description).
+- **`CHECK` constraints** for invariants the database can see: non-negative
+  pence, `ends_at > starts_at`. Prisma cannot declare them — add them to the
+  migration SQL, name them `ck_…`, and note them in a comment on the model.
+- **Unique constraints** are scoped to the owner (`@@unique([ownerId, name])`),
+  and to active rows when the table soft-deletes (below).
+- Normalise by default; denormalise only with a measurement and a comment.
+- Many-to-many uses an explicit join table with its own `id` and `created_at`;
+  join rows are hard-deleted.
+
+## Soft delete
+
+- **User-facing domain entities soft-delete:** `DELETE` sets `deleted_at`. The
+  web offers undo, and restore clears `deleted_at` (the template's restore
+  endpoint is in BACKLOG.md). Join rows, Better Auth rows and other internal
+  bookkeeping hard-delete.
+- **Reads exclude deleted rows in the repository.** The template routes every
+  query through a private `active(where)` helper that adds `deletedAt: null`,
+  including the optimistic-locked update. A new query that skips it is a bug. A
+  Prisma client extension that enforces this across all models is a backlog
+  item for when a second model exists.
+- **Purging is manual.** Deleted rows stay until the owner empties the trash —
+  an explicit, irreversible action with a confirmation dialog
+  ([UX_STANDARDS.md](UX_STANDARDS.md)) that hard-deletes that entity's
+  soft-deleted rows. There is **no automatic purge** and no retention timer.
+- **Uniqueness ignores deleted rows** through a partial unique index, written in
+  the migration SQL because Prisma 6 cannot declare it:
+
+  ```sql
+  CREATE UNIQUE INDEX uq_projects_owner_id_name_active
+    ON projects (owner_id, name) WHERE deleted_at IS NULL;
+  ```
+
+  Prisma does not know about the index, so check that later generated
+  migrations do not drop it.
 
 ## Optimistic locking
 
-- Mutable rows subject to concurrent edits carry an integer **`version`** column.
-- Updates are conditional on the expected version
-  (`WHERE id = ? AND version = ?`) and **increment it**; a zero-row update means
-  someone else changed it → the API returns **409 Conflict** so the client can
-  refetch and retry. This avoids lost updates without long-held locks.
-- Demonstrated in the reference feature.
+Rows the owner edits carry `version`. As in the template's
+`updateIfVersionMatches`:
 
-## Data types & conventions
+1. The client sends the `version` it last read.
+2. The repository runs `updateMany` where `id`, `version` and `deleted_at IS NULL`
+   match, setting `version: { increment: 1 }`.
+3. A count of `0` means the row changed or disappeared; the service throws
+   `ConflictError` → **409**, and the client refetches.
 
-- Timestamps: `timestamptz`, stored UTC. Text: `text` (not arbitrary
-  `varchar(n)` unless a real limit applies). Money (if the app has any):
-  `integer`/`bigint` minor units + currency code. Identifiers: `uuid`. Enums:
-  Postgres enums via Prisma.
-- No business logic in triggers/stored procedures unless justified and
-  documented (keep logic in the app for testability).
+Use this, not `SELECT … FOR UPDATE`, for read-modify-write on a single row. Even
+with one owner, two browser tabs are enough to lose an update.
 
-## Testing & performance
+## Transactions
 
-- Integration tests run against a **real Postgres** (see [`TESTING.md`](TESTING.md)).
-- Profile with `EXPLAIN ANALYZE`; watch for N+1 (Prisma `include`/`select`),
-  missing indexes, and unbounded queries. **Paginate everything.** See
-  [`PERFORMANCE.md`](PERFORMANCE.md).
+**The standard for new code:**
+
+- **The service owns the boundary.** It opens an interactive transaction with
+  `prisma.$transaction(async (tx) => { … })` — the one reason a service may
+  inject `PrismaService` — and passes `tx` into repository methods.
+- **Repository methods take an optional client:**
+  `create(data, db: Prisma.TransactionClient = this.prisma)`. Every query uses
+  `db`, so the same method works inside and outside a transaction.
+- **Only when needed:** two or more writes that must succeed together, or a
+  read whose result a following write depends on. A single `create`/`update` is
+  already atomic.
+- **Short and local:** no HTTP calls, Better Auth calls, file writes or waits
+  inside; Prisma's 5-second interactive timeout is a ceiling, not a target. Do
+  side effects after commit.
+- **Isolation:** PostgreSQL's default Read Committed plus optimistic locking.
+  Use `Serializable` only for an invariant that spans rows, and retry on
+  serialisation failure (Prisma `P2034`).
+
+**Today** the template's repository injects `PrismaService` and its methods take
+no transaction client — adding the optional `db` parameter to the template is a
+backlog item. Follow the pattern above as soon as a feature needs a transaction.
+
+## Migrations
+
+### Workflow
+
+1. Run **database-architect** before writing the schema change
+   ([agents](../.claude/agents/README.md)).
+2. `pnpm --filter @repo/api prisma:migrate --name <change>` generates
+   `prisma/migrations/<timestamp>_<change>/migration.sql` against your local
+   database.
+3. **Read the SQL.** Prisma writes a rename as drop-and-add, and a new
+   `NOT NULL` column without a default fails on existing rows. Edit the SQL
+   when it does not preserve data, and add `CHECK` constraints and partial
+   indexes by hand.
+4. Commit `schema.prisma` and the migration together. Never edit a migration
+   that has been applied anywhere but your machine.
+
+In production the compose `migrate` service runs `prisma migrate deploy`, and the
+API starts only after it succeeds ([DEPLOYMENT.md](DEPLOYMENT.md)). The app is
+briefly unavailable during a deploy; for one owner that is accepted, so
+migrations do not need to be backward-compatible with the previous image.
+
+### Migration safety
+
+Prisma migrations are **forward-only**: there are no down migrations. The safety
+net is a backup and a rehearsal, not a reverse script.
+
+- **Every migration:** take a fresh `pg_dump` of production immediately before
+  deploying it (manual until the backup job exists — PRODUCT.md Next).
+- **Additive changes** — a new table, a nullable column, a column with a
+  default, an index — need nothing more.
+- **Destructive or data-transforming changes** — dropping or renaming a table or
+  column, narrowing a type, adding `NOT NULL` or a unique constraint to existing
+  data, moving data between columns — also need, in the PR's _Risk & rollback_:
+  - a **data-preserving plan**: rename in SQL instead of drop-and-add; copy data
+    before dropping the source; backfill before adding `NOT NULL`;
+  - a **dry run on a restored copy** of the production dump, with the checks you
+    ran (row counts, spot queries).
+- **Rollback** is restoring the pre-migration dump and redeploying the previous
+  `IMAGE_TAG`. Anything written after the dump is lost, so deploy migrations when
+  the app is not in use.
+
+## Queries and indexes
+
+The query rules that decide backend performance; budgets are in
+[PERFORMANCE.md](PERFORMANCE.md).
+
+- **Bounded:** every list is paginated with a capped `limit`
+  ([API.md](API.md#lists)). No `findMany` without `take` on a table that grows.
+- **No N+1:** load related rows with `include`/`select` or one `in` query, never
+  a query per row in a loop.
+- **Select what you use** on wide rows and in lists; let the database filter,
+  sort, count and aggregate — never fetch and filter in TypeScript.
+- **Batch writes** with `createMany`/`updateMany` inside a transaction.
+- **Index real query patterns:** `owner_id` leads every composite index, then
+  equality filters, then the sort column (`@@index([ownerId, status, createdAt])`).
+  Do not add an index that is a leftmost prefix of another. Remove an index no
+  query uses.
+- **Measure first.** Before adding an index or rewriting a query, reproduce it on
+  a realistic data set (for example 100k rows in the table), read
+  `EXPLAIN (ANALYZE, BUFFERS)`, and put the before/after numbers in the PR.
+  To see the SQL Prisma sends, pass `log: ['query']` to the client in
+  `PrismaService` locally (do not commit it) — Prisma is not wired to the Pino
+  logger.
+
+## Data export (planned)
+
+The owner can take their data elsewhere: a server CLI command that writes every
+domain table the owner owns to JSON, alongside the backups planned in
+PRODUCT.md. Tracked in BACKLOG.md.
+
+## Checklist
+
+- [ ] database-architect consulted before the migration
+- [ ] Standard columns; UUID v7; `timestamptz(3)` instants, `date` dates, `Int` pence
+- [ ] No actor columns or audit table
+- [ ] Foreign keys with a chosen `onDelete`; `NOT NULL` by default; `CHECK`s in SQL
+- [ ] Owner-scoped unique constraints; partial unique index when soft-deleting
+- [ ] Every read through `active()`; optimistic-locked updates
+- [ ] Multi-write use cases in a transaction, with `tx` passed to repositories
+- [ ] Migration SQL read; destructive changes have a backup, a data plan and a dry run
+- [ ] Lists bounded; no N+1; indexes match the queries; numbers for any tuning
