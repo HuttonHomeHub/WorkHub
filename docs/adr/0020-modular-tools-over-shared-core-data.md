@@ -3,6 +3,8 @@
 - **Status:** Proposed
 - **Date:** 2026-09-16
 - **Deciders:** Project owner (drafted with Claude)
+- **Owner's answer:** approved as drafted on 2026-09-16; Status moves to Accepted at
+  the final approval of the hours tracker plan
 
 ## Context
 
@@ -96,8 +98,8 @@ import each feature's manifest. Shared layers still never import features.
 ### 4. Naming, routes and URLs
 
 - **Tables and API resources are named for what they hold, never for the tool:**
-  `time_entries` and `/api/v1/time-entries`, not `hours_entries` or
-  `/api/v1/hours/entries`. Names are unique across the app, so they must be
+  `work_days` and `/api/v1/work-days`, not `hours_days` or
+  `/api/v1/hours/days`. Names are unique across the app, so they must be
   specific (`time-adjustments`, not `adjustments`). This keeps API.md's flat,
   plural-noun rule and makes promotion to core a code move.
 - **Web routes are grouped by tool:** `/<tool>` is the tool's home;
@@ -120,7 +122,10 @@ TypeScript, with no Nest, React or Prisma imports, and is foldered by tool and
 core. The API uses it for authoritative results; the web uses it for live
 feedback while the owner types. `@repo/types` keeps contracts and shared limits
 (ADR-0017). Date and time zone helpers for `Europe/London` live in
-`packages/domain/src/core/time/`.
+`packages/domain/src/core/time/`, built on the TC39 **Temporal** API through
+`temporal-polyfill`. It is imported from one module, not patched onto
+`globalThis`, so moving to native Temporal once Node ships it is a one-file
+change.
 
 ### 6. The generator and the template (ADR-0014/0015)
 
@@ -144,7 +149,7 @@ feedback while the owner types. `@repo/types` keeps contracts and shared limits
   explicitly for modular tools. The sidebar and palette would need a registry
   anyway. And with no rule for shared records, the second tool would import the
   first tool's internals, or duplicate them. Rejected.
-- **Namespace everything by tool** (`/api/v1/hours/time-entries`, `hours_`
+- **Namespace everything by tool** (`/api/v1/hours/work-days`, `hours_`
   table prefixes). Ownership is visible in every path. But it contradicts API.md's
   flat resources, and moving an entity to core would rename its table and break
   its API paths: a destructive migration plus a contract break. Rejected.
@@ -166,7 +171,7 @@ feedback while the owner types. `@repo/types` keeps contracts and shared limits
   package, and one runtime for the rules. But the web could show totals only
   after each save round-trip, and any client-side preview would be a second,
   untested copy of the rules. This is a reasonable fallback if the owner prefers
-  it (feature doc, question 12).
+  it; the owner chose the shared package on 2026-09-16.
 
 ## Consequences
 
@@ -179,8 +184,9 @@ feedback while the owner types. `@repo/types` keeps contracts and shared limits
   rule (tool ↛ tool, core ↛ tool) is a follow-up. App-wide unique names need a
   little more thought when choosing names.
 - **New package:** `@repo/domain` adds a workspace package to build, lint and
-  test in Turborepo. Its time zone dependency is a new runtime dependency and
-  needs security-reviewer, per the escalation triggers.
+  test in Turborepo. Its Temporal polyfill (`temporal-polyfill`) is a new runtime
+  dependency and needs security-reviewer, per the escalation triggers. It adds
+  roughly 20 kB gzipped to the chunks of the routes that use it.
 - **Follow-up documentation (in the PRs that implement them):**
   - PRODUCT.md: purpose, glossary, feature inventory and roadmap;
   - BACKEND_ARCHITECTURE.md and REFERENCE_FEATURE.md: `modules/<tool>/` and
