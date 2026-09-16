@@ -74,6 +74,11 @@ one that catches the rest — do it for every interactive change.
       closes. (2.4.3)
 - [ ] **After a route change**, focus moves to the new page's heading or main
       landmark rather than staying on a link that no longer exists. (2.4.3)
+      `lib/route-focus.ts` does this once, from the root route: when an in-app
+      navigation changes the **pathname**, focus moves to `<main>`, or to the
+      first heading on a page without one. It never moves focus on the initial
+      page load, or when only search params or the hash change (a `?week=`
+      control keeps its focus).
 - [ ] **After deleting the focused row**, focus moves to the next row (or the
       list container if the list is now empty) — never to `<body>`. (2.4.3)
 - [ ] No focus change on its own triggers a context change. (3.2.1)
@@ -112,7 +117,7 @@ one that catches the rest — do it for every interactive change.
       shape. (1.4.1)
 - [ ] Correct in **light and dark**; check both.
 
-> **Known gap.** The current `--border` and `--input` tokens
+> **Known gap.** The current `--border`, `--input` and `--sidebar-border` tokens
 > (`oklch(0.922 0 0)` on white in light; `oklch(1 0 0 / 15%)` on
 > `oklch(0.145 0 0)` in dark) are **suspect against 1.4.11 and have not been
 > measured**. Do not treat them as passing. Measuring and fixing them is tracked

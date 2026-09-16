@@ -52,8 +52,10 @@ One shell, composed once as a layout route (`routes/_authed.tsx` →
 the tool manifests in `app/tools.ts` (ADR-0020).
 
 - Two states: **expanded** (240px, icon + label) and **rail** (56px, icon only
-  with a tooltip). The toggle is a header button; the state persists per browser
-  in `localStorage` and is restored before first paint.
+  with a tooltip). The toggle is a header button named "Sidebar" with
+  `aria-expanded` and `aria-controls`, and a tooltip naming its action
+  ("Collapse sidebar"); the state persists per browser in `localStorage` and is
+  restored before first paint.
 - Rail state never hides a destination — it hides labels. A tooltip on hover
   **and** an accessible name for the keyboard is required on every rail item.
 - The current destination is marked `aria-current="page"` and visually distinct
@@ -69,7 +71,10 @@ chrome must not obscure focus — `scroll-padding-top: var(--header-height)` on
 `<html>` keeps focused elements clear of it
 ([ACCESSIBILITY.md](ACCESSIBILITY.md), 2.4.11). Below 48rem the header wraps
 onto more lines instead of clipping or hiding its content, and scrolls away with
-the page rather than sticking, so it cannot cover a short viewport.
+the page rather than sticking, so it cannot cover a short viewport. The
+scroll padding assumes a **one-line** sticky header at 48rem and wider; revisit
+it if the header's controls grow (the palette trigger, for example) enough to
+wrap there.
 
 **Skip link:** "Skip to main content" is the first tab stop on every signed-in
 page; it moves focus to `<main>`.

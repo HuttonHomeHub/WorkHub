@@ -66,7 +66,7 @@ records the roles; `globals.css` holds the values.
   when you touch a colour token. Measure, don't eyeball
   ([ACCESSIBILITY.md](ACCESSIBILITY.md#how-to-verify)).
 - Status is never colour alone — pair with an icon or text.
-- **Open question:** `--border` and `--input` are the tokens most likely to fail
+- **Open question:** `--border`, `--input` and `--sidebar-border` are the tokens most likely to fail
   1.4.11 (3:1 for control boundaries), in both themes. They have **not** been
   measured. Treat them as suspect and fix them before claiming compliance
   ([TECH_DEBT.md](TECH_DEBT.md), [BACKLOG.md](BACKLOG.md)).
@@ -153,7 +153,10 @@ The single most important change from the generic starter: **32px, not 36px.**
   ring and padding are what must not shrink.
 - **Today:** `button.tsx` defaults to `h-9` (36px) with `sm` at `h-8` (32px), and
   `input.tsx` is fixed at `h-9`. Retuning the defaults to 32px, and giving
-  `Input` the same size variants as `Button`, is part of the app-shell work.
+  `Input` the same size variants as `Button`, is **later** app-shell work
+  (PRODUCT.md → Next, "App shell: density tokens"). The hours tracker's slice 1
+  did not do it: the header's icon buttons (sidebar toggle, theme) are still
+  36px until that retune lands.
 
 ### Layout — partly implemented
 
@@ -174,16 +177,15 @@ custom properties on `:root`, used as `w-(--sidebar-width)` or
 | `--pane-list-default` | 380px  | List pane default                             | proposed    |
 | `--pane-detail-min`   | 480px  | Detail pane minimum, below which panes stack  | proposed    |
 
-**Sidebar variants — implemented.** `globals.css` defines two custom variants
+**Sidebar variant — implemented.** `globals.css` defines one custom variant
 for the shell, driven by `data-sidebar` on `<html>` (set before first paint):
 
-- `sidebar-rail:` applies when the sidebar is collapsed, **or** at any width
-  below 48rem (Tailwind's `md`; a 1280px window reaches it at 200% zoom), where
-  the sidebar is always the rail;
-- `sidebar-expanded:` applies when it is expanded at 48rem or wider.
-
-Use them only inside the shell, for the rail's width, its hidden labels and its
-tooltips.
+`sidebar-rail:` applies when the sidebar is collapsed, **or** at any width
+below 48rem (Tailwind's `md`; a 1280px window reaches it at 200% zoom), where
+the sidebar is always the rail. Use it only inside the shell, for the rail's
+width and its hidden labels. The rail tooltips open only in the rail state,
+checked in JavaScript when they would open (`isSidebarRail()` in `sidebar.tsx`
+mirrors the variant), so an expanded link never carries a description.
 
 ### Z-index — partly implemented
 

@@ -138,9 +138,10 @@ first paint, and no API surface. Rules:
   `workhub:table:<id>`).
 - Sidebar state is applied before first paint, like the theme, so the shell does
   not jump: the inline script in `index.html` sets `data-sidebar` on `<html>`,
-  `AppShell` keeps it in sync, and CSS variants (`sidebar-rail:`,
-  `sidebar-expanded:`, DESIGN_SYSTEM.md → Layout) do the rest. Keep that
-  script's parsing in step with the helper.
+  `AppShell` keeps it in sync, and the `sidebar-rail:` CSS variant
+  (DESIGN_SYSTEM.md → Layout) does the rest. `src/pre-paint-script.test.ts` checks the
+  script's key and version against the helper. The script only ever writes
+  constants (`'collapsed'` or `'expanded'`) into the DOM, never stored text.
 - If the owner later wants preferences to follow them between machines, move them
   to a server `preferences` resource — that is a Feature, not a tweak.
 
@@ -156,6 +157,13 @@ first paint, and no API surface. Rules:
   session and `GET /api/v1/config`.
 - **Code splitting:** `autoCodeSplitting: true` in `vite.config.ts` gives each
   route its own chunk.
+- **Focus after navigation — implemented:** the root route subscribes
+  `lib/route-focus.ts` to the router's `onRendered` event. A navigation that
+  changes the pathname moves focus to `<main>` (or the first heading on a page
+  without `<main>`). The initial load and search-param-only or hash-only changes
+  leave focus where it is, so a control that only rewrites the query (a week
+  navigator, a filter) keeps focus. Don't add per-page focus handling for route
+  changes ([ACCESSIBILITY.md](ACCESSIBILITY.md), 2.4.3).
 - **Router defaults — implemented:** `defaultPreload: 'intent'` (hover/focus warms
   a route), `defaultPreloadStaleTime: 0` (the query cache owns freshness),
   `scrollRestoration: true`, and a root `notFoundComponent`.

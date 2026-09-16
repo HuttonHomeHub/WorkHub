@@ -22,8 +22,8 @@ finished item; move a scheduled one to PRODUCT.md.
 - `S` Bundle-size budget check for the web app in CI.
 - `S` Load Inter (self-hosted `woff2`, preloaded) or drop it from `--font-sans`
   (DESIGN_SYSTEM.md → Typography).
-- `S` Measure `--border` and `--input` against WCAG 1.4.11 in both themes and
-  retune them (ACCESSIBILITY.md).
+- `S` Measure `--border`, `--input` and `--sidebar-border` against WCAG 1.4.11
+  in both themes and retune them (ACCESSIBILITY.md).
 - `S` `Button` pending state (spinner, `disabled`, `aria-busy`) replacing
   label-swapping in forms.
 - `S` Error summary in the `Form` primitive, linking each failure to its field.
