@@ -18,4 +18,8 @@ documentation afterwards. The process around them is in
 - A feature that is dropped keeps its doc with a note saying why, rather than
   being deleted.
 
-No features have been planned yet.
+## Index
+
+| Feature                           | Status | Summary                                                                  |
+| --------------------------------- | ------ | ------------------------------------------------------------------------ |
+| [Hours tracker](hours-tracker.md) | Draft  | The first tool: time entries, contracted hours, overtime, flexi and TOIL |
