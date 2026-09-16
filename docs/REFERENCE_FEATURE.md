@@ -42,16 +42,24 @@ rules — if a rule and this page ever disagree, the linked standard wins.
    - the module registration in `apps/api/src/app.module.ts`
 3. **Replace the placeholder fields** with your entity's fields in the model,
    DTOs, service rules, and tests. Design the schema with the
-   **database-architect** agent ([`DATABASE.md`](DATABASE.md)).
+   **database-architect** agent before writing the migration
+   ([`DATABASE.md`](DATABASE.md)).
 4. **Create the migration:** `pnpm --filter @repo/api prisma:migrate --name add_<plural>`
-   and read the generated SQL.
+   and read the generated SQL ([migration safety](DATABASE.md#migration-safety)).
 5. **Regenerate the API contract:** `pnpm contract:generate` and commit
    `apps/api/openapi.json` + `packages/types/src/openapi.gen.ts` (ADR-0017).
-6. **Make the tests green**, update [`API.md`](API.md) if conventions changed,
-   and add a changeset.
-7. **Review** with `/review`, which runs the backend-reviewer,
-   security-reviewer, database-architect and test-engineer agents on these
-   paths.
+6. **Make the tests green** — API e2e for every status code first, unit tests
+   only for real logic ([`TESTING.md`](TESTING.md)) — update
+   [`API.md`](API.md) if conventions changed, and add a changeset.
+7. **Review** with `/review`, which picks agents by the paths the diff touches
+   ([`.claude/agents/README.md`](../.claude/agents/README.md)):
+
+   | Change                                    | Agents                                                    |
+   | ----------------------------------------- | --------------------------------------------------------- |
+   | `schema.prisma` or a migration            | **database-architect** (before writing it, and to review) |
+   | Controllers, DTOs, services, repositories | **backend-reviewer**                                      |
+   | Data access, ownership, auth, config      | **security-reviewer**                                     |
+   | Tests missing or thin, or a bug fix       | **test-engineer**                                         |
 
 ## Backend feature anatomy
 
@@ -61,7 +69,7 @@ apps/api/src/modules/<feature>/
 ├── <feature>.controller.ts      # HTTP surface (thin)
 ├── <feature>.service.ts         # Business logic / use cases / authorisation
 ├── <feature>.repository.ts      # Data access (the only Prisma consumer)
-├── <feature>.service.spec.ts    # Unit tests (repository mocked)
+├── <feature>.service.spec.ts    # Unit tests for service rules (ownership, conflict, cursor)
 └── dto/
     ├── create-<entity>.dto.ts        # Request DTO — no owner field
     ├── update-<entity>.dto.ts        # includes `version` (optimistic lock)
@@ -76,27 +84,45 @@ apps/api/test/<feature>.e2e-spec.ts   # API e2e (Supertest + real Postgres)
   (`ApiDataResponse` / `ApiPaginatedResponse`), mapping entities to response
   DTOs. Injects the principal with `@CurrentUser()`. **No business logic.**
 - **Service** — authorise → apply rules → delegate persistence → log. Owns
-  transactions; throws typed domain errors (never HTTP exceptions); no raw
-  Prisma.
+  transactions; throws typed domain errors (never HTTP exceptions); no Prisma
+  queries.
 - **Repository** — the only Prisma consumer. Centralises the soft-delete filter
   and the optimistic-locked update; swapping the ORM would touch only this file.
 
 ### Standard → canonical rule → where it is demonstrated
 
-| Standard                                          | Canonical rule                                                                                               | In the template                                      |
-| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------- |
-| Modules, layering, DI                             | [ADR-0008](adr/0008-backend-modular-monolith.md), [`BACKEND_ARCHITECTURE.md`](BACKEND_ARCHITECTURE.md)       | `reference.module.ts`                                |
-| REST conventions, status codes, envelopes         | [`API.md`](API.md)                                                                                           | `reference.controller.ts`, live interceptor/filter   |
-| OpenAPI contract + generated client types         | [ADR-0017](adr/0017-shared-contracts-and-generated-api-client.md), [`API.md`](API.md)                        | `reference.controller.ts`                            |
-| Validation (DTOs), pagination, filtering, sorting | [`API.md`](API.md)                                                                                           | `dto/*.dto.ts`, `ReferenceService.list`              |
-| Owner-based access (anti-IDOR)                    | [`SECURITY_STANDARDS.md` → Authorisation](SECURITY_STANDARDS.md#authorisation--ownership-adr-0016)           | `ReferenceService.findOwnedOrThrow`                  |
-| Errors (domain errors → envelope)                 | [`BACKEND_ARCHITECTURE.md` → Error handling](BACKEND_ARCHITECTURE.md#error-handling)                         | `ReferenceService`, `common/errors/`                 |
-| Schema, soft delete, auditing, optimistic locking | [`DATABASE.md`](DATABASE.md)                                                                                 | `schema.reference.prisma`, `reference.repository.ts` |
-| Structured, correlated logging                    | [`OBSERVABILITY.md`](OBSERVABILITY.md)                                                                       | `ReferenceService` (`PinoLogger`)                    |
-| Typed configuration (no `process.env`)            | [`BACKEND_ARCHITECTURE.md` → Configuration](BACKEND_ARCHITECTURE.md#configuration)                           | `AppConfigService` (live)                            |
-| Unit + API e2e tests                              | [`TESTING.md`](TESTING.md)                                                                                   | `reference.service.spec.ts`, `reference.e2e-spec.ts` |
-| Security checklist                                | [`SECURITY_STANDARDS.md` → checklist](SECURITY_STANDARDS.md#secure-by-default-checklist-per-endpointfeature) | —                                                    |
-| Performance checklist                             | [`PERFORMANCE.md` → Definition of done](PERFORMANCE.md#definition-of-done-performance)                       | —                                                    |
+| Standard                                            | Canonical rule                                                                                         | In the template                                      |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | ---------------------------------------------------- |
+| Modules, layering, DI                               | [ADR-0008](adr/0008-backend-modular-monolith.md), [`BACKEND_ARCHITECTURE.md`](BACKEND_ARCHITECTURE.md) | `reference.module.ts`                                |
+| REST conventions, status codes, envelopes           | [`API.md`](API.md)                                                                                     | `reference.controller.ts`, live interceptor/filter   |
+| OpenAPI contract + generated client types           | [ADR-0017](adr/0017-shared-contracts-and-generated-api-client.md), [`API.md`](API.md)                  | `reference.controller.ts`                            |
+| Validation (DTOs), pagination, filtering, sorting   | [`API.md`](API.md)                                                                                     | `dto/*.dto.ts`, `ReferenceService.list`              |
+| Owner-based access (anti-IDOR)                      | [`SECURITY_STANDARDS.md` → Authorisation](SECURITY_STANDARDS.md#authorisation--ownership-adr-0016)     | `ReferenceService.findOwnedOrThrow`                  |
+| Errors (domain errors → envelope)                   | [`BACKEND_ARCHITECTURE.md` → Error handling](BACKEND_ARCHITECTURE.md#error-handling)                   | `ReferenceService`, `common/errors/`                 |
+| Schema, soft delete, timestamps, optimistic locking | [`DATABASE.md`](DATABASE.md)                                                                           | `schema.reference.prisma`, `reference.repository.ts` |
+| Structured, correlated logging                      | [`OBSERVABILITY.md`](OBSERVABILITY.md)                                                                 | `ReferenceService` (`PinoLogger`)                    |
+| Typed configuration (no `process.env`)              | [`BACKEND_ARCHITECTURE.md` → Configuration](BACKEND_ARCHITECTURE.md#configuration)                     | `AppConfigService` (live)                            |
+| API e2e + unit tests                                | [`TESTING.md`](TESTING.md)                                                                             | `reference.e2e-spec.ts`, `reference.service.spec.ts` |
+| Transactions, time                                  | [`DATABASE.md` → Transactions](DATABASE.md#transactions), [Time](DATABASE.md#time)                     | Not yet — see below                                  |
+| Security checklist                                  | [`SECURITY_STANDARDS.md` → Checklist](SECURITY_STANDARDS.md#checklist)                                 | —                                                    |
+| Performance                                         | [`PERFORMANCE.md`](PERFORMANCE.md)                                                                     | —                                                    |
+
+### Transactions and time in new code
+
+The template has neither yet; follow the standard when a feature needs them:
+
+- **Transactions:** when a use case makes two or more writes that must succeed
+  together, the service opens `prisma.$transaction(async (tx) => …)` and passes
+  `tx` to repository methods that take an optional
+  `db: Prisma.TransactionClient = this.prisma` parameter
+  ([`DATABASE.md` → Transactions](DATABASE.md#transactions)). Adding that
+  parameter to the template is a backlog item.
+- **Time:** store instants as `timestamptz` (UTC) and calendar dates as `date`;
+  compute "today" in `Europe/London`. The template's `new Date()` for
+  `deletedAt` is bookkeeping; rules that depend on "now" wait for the planned
+  `Clock` seam ([`DATABASE.md` → Time](DATABASE.md#time)).
+- **Money** is integer pence in a `<name>Pence` field — there is no currency
+  column ([`API.md`](API.md#dates-money-and-other-values)).
 
 ## What to customise vs. what must stay consistent
 
@@ -111,18 +137,17 @@ repository, and the endpoints.
 - The standard **`{ data, meta }` / `{ error }` envelopes**, documented in
   OpenAPI with the envelope decorators, and status codes.
 - **Validated DTOs**; safe response DTOs (no internal columns).
-- **Soft delete, auditing, optimistic locking**, UUID v7, `timestamptz`,
-  owner-scoped indexes.
+- **Soft delete, timestamps, optimistic locking**, UUID v7, `timestamptz`,
+  owner-scoped indexes — and no actor columns (ADR-0019).
 - **Structured, correlated logging**; typed config; no `process.env`.
-- **Tests** (unit + API e2e) and the coverage bar.
+- **Tests:** API e2e for every endpoint, unit tests for real logic.
 
 ## Common mistakes to avoid
 
 - Putting business logic in the controller, or Prisma queries in the service.
 - Forgetting the **ownership** check after loading a row (⇒ IDOR), or taking the
   owner from the request body.
-- Returning the raw entity (leaking `deletedAt`/`createdBy`) instead of a
-  response DTO.
+- Returning the raw entity (leaking `deletedAt`) instead of a response DTO.
 - Skipping the soft-delete filter, or bypassing the repository from the service.
 - Using floats for money; using `ParseUUIDPipe` (rejects UUID v7) instead of
   `ParseUuidPipe` from `common/validation/uuid`.

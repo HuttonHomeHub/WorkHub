@@ -25,7 +25,7 @@ reference-feature/
 │   ├── reference.controller.ts     # HTTP surface (thin)
 │   ├── reference.service.ts        # Business logic / use cases
 │   ├── reference.repository.ts     # Data access — the only Prisma consumer
-│   ├── reference.service.spec.ts   # Unit tests (repository mocked)
+│   ├── reference.service.spec.ts   # Unit tests for the service's rules
 │   └── dto/                        # Request + response DTOs
 ├── reference.e2e-spec.ts           # API e2e (Supertest + real Postgres)
 └── schema.reference.prisma         # Model sketch the generator appends to schema.prisma
@@ -45,6 +45,6 @@ Layered controller → service → **repository**; validated DTOs; standard
 `{ data, meta }` / `{ error }` envelopes documented in OpenAPI; cursor
 pagination + filtering + sorting; **owner-scoped** authorisation (anti-IDOR,
 ADR-0016) with a real `owner` foreign key; soft delete; timestamps; optimistic
-locking; structured logging with correlation IDs; and unit + API (Supertest)
+locking; structured logging with correlation IDs; and API (Supertest) + unit
 tests. The standard-by-standard map is in
 [`docs/REFERENCE_FEATURE.md`](../../../../docs/REFERENCE_FEATURE.md).

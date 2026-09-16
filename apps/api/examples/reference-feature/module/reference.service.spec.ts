@@ -27,9 +27,10 @@ function makeItem(overrides: Partial<ReferenceItem> = {}): ReferenceItem {
 }
 
 /**
- * Unit tests for the service. The **repository is mocked** — the service is
- * tested in isolation from the database (docs/TESTING.md). The e2e test exercises
- * the real repository against Postgres.
+ * Unit tests for the service's own rules — ownership 404s, optimistic-lock
+ * conflicts and cursor maths — with the repository stubbed. Endpoint behaviour
+ * is proven by the API e2e test against Postgres, the primary layer
+ * (docs/TESTING.md); delete cases a generated feature has no logic for.
  */
 describe('ReferenceService', () => {
   let repository: {

@@ -15,7 +15,7 @@ module/
 ├── reference.controller.ts    # HTTP surface (thin): DTOs, status codes, OpenAPI envelope
 ├── reference.service.ts       # Business logic: ownership authz, locking, logging
 ├── reference.repository.ts    # Data access: soft-delete filter, optimistic lock
-├── reference.service.spec.ts  # Unit tests (repository mocked)
+├── reference.service.spec.ts  # Unit tests for the service's rules
 └── dto/
     ├── create-reference-item.dto.ts       # note: NO owner field — owner = caller
     ├── update-reference-item.dto.ts       # includes `version` (optimistic lock)
