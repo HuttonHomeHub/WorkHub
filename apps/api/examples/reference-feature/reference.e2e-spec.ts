@@ -94,6 +94,21 @@ describe.skipIf(!hasDatabase)('Reference items API (e2e)', () => {
     expect(res.body.data).toHaveLength(1);
     expect(res.body.meta).toMatchObject({ hasMore: true });
     expect(res.body.meta.nextCursor).toEqual(expect.any(String));
+
+    const next = await request(app.getHttpServer())
+      .get(base)
+      .query({ limit: 1, cursor: res.body.meta.nextCursor as string })
+      .expect(200);
+    expect(next.body.data).toHaveLength(1);
+    expect(next.body.data[0].id).not.toBe(res.body.data[0].id);
+  });
+
+  it('rejects a malformed cursor with 400 (not a 500 from the database)', async () => {
+    const res = await request(app.getHttpServer())
+      .get(base)
+      .query({ cursor: 'not-a-cursor' })
+      .expect(400);
+    expect(res.body.error.code).toBe('BAD_REQUEST');
   });
 
   it('fetches an item by id (200) and 404s for a missing one', async () => {

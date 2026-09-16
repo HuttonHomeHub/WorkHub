@@ -104,6 +104,16 @@ export class AllExceptionsFilter implements ExceptionFilter {
     switch (error.code) {
       case 'P2025':
         return { status: HttpStatus.NOT_FOUND, code: 'NOT_FOUND', message: 'Resource not found.' };
+      // Inconsistent column data: a value Prisma cannot convert to the column's
+      // type, such as a malformed UUID. Boundary validation (ParseUuidPipe,
+      // IsCursor) should stop these first; this keeps a missed one a 400
+      // rather than a 500 (docs/API.md → Status codes).
+      case 'P2023':
+        return {
+          status: HttpStatus.BAD_REQUEST,
+          code: 'BAD_REQUEST',
+          message: 'The request contains a malformed value.',
+        };
       case 'P2002':
         return {
           status: HttpStatus.CONFLICT,

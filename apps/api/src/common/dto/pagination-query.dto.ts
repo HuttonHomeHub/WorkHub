@@ -2,6 +2,8 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 
+import { IsCursor } from '../validation/cursor';
+
 /**
  * Base query params for cursor-paginated, sortable list endpoints
  * (see docs/API.md). Feature list DTOs extend this to add filters and a typed
@@ -18,6 +20,7 @@ export class PaginationQueryDto {
 
   @ApiPropertyOptional({ description: 'Opaque cursor from a previous response.' })
   @IsOptional()
+  @IsCursor() // A malformed cursor is a 400, not a 422 (docs/API.md).
   @IsString()
   cursor?: string;
 
