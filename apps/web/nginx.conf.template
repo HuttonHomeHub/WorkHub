@@ -22,13 +22,27 @@ server {
   root /usr/share/nginx/html;
   index index.html;
 
+  # Proxy settings for every location below that proxies to the API. They are
+  # inherited because no location sets its own proxy_set_header.
+  proxy_http_version 1.1;
+  proxy_set_header Host $host;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_set_header X-Forwarded-Proto $forwarded_proto;
+
   # Same-origin API (auth cookies stay first-party; no CORS in production).
   location /api/ {
     proxy_pass http://${API_UPSTREAM};
-    proxy_http_version 1.1;
-    proxy_set_header Host $host;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto $forwarded_proto;
+  }
+
+  # The API's health probes live at the root, outside /api. Proxy the two exact
+  # paths so an external uptime monitor gets the API's answer (503 when the
+  # database is down, 502 when the API is) instead of the SPA's index.html.
+  location = /health {
+    proxy_pass http://${API_UPSTREAM};
+  }
+
+  location = /health/ready {
+    proxy_pass http://${API_UPSTREAM};
   }
 
   # Long-cache fingerprinted assets.
