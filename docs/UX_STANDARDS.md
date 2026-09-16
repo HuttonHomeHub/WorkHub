@@ -125,14 +125,15 @@ hand-picked heights.
 The palette is WorkHub's **only custom shortcut** (PRODUCT.md). The owner
 explicitly declined other custom shortcuts and all single-key shortcuts.
 
-- **Opens on Ctrl+K / Cmd+K from anywhere except while a text input has focus
-  and the browser would use the chord.** It is also reachable by a visible header
+- **Opens on Ctrl+K / Cmd+K from anywhere, including inside a text field** — the
+  app claims that chord (`preventDefault`), so the browser's own Ctrl+K
+  search-bar focus does not fire inside WorkHub. It is also reachable by a visible header
   button showing `⌘K` / `Ctrl K` — discoverability is not optional; a shortcut
   nobody can see does not exist.
 - **What belongs in it:** navigation to every destination in the sidebar, the
   primary action of each feature, global search over the owner's data, and
   app-level commands (toggle theme, toggle sidebar, sign out).
-- **What does not:** destructive actions without a confirmation step, anything
+- **What does not:** irreversible actions (they need their AlertDialog in context), anything
   that depends on the current selection in a way the palette cannot show, and
   settings that belong on a settings page.
 - **Behaviour:** opens focused on its input, filters as you type, arrows move the
@@ -294,11 +295,12 @@ Rules:
 
 - **Layout at 14px/32px:** label above the field, 4px gap; fields stacked in a
   single column capped at `--width-form`; related short fields may share a row
-  (a date range, an amount plus currency). Description text below the label, error
+  (a date range, an amount and its date). Description text below the label, error
   text below the field.
 - **Submit:** `Enter` submits a single-line form. In a multi-line field `Enter`
   inserts a newline and **`Ctrl/Cmd+Enter` submits** — label the submit button
-  with that hint. The submit button shows a pending state and disables while the
+  with that hint. This is a standard form convention scoped to the focused form,
+  not a custom shortcut. The submit button shows a pending state and disables while the
   mutation runs (_planned_ — `Button` has no pending state yet; forms currently
   swap the label, as `sign-in-form.tsx` does).
 - **Autosave vs explicit save:** autosave **only** for single-field, immediately
