@@ -8,7 +8,8 @@
 > behind them in [BACKEND_ARCHITECTURE.md](BACKEND_ARCHITECTURE.md).
 
 Rules marked **(planned)** are the standard for new code but are not yet
-implemented everywhere; each has a [BACKLOG.md](BACKLOG.md) item.
+implemented everywhere; each is tracked in [BACKLOG.md](BACKLOG.md) or PRODUCT.md's
+[roadmap](PRODUCT.md#roadmap).
 
 ## Paths and verbs
 
@@ -125,7 +126,7 @@ domain `ValidationError` maps to 422.
 | `INTERNAL_ERROR`    | 500    | Anything else, including unmapped Prisma errors                |
 | `ERROR`             | other  | Fallback for an `HttpException` status with no mapping         |
 
-**(planned)** An error-code catalogue in `@repo/types`: one exported union of
+**(planned — PRODUCT.md, Later)** An error-code catalogue in `@repo/types`: one exported union of
 codes, so the API throws and the web branches on the same constants. Feature
 codes are added there when a client needs to tell two failures apart that share a
 status (for example `VERSION_CONFLICT` vs `DUPLICATE_NAME`, both 409). Until

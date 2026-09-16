@@ -10,8 +10,8 @@
 WorkHub has one owner, one API instance and one database at personal scale
 ([PRODUCT.md](PRODUCT.md)). The data is the one thing that cannot be rebuilt, so
 the rules favour integrity and safe change over throughput. Rules marked
-**(planned)** are the standard for new code but not yet implemented; each has a
-[BACKLOG.md](BACKLOG.md) item.
+**(planned)** are the standard for new code but not yet implemented; each is
+tracked in [BACKLOG.md](BACKLOG.md) or PRODUCT.md's [roadmap](PRODUCT.md#roadmap).
 
 ## Principles
 
@@ -52,8 +52,8 @@ Every **domain** table carries:
 | `deleted_at` | `DateTime? @db.Timestamptz(3)`                          | [Soft delete](#soft-delete)                           |
 | `version`    | `Int @default(1)`                                       | [Optimistic locking](#optimistic-locking)             |
 
-**No `created_by`/`updated_by` columns and no audit-log table.** With one owner
-they only ever name the same user (ADR-0019). Security-relevant events go to the
+**No actor columns (who created or last changed a row) and no audit table.** With
+one owner they would only ever name the same user (ADR-0019). Security-relevant events go to the
 structured logs instead ([OBSERVABILITY.md](OBSERVABILITY.md#auth-security-events)).
 
 The four Better Auth tables (`users`, `sessions`, `accounts`, `verifications`)
@@ -244,7 +244,7 @@ The query rules that decide backend performance; budgets are in
 
 The owner can take their data elsewhere: a server CLI command that writes every
 domain table the owner owns to JSON, alongside the backups planned in
-PRODUCT.md. Tracked in BACKLOG.md.
+PRODUCT.md. Scheduled with the backups in PRODUCT.md's Next list.
 
 ## Checklist
 

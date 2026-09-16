@@ -22,8 +22,9 @@ link to the canonical document instead of restating a rule.
   and GHCR images.
 - **Does not exist:** domain features or models, passkeys, backups, the sidebar,
   command palette, background jobs, caching, file storage, OpenTelemetry.
-- Several standards documents still describe the old generic starter and carry a
-  **"Pending rewrite (ADR-0019)"** banner. Where they conflict with
+- The operations documents (ARCHITECTURE, DEPLOYMENT, DEVELOPMENT) still
+  describe parts of the old generic starter until their rewrite; ARCHITECTURE.md
+  carries a **"Pending rewrite (ADR-0019)"** banner. Where they conflict with
   `docs/PRODUCT.md`, PRODUCT.md wins.
 - **Check before assuming.** Grep for code before referencing it, and check
   `git log origin/main` before relying on anything in this file.

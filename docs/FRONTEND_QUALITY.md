@@ -2,7 +2,7 @@
 
 > The quality bar for `apps/web`: performance budgets, the browser and viewport
 > matrix, error handling, client logging and the frontend definition of done.
-> Test strategy and the coverage rule belong to [`TESTING.md`](TESTING.md);
+> Test strategy and test layers belong to [`TESTING.md`](TESTING.md);
 > accessibility belongs to [`ACCESSIBILITY.md`](ACCESSIBILITY.md); backend
 > performance belongs to [`PERFORMANCE.md`](PERFORMANCE.md).
 
@@ -108,8 +108,8 @@ The gap is standing debt, not an exemption
 project — is in [BACKLOG.md](BACKLOG.md) and PRODUCT.md's Next list. Until then,
 run the wider matrix locally for UI changes and say in the PR what you ran.
 
-Everything else about tests — the pyramid, the tooling, the coverage rule, the CI
-jobs — is in [TESTING.md](TESTING.md).
+Everything else about tests — the layers, the tooling, test data, the CI jobs —
+is in [TESTING.md](TESTING.md).
 
 ## Accessibility
 

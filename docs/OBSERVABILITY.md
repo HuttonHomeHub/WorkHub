@@ -7,7 +7,8 @@
 One owner, one API instance, one database. The questions to answer are "is it
 up?", "did last night's backup run?" and "what happened in this request?" —
 logs and two alerts answer them. Rules marked **(planned)** are the standard for
-new code but not yet built; each has a [BACKLOG.md](BACKLOG.md) item.
+new code but not yet built; each is tracked in [BACKLOG.md](BACKLOG.md) or
+PRODUCT.md's [roadmap](PRODUCT.md#roadmap).
 
 ## Logging
 

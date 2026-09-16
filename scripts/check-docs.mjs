@@ -110,6 +110,30 @@ const STALE_TERMS = [
     /useMediaQuery|useBreakpoint/,
     'layout adapts in CSS; there is no media-query hook (docs/FRONTEND_ARCHITECTURE.md)',
   ],
+  // Single-owner backend standards (ADR-0019, DECISIONS.md 2026-09-16).
+  // Deferred to the operations rewrite, still present in ARCHITECTURE.md,
+  // DEPLOYMENT.md or DEVELOPMENT.md: expand/contract, secret manager.
+  [
+    /\b(BullMQ|Redis)\b/i,
+    'no queue or shared cache: pg-boss or an in-process scheduler when needed (ADR-0019)',
+  ],
+  [
+    /\b(StorageService|CacheService)\b|auto-instrument|RED metrics|SLO burn/,
+    'storage, caching and OpenTelemetry are deferred, not built (docs/BACKEND_ARCHITECTURE.md)',
+  ],
+  [/created_?by|updated_?by/i, 'no actor columns — WorkHub has one owner (docs/DATABASE.md)'],
+  [
+    /append-only audit|audit[- ]log (entry|entries|table)|audit entr(y|ies)|\baudit_log\b/i,
+    'no audit log; auth security events go to the logs (docs/OBSERVABILITY.md)',
+  ],
+  [
+    /read replicas?|PgBouncer|cross-tenant/i,
+    'one owner, one API instance, one database (docs/PERFORMANCE.md)',
+  ],
+  [
+    /80% (line )?coverage|≥ ?80%|coverage (bar|rule)|coverage did not regress/i,
+    'there is no coverage percentage; coverage is a local diagnostic (docs/TESTING.md)',
+  ],
 ];
 
 // Agents and skills must be discoverable under the name their file implies.

@@ -122,7 +122,7 @@ empty, selected. A missing state is an incomplete component.
 
 ## Testing
 
-Strategy, tooling and the coverage rule are in [TESTING.md](TESTING.md). For
+Strategy, tooling and test layers are in [TESTING.md](TESTING.md). For
 components specifically: query by role and label, assert behaviour and
 accessible names rather than class names, exercise the keyboard contract, and
 smoke-render each variant and size.
