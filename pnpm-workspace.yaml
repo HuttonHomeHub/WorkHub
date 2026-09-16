@@ -4,6 +4,20 @@ packages:
   - 'apps/*'
   - 'packages/*'
 
+# Dependencies allowed to run install scripts (pnpm 10 blocks the rest). These
+# need them: Prisma downloads its engines, esbuild and @swc/core fetch native
+# binaries. Settings live here, not in package.json's "pnpm" field, which newer
+# pnpm versions no longer read. Docs: https://pnpm.io/settings
+onlyBuiltDependencies:
+  - '@prisma/client'
+  - '@prisma/engines'
+  - '@swc/core'
+  - esbuild
+  - prisma
+# Deliberately not built: swagger-ui-dist's usage-telemetry postinstall.
+ignoredBuiltDependencies:
+  - '@scarf/scarf'
+
 # Pin the catalog of shared dependency versions so every workspace
 # package resolves the same version of a given library. Reference these
 # from a package.json with e.g. "react": "catalog:".
