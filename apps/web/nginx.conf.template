@@ -16,6 +16,13 @@ map $http_x_forwarded_proto $forwarded_proto {
   '' $scheme;
 }
 
+# Long-cache fingerprinted assets (their names change with their content). An
+# empty value adds no header, so every other response is left alone.
+map $uri $asset_cache_control {
+  default '';
+  ~^/assets/ 'public, max-age=31536000, immutable';
+}
+
 server {
   listen 8080;
   server_name _;
@@ -45,10 +52,11 @@ server {
     proxy_pass http://${API_UPSTREAM};
   }
 
-  # Long-cache fingerprinted assets.
+  # Fingerprinted assets. No add_header in here: a location that sets its own
+  # add_header inherits none from the server block, which dropped the security
+  # headers below. Their Cache-Control comes from $asset_cache_control instead.
   location /assets/ {
-    expires 1y;
-    add_header Cache-Control "public, immutable";
+    try_files $uri =404;
   }
 
   # SPA fallback: route everything else to index.html.
@@ -57,6 +65,9 @@ server {
   }
 
   # Baseline security headers (tune CSP once the app's origins are known).
+  # Every response header is set here, at server level, and no location sets
+  # add_header — otherwise that location loses all of them.
+  add_header Cache-Control $asset_cache_control;
   add_header X-Content-Type-Options "nosniff" always;
   add_header X-Frame-Options "DENY" always;
   add_header Referrer-Policy "strict-origin-when-cross-origin" always;
