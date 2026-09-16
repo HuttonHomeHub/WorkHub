@@ -54,7 +54,7 @@ export class ReferenceService {
     const where: Prisma.ReferenceItemWhereInput = {
       ownerId: principal.userId,
       ...(query.status ? { status: query.status } : {}),
-      ...(query.search ? { name: { contains: query.search, mode: 'insensitive' } } : {}),
+      ...(query.q ? { name: { contains: query.q, mode: 'insensitive' } } : {}),
     };
 
     // Cursor pagination: over-fetch by one to detect a further page. The

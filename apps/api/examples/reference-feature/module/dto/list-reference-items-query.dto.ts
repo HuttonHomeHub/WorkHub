@@ -14,11 +14,11 @@ export class ListReferenceItemsQueryDto extends PaginationQueryDto {
   @IsEnum(ReferenceItemStatus)
   status?: ReferenceItemStatus;
 
-  @ApiPropertyOptional({ description: 'Case-insensitive name search.' })
+  @ApiPropertyOptional({ description: 'Case-insensitive search on the name.' })
   @IsOptional()
   @IsString()
   @MaxLength(120)
-  search?: string;
+  q?: string;
 
   @ApiPropertyOptional({ enum: ['createdAt', 'name'], default: 'createdAt' })
   @IsOptional()
