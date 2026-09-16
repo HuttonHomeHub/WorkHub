@@ -72,8 +72,8 @@ multi-currency support:
   - an explicit session policy (lifetime, idle timeout, sign-out everywhere);
   - a brute-force posture for the auth routes behind the proxy;
   - strong, generated secrets.
-- **Images** are published to GHCR for amd64 and arm64 (amd64 only until the
-  multi-arch item in Next ships).
+- **Images** are published to GHCR for amd64 today; arm64 (multi-arch) is
+  planned — see Next.
 - **Releases** use Changesets. Only changes to the running app get a changeset;
   a release is cut when the owner wants to deploy.
 

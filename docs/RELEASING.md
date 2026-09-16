@@ -118,11 +118,11 @@ Watch it with `gh run watch`; `/release` does.
 
 ### Image tags
 
-| Tag           | Example       | Use                                                     |
-| ------------- | ------------- | ------------------------------------------------------- |
-| `X.Y.Z`       | `0.2.0`       | **Pin this** as `IMAGE_TAG` on the server               |
-| `X.Y`         | `0.2`         | Moves with each patch release; not for the server       |
-| `sha-<short>` | `sha-2dd559f` | The commit the image was built from; manual builds only |
+| Tag           | Example       | Use                                                                                             |
+| ------------- | ------------- | ----------------------------------------------------------------------------------------------- |
+| `X.Y.Z`       | `0.2.0`       | **Pin this** as `IMAGE_TAG` on the server                                                       |
+| `X.Y`         | `0.2`         | Moves with each patch release; not for the server                                               |
+| `sha-<short>` | `sha-2dd559f` | Added to every build (releases and manual runs) to trace the commit; never pin the server to it |
 
 - No `v` prefix anywhere: git tags are `@repo/<app>@X.Y.Z`, image tags `X.Y.Z`.
 - Images are immutable: a release is built once and the same images are run;
