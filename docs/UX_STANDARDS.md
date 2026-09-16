@@ -104,7 +104,7 @@ and let the surplus fall outside; a table stretched across 2400px is unreadable.
 
 Compact density is a product decision (PRODUCT.md): **14px body text, 32px
 controls and table rows**. Sizes come from the density tokens in
-[DESIGN_SYSTEM.md](DESIGN_SYSTEM.md#density-and-control-sizing) — never from
+[DESIGN_SYSTEM.md](DESIGN_SYSTEM.md#density-and-control-sizing--proposed) — never from
 hand-picked heights.
 
 - **One scan order per screen:** title → primary data → supporting detail →

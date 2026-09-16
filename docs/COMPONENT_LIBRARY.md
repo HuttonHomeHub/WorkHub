@@ -68,7 +68,7 @@ change class (CLAUDE.md §3).
   (`button.tsx`, `alert.tsx`).
 - **Size variants are required** on any control that appears in both forms and
   dense tables: `sm` (28px), `default` (32px), `lg` (40px) per
-  [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md#density-and-control-sizing). Today `Button`
+  [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md#density-and-control-sizing--proposed). Today `Button`
   has them (at the old 32/36/40px scale) and `Input` does not.
 - **`asChild`** (Radix `Slot`) for rendering a primitive's styling on another
   element, as `Button asChild` wraps a router `Link`.
