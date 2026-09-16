@@ -15,9 +15,14 @@ import { PREFERENCES_VERSION, preferenceKey, writePreference } from '@/lib/prefe
 const html = readFileSync(resolve(import.meta.dirname, '../index.html'), 'utf8');
 
 function inlineScript(): string {
-  const match = /<script>([\s\S]*?)<\/script>/.exec(html);
-  if (!match?.[1]) throw new Error('index.html has no inline pre-paint script');
-  return match[1];
+  // Parse the document rather than pattern-matching tags, so casing, attributes
+  // and whitespace in index.html can't make the lookup miss the script.
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const script = [...doc.querySelectorAll('script')].find(
+    (el) => !el.src && el.type !== 'module' && el.textContent.trim() !== '',
+  );
+  if (!script) throw new Error('index.html has no inline pre-paint script');
+  return script.textContent;
 }
 
 function runPrePaintScript(): void {
