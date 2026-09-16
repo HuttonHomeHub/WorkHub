@@ -1,80 +1,48 @@
-# Performance & Scalability Standards
+# Backend performance
 
-> **Pending rewrite (ADR-0019).** Parts of this document assume Redis caching, BullMQ queues and horizontal scaling across API instances — where it conflicts with [PRODUCT.md](PRODUCT.md), PRODUCT.md wins.
+> The canonical home of WorkHub's backend performance budgets and how to measure
+> against them. The query rules that meet these budgets are in
+> [DATABASE.md](DATABASE.md#queries-and-indexes); browser budgets are in
+> [FRONTEND_QUALITY.md](FRONTEND_QUALITY.md).
 
-> Backend and system performance standards. Frontend performance lives in
-> [`FRONTEND_QUALITY.md`](FRONTEND_QUALITY.md). Guiding rule: **measure before
-> optimising; no un-measured claims.**
+WorkHub serves **one owner from one API instance and one PostgreSQL database**
+on the owner's hardware ([PRODUCT.md](PRODUCT.md#scale)). There is no concurrent
+load to plan for, no horizontal scaling and no shared cache. What matters is that
+each request is fast for one person as their data grows over years.
 
-## Targets
+## Budgets
 
-- **API p95 < 200ms** for typical reads under expected load; p99 bounded.
-- **Paginate every list endpoint**; cap page size server-side.
-- Core Web Vitals (frontend) in the "good" band (see frontend docs).
-- Concrete SLOs are set from real data once deployed (see `docs/TECH_DEBT.md`).
+Measured as **server time** (the request log's `responseTime`) on the production
+host shape, with a **personal data set of 100k rows in the largest table**:
 
-## Query optimisation (the first place to look)
+| Request                                                  | Budget                                                                    |
+| -------------------------------------------------------- | ------------------------------------------------------------------------- |
+| A read: one resource, or one page of a list (≤ 200 rows) | < 100 ms                                                                  |
+| A write: create, update, soft delete                     | < 150 ms                                                                  |
+| A list with `meta.total`, a search (`q`) or a date range | < 250 ms                                                                  |
+| Anything slower (an export, a report)                    | Designed in its feature doc: streamed, paginated or run in the background |
 
-- **Index for real query patterns** (`WHERE`/`JOIN`/`ORDER BY`/FK); verify with
-  `EXPLAIN ANALYZE` (see [`DATABASE.md`](DATABASE.md)).
-- **Kill N+1 queries:** use Prisma `select`/`include` deliberately; fetch what a
-  use-case needs, no more. Batch where possible.
-- **Never return unbounded result sets** — cursor pagination everywhere.
-- Keep transactions short; do no network I/O inside them.
-- Select only needed columns; avoid over-fetching wide rows.
+The budgets are starting points ([TECH_DEBT.md](TECH_DEBT.md)); revisit them with
+real data once WorkHub has a domain.
 
-## Caching (ADR-0010)
+## Measure first
 
-- **Cache-aside via Redis** for hot, expensive, staleness-tolerant reads;
-  **invalidate on write**; explicit TTLs; namespaced/versioned keys.
-- **Cache only when profiling shows a hot path** — premature caching adds
-  correctness risk. Never cache authoritative computed results beyond safe
-  bounds. Guard very hot keys against stampedes.
+- **Reproduce before tuning.** Seed the table to the budget's data size in a
+  local database, time the endpoint (the request log, or `Date.now()` around the
+  call in an API e2e test), and find the slow query with Prisma query logging and
+  `EXPLAIN (ANALYZE, BUFFERS)` ([OBSERVABILITY.md](OBSERVABILITY.md#slow-queries)).
+- **Change one thing, measure again,** and put before/after numbers in the PR.
+- **The usual fixes, in order:** a missing or wrong-order index; an N+1; an
+  unbounded or over-wide query; aggregation done in TypeScript instead of SQL.
+- **Caching is the last resort.** No shared cache (ADR-0019); in-process
+  memoisation only for a measured hot path with an explicit invalidation rule.
+- **Slow work leaves the request** only when a feature needs it, using the
+  deferred defaults in ADR-0019 (pg-boss or an in-process scheduler).
+- Do not load-test for concurrency or tune connection pools for scale that does
+  not exist.
 
-## Async processing & queueing (ADR-0009)
+## Checklist
 
-- **Move slow / retriable / scheduled work off the request path** into BullMQ
-  jobs (notifications, exports, recurring generation). Requests stay fast.
-- Jobs are **idempotent**, retried with backoff, concurrency-limited, and
-  observable (queue depth, failure rate). The worker scales independently of the
-  API.
-
-## Profiling & measurement
-
-- Use OpenTelemetry traces/metrics (see [`OBSERVABILITY.md`](OBSERVABILITY.md))
-  to find real hot spots; profile the database with `EXPLAIN ANALYZE` and slow-
-  query logs.
-- **Establish a baseline, change one thing, measure again.** Optimisations land
-  with before/after numbers in the PR. No speculative micro-optimisation.
-- Load-test critical endpoints before claiming a capacity number.
-
-## Scalability expectations
-
-- **Stateless API:** no in-process session/state, so instances scale
-  horizontally behind a load balancer. Shared state lives in Postgres/Redis.
-- **Connection management:** a bounded Prisma/DB connection pool sized to the
-  DB; a pooler (e.g. PgBouncer) in front when instance count grows.
-- **Read scaling:** read replicas for read-heavy load when needed (routed
-  explicitly); **write scaling** via careful indexing, batching, and async
-  offload before considering partitioning.
-- **Backpressure:** enforce timeouts, payload caps, pagination limits, and rate
-  limits so load sheds gracefully rather than collapsing.
-- **Graceful degradation:** a slow/absent cache or queue degrades performance,
-  not correctness.
-
-## Anti-patterns (flagged in review)
-
-- Fetching-then-filtering in app code what the DB should filter/paginate.
-- N+1 queries; missing indexes on filtered/sorted columns.
-- Unbounded lists / missing pagination.
-- Caching without an invalidation story, or caching authoritative/sensitive data.
-- Doing slow/external work synchronously in a request.
-- Optimising without a measurement.
-
-## Definition of done (performance)
-
-- [ ] List endpoints paginated; queries indexed and N+1-free
-- [ ] Slow/retriable work offloaded to jobs where appropriate
-- [ ] Any caching has explicit TTL + invalidation and is justified by profiling
-- [ ] Perf-sensitive changes include before/after measurements
-- [ ] No unbounded queries or payloads
+- [ ] Lists bounded and indexed for their filters and sort ([DATABASE.md](DATABASE.md#queries-and-indexes))
+- [ ] No N+1; aggregation in SQL
+- [ ] Any performance change carries before/after numbers at the stated data size
