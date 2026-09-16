@@ -1,106 +1,151 @@
 # Testing
 
-> **Pending rewrite (ADR-0019).** Parts of this document assume an 80% coverage bar that CI does not enforce and Chromium-only browser tests — where it conflicts with [PRODUCT.md](PRODUCT.md), PRODUCT.md wins.
+> The canonical home of WorkHub's test strategy: which layer tests what, how the
+> test database is isolated, how to run each suite, and exactly what CI runs.
+> The browser and viewport matrix is in [FRONTEND_QUALITY.md](FRONTEND_QUALITY.md#test-matrix);
+> accessibility checks are in [ACCESSIBILITY.md](ACCESSIBILITY.md).
 
-> Tests are part of the definition of done. Every feature ships with tests;
-> every bug fix ships with a regression test.
+Tests prove behaviour. **Every feature ships tests; every bug fix ships a
+regression test that fails without the fix** (CLAUDE.md §4). There is no
+coverage percentage to hit. Rules marked **(planned)** are the standard for new
+code but not yet in place; each has a [BACKLOG.md](BACKLOG.md) item.
 
-## The testing pyramid
+## Layers
 
-```mermaid
-graph TD
-  E["End-to-end (Playwright)<br/>critical user journeys — few"]
-  I["Integration / API e2e (Supertest)<br/>endpoints against real Postgres — some"]
-  U["Unit (Vitest)<br/>pure logic + components — many"]
-  E --- I --- U
-```
+WorkHub is a thin CRUD API over PostgreSQL for one owner, so most backend bugs
+live where the HTTP layer, validation, ownership and SQL meet. The tests are
+weighted to match:
 
-Favour many fast unit tests, a solid layer of API integration tests, and a small
-number of high-value end-to-end journeys.
+| Layer                         | Tool                                             | Tests                                                                                                                            | Location                            |
+| ----------------------------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| **API e2e — primary backend** | Vitest + Supertest, real Nest app, real Postgres | Every endpoint's status codes and envelopes, validation (400/422), ownership 404s, optimistic-lock 409s, pagination, auth wiring | `apps/api/test/**/*.e2e-spec.ts`    |
+| **Unit**                      | Vitest                                           | Real logic only: calculations, state machines, date and time rules, pure helpers, config validation                              | `apps/*/src/**/*.{spec,test}.ts(x)` |
+| **Component**                 | Vitest + Testing Library (jsdom)                 | Form behaviour and component states, queried by role and label                                                                   | `apps/web/src/**/*.test.tsx`        |
+| **Browser journeys**          | Playwright + axe                                 | The critical user flows end to end, with an accessibility scan on every screen                                                   | `apps/web/e2e/**`                   |
 
-## Tooling
+- **Do not write mocked-repository service tests for pass-through CRUD.** A test
+  that mocks Prisma and asserts the mock was called proves nothing the e2e test
+  does not prove better. Unit-test a service only for logic with real branches.
+  The template's `reference.service.spec.ts` covers the ownership, conflict and
+  cursor branches; delete what a generated feature does not need.
+- **Behaviour, not implementation.** Assert on HTTP responses, rendered roles and
+  text, and database state — not on private calls.
+- One behaviour per test, Arrange–Act–Assert, a name that states the rule.
 
-| Layer            | Tool                                                   | Location                            |
-| ---------------- | ------------------------------------------------------ | ----------------------------------- |
-| Unit / component | [Vitest](https://vitest.dev) (+ Testing Library)       | `apps/*/src/**/*.{test,spec}.ts(x)` |
-| API integration  | [Supertest](https://github.com/ladjs/supertest) + Nest | `apps/api/test/**/*.e2e-spec.ts`    |
-| End-to-end (UI)  | [Playwright](https://playwright.dev)                   | `apps/web/e2e/**`                   |
+## API e2e tests
 
-## Principles
+Each suite boots the real `AppModule` with `configureApp` — the same global
+pipe, filter, interceptor, guards, Better Auth handler and body parsing as
+production — and talks to it through Supertest.
 
-- **Deterministic & isolated.** No shared mutable state, no reliance on real
-  time, network, or external services unless explicitly stubbed.
-- **Test behaviour, not implementation.** Assert on observable outputs and DOM
-  from the user's perspective (Testing Library queries by role/label).
-- **Arrange–Act–Assert**, one behaviour per test, descriptive names.
-- **Fast feedback.** Unit tests run in milliseconds; keep e2e focused.
+- **Authentication.** Feature suites override `AuthContextService` with a test
+  principal (`overrideProvider`), as the template does; production stays deny by
+  default. The real session flow is covered once, in `auth.e2e-spec.ts` and
+  `accounts.e2e-spec.ts`.
+- **Prerequisites** (as CI does):
 
-## Coverage
+  ```bash
+  pnpm --filter @repo/types build
+  export DATABASE_URL='postgresql://app:app@localhost:5432/app_test?schema=public'
+  pnpm --filter @repo/api prisma:deploy
+  pnpm --filter @repo/api test:e2e
+  ```
 
-- Target **≥ 80% line coverage on changed code**; overall coverage must not
-  regress. Coverage is a signal, not a goal — don't write assertion-free tests
-  to game it.
-- Coverage is collected by Vitest (v8 provider) and reported in CI.
+- **Lazy imports.** Suites import `AppModule` inside `beforeAll`, because
+  configuration is validated on import.
 
-## Backend unit tests
+### Test database isolation
 
-- Test services in isolation with the **repository mocked** (no database): cover
-  happy paths and failure modes — ownership denied, not-found, conflict /
-  optimistic-lock. Template:
-  `apps/api/examples/reference-feature/module/reference.service.spec.ts`.
+- **API e2e runs only against a database whose name ends in `_test`**
+  (`app_test` locally and in CI) — never the development `app` database. Suites
+  create and delete rows, and `scripts/verify-template.sh --e2e` pushes a
+  throwaway schema with `--accept-data-loss`; the script refuses any other
+  database name outside CI.
+- **Each suite creates its own users and rows and removes them afterwards**
+  (deleting a test user cascades to its data). Use fixed, suite-specific ids or
+  emails so re-runs are idempotent.
+- **Known gap:** the template's `beforeEach` calls `deleteMany()` on the whole
+  table. That is harmless in a dedicated `_test` database, but new suites should
+  scope cleanup to their own test users **(planned for the template)**.
+- Files run in separate workers but share one database; never assert on a
+  table-wide count.
 
-## Backend integration / API tests
+### Shared helpers (planned)
 
-- Boot the **real Nest app** (global pipe, filter, interceptor, guards) and
-  exercise endpoints via **Supertest**, asserting status codes and the standard
-  `{ data, meta }` / `{ error }` envelopes. Template:
-  `apps/api/examples/reference-feature/reference.e2e-spec.ts` (`pnpm gen:feature`
-  places it in `apps/api/test/`).
-- **Auth seam:** override `AuthContextService` with a test principal (Nest's
-  `overrideProvider`) — production auth stays deny-by-default.
-- **Database:** run against a **real PostgreSQL** (a disposable instance locally,
-  a service container in CI), with migrations applied first (`prisma migrate
-deploy`). Each test sets up and tears down its own data; no cross-test
-  coupling. Import `AppModule` lazily and **skip when `DATABASE_URL` is unset**
-  so the suite stays green without a database and runs fully in CI.
+`createTestApp()` (boot and configure the app with optional provider overrides)
+and `signInAs(user)` (a real session cookie via the CLI account helpers) in
+`apps/api/test/helpers/`, replacing the boot and cookie code each suite repeats
+today.
 
-## Frontend testing
+### Skips
 
-- Component tests use Testing Library with the jsdom environment (see
-  `apps/web/src/test/setup.ts`).
-- Query by accessible role/name to keep tests aligned with accessibility.
-- Playwright journeys cover the critical paths and include automated
-  accessibility assertions.
+Suites use `describe.skipIf(!process.env.DATABASE_URL)`, so `pnpm test:e2e`
+passes on a machine without a database. **(planned)** In CI a missing
+`DATABASE_URL` must fail the job rather than skip every suite.
+
+## Determinism
+
+- **No real network or third-party services.** Everything runs against the
+  local app and database.
+- **Time (planned):** code that reads "now" will take an injected `Clock`
+  ([DATABASE.md](DATABASE.md#time)); tests pass a fixed clock, and Vitest's fake
+  timers cover timers. Until then, assert on relative order or shape, not exact
+  timestamps, and never on the wall-clock date.
+- **Randomness:** generate ids in the test or assert on shape.
+- No `.only` (Playwright's `forbidOnly` fails CI) and no committed `.skip`
+  except the database guard.
+
+## Frontend tests
+
+- Component tests use Testing Library with jsdom (`apps/web/src/test/setup.ts`),
+  querying by accessible role and name.
+- Playwright journeys start the API and web dev servers (`playwright.config.ts`),
+  create their account in `e2e/global-setup.ts`, and call
+  `expectNoA11yViolations(page)` on every screen (`e2e/auth.spec.ts`).
+- Which browsers, viewports, keyboard-only and 400%-zoom journeys are required is
+  in [FRONTEND_QUALITY.md](FRONTEND_QUALITY.md#test-matrix).
 
 ## Running tests
 
 ```bash
-pnpm test           # all unit tests (Turborepo)
-pnpm test:e2e       # all end-to-end tests
-pnpm --filter @repo/api test         # API unit tests only
-pnpm --filter @repo/api test:e2e     # API HTTP e2e (Supertest)
-pnpm --filter @repo/web test:watch   # web unit tests in watch mode
-bash scripts/verify-template.sh --e2e  # generated feature, incl. its API e2e (DATABASE_URL must name a *_test database)
+pnpm test                               # all unit and component tests (Turborepo)
+pnpm test:e2e                           # API e2e + Playwright (needs DATABASE_URL, migrations, browsers)
+pnpm --filter @repo/api test            # API unit tests
+pnpm --filter @repo/api test:e2e        # API e2e only
+pnpm --filter @repo/web test:watch      # web tests in watch mode
+pnpm --filter @repo/web test:e2e        # Playwright only
+bash scripts/verify-template.sh         # generate a feature from the template; typecheck, lint, unit-test it
+DATABASE_URL='postgresql://app:app@localhost:5432/app_test?schema=public' \
+  bash scripts/verify-template.sh --e2e # …and run its API e2e (a *_test database is required)
 ```
+
+**Coverage** is a local diagnostic, not a gate:
+`pnpm --filter @repo/api exec vitest run --coverage` uses the v8 settings in
+`apps/api/vitest.config.ts` (`@vitest/coverage-v8` is not a dependency, so Vitest
+offers to install it). Use it to find untested branches, not to chase a number.
+CI neither collects nor enforces coverage; adding a coverage gate would be a
+change to a CI gate, and so an escalation ([PROCESS.md](PROCESS.md)).
 
 ## CI
 
-[`.github/workflows/ci.yml`](../.github/workflows/ci.yml) runs three jobs; all
-must pass before merge:
+[`.github/workflows/ci.yml`](../.github/workflows/ci.yml) runs three jobs on every
+pull request and push to `main`; all must pass.
 
-- **quality** — format, lint, typecheck, unit tests (`pnpm test`), build, the
-  API-contract drift check (ADR-0017), and the docs check (`pnpm docs:check`).
-- **template** — `scripts/verify-template.sh`: generates a feature from the
-  reference template, then type-checks, lints, and unit-tests it.
-- **e2e** — a Postgres service with migrations applied, then `pnpm test:e2e`
-  (the API Supertest suites and the Playwright journeys on chromium, with axe
-  checks) and `scripts/verify-template.sh --e2e` (the generated feature's API
-  tests).
+| Job                                                | Steps                                                                                                                                                                                                                                                                       |
+| -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **quality** — Format, lint, typecheck & unit tests | Install; Prisma client; `pnpm format:check`; `pnpm docs:check`; `pnpm lint`; `pnpm typecheck`; `pnpm test`; `pnpm build`; `pnpm contract:generate` then `git diff --exit-code` on the contract and generated types (ADR-0017)                                               |
+| **template** — Verify feature template             | `bash scripts/verify-template.sh`                                                                                                                                                                                                                                           |
+| **e2e** — End-to-end tests                         | A `postgres:17-alpine` service with database `app_test`; Prisma client; `prisma:deploy`; install **Chromium only**; `pnpm test:e2e` (API e2e and Playwright on the `chromium` project at the default Desktop Chrome viewport); then `bash scripts/verify-template.sh --e2e` |
 
-## Definition of done (testing)
+CI runs no Firefox project and no explicit 1280×800 / 1920×1080 viewports yet —
+standing debt in [TECH_DEBT.md](TECH_DEBT.md), scheduled in PRODUCT.md's Next
+list. CodeQL runs in its own workflow ([SECURITY_STANDARDS.md](SECURITY_STANDARDS.md#dependencies)).
 
-- [ ] New behaviour has unit tests; endpoints have integration tests
-- [ ] Bug fixes include a test that fails without the fix
-- [ ] Critical journeys covered by an e2e test where appropriate
-- [ ] No skipped/`.only` tests committed
-- [ ] Coverage did not regress
+## Checklist
+
+- [ ] Each new or changed endpoint has API e2e tests for its status codes, including the ownership 404
+- [ ] Unit tests only where there is logic; none that only assert mocks
+- [ ] A bug fix has a test that failed before the fix (show the red run in the PR)
+- [ ] New user-facing flows have a Playwright journey with axe
+- [ ] E2E ran against a `_test` database; suites clean up their own data
+- [ ] No `.only`, no new skips, no dependence on the real clock
