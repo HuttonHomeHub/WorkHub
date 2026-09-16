@@ -62,7 +62,7 @@ breaking OpenAPI change; a change to a CI or security gate.
 - **UI:** semantic tokens and shared components only — no one-off styling
   (`docs/DESIGN_SYSTEM.md`). Desktop-first for ≥ 1280px.
 - **Accessibility:** WCAG 2.2 AA is a merge requirement, including reflow at
-  400% zoom.
+  400% zoom (`docs/ACCESSIBILITY.md`).
 - **No secrets in git.** Never disable TLS verification.
 - **Never weaken a gate** (CI, lint, security, accessibility) to get green.
 - **Every bug fix ships a regression test**; every feature ships tests
@@ -123,30 +123,31 @@ pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm docs:check
 
 ## 8. Where things live
 
-| Topic                                 | Canonical document                                                                                         |
-| ------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| Product profile, non-goals            | [`docs/PRODUCT.md`](docs/PRODUCT.md)                                                                       |
-| System overview                       | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)                                                             |
-| Frontend structure, state, routing    | [`docs/FRONTEND_ARCHITECTURE.md`](docs/FRONTEND_ARCHITECTURE.md)                                           |
-| Tokens and components                 | [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md), [`docs/COMPONENT_LIBRARY.md`](docs/COMPONENT_LIBRARY.md) |
-| UX principles                         | [`docs/UX_STANDARDS.md`](docs/UX_STANDARDS.md)                                                             |
-| Frontend quality (a11y, perf, bundle) | [`docs/FRONTEND_QUALITY.md`](docs/FRONTEND_QUALITY.md)                                                     |
-| Backend modules and layering          | [`docs/BACKEND_ARCHITECTURE.md`](docs/BACKEND_ARCHITECTURE.md)                                             |
-| REST conventions and envelopes        | [`docs/API.md`](docs/API.md)                                                                               |
-| Schema rules                          | [`docs/DATABASE.md`](docs/DATABASE.md)                                                                     |
-| Security, ownership, auth             | [`docs/SECURITY_STANDARDS.md`](docs/SECURITY_STANDARDS.md)                                                 |
-| Logging and health                    | [`docs/OBSERVABILITY.md`](docs/OBSERVABILITY.md)                                                           |
-| Backend performance                   | [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md)                                                               |
-| Feature template                      | [`docs/REFERENCE_FEATURE.md`](docs/REFERENCE_FEATURE.md)                                                   |
-| Tests and CI jobs                     | [`docs/TESTING.md`](docs/TESTING.md)                                                                       |
-| Local development                     | [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md)                                                               |
-| Releases and deployment               | [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)                                                                 |
-| Delivery process                      | [`docs/PROCESS.md`](docs/PROCESS.md)                                                                       |
-| Feature docs                          | [`docs/features/`](docs/features/README.md)                                                                |
-| Architectural decisions (immutable)   | [`docs/adr/`](docs/adr/)                                                                                   |
-| Smaller decisions, newest first       | [`docs/DECISIONS.md`](docs/DECISIONS.md)                                                                   |
-| Known debt with remediation intent    | [`docs/TECH_DEBT.md`](docs/TECH_DEBT.md)                                                                   |
-| Now / Next / Later, candidate work    | [`docs/PRODUCT.md`](docs/PRODUCT.md#roadmap), [`docs/BACKLOG.md`](docs/BACKLOG.md)                         |
+| Topic                                | Canonical document                                                                                         |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| Product profile, non-goals           | [`docs/PRODUCT.md`](docs/PRODUCT.md)                                                                       |
+| System overview                      | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)                                                             |
+| Frontend structure, state, routing   | [`docs/FRONTEND_ARCHITECTURE.md`](docs/FRONTEND_ARCHITECTURE.md)                                           |
+| Tokens and components                | [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md), [`docs/COMPONENT_LIBRARY.md`](docs/COMPONENT_LIBRARY.md) |
+| UX: shell, keyboard, feedback, forms | [`docs/UX_STANDARDS.md`](docs/UX_STANDARDS.md)                                                             |
+| Accessibility (WCAG 2.2 AA)          | [`docs/ACCESSIBILITY.md`](docs/ACCESSIBILITY.md)                                                           |
+| Frontend budgets and test matrix     | [`docs/FRONTEND_QUALITY.md`](docs/FRONTEND_QUALITY.md)                                                     |
+| Backend modules and layering         | [`docs/BACKEND_ARCHITECTURE.md`](docs/BACKEND_ARCHITECTURE.md)                                             |
+| REST conventions and envelopes       | [`docs/API.md`](docs/API.md)                                                                               |
+| Schema rules                         | [`docs/DATABASE.md`](docs/DATABASE.md)                                                                     |
+| Security, ownership, auth            | [`docs/SECURITY_STANDARDS.md`](docs/SECURITY_STANDARDS.md)                                                 |
+| Logging and health                   | [`docs/OBSERVABILITY.md`](docs/OBSERVABILITY.md)                                                           |
+| Backend performance                  | [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md)                                                               |
+| Feature template                     | [`docs/REFERENCE_FEATURE.md`](docs/REFERENCE_FEATURE.md)                                                   |
+| Tests and CI jobs                    | [`docs/TESTING.md`](docs/TESTING.md)                                                                       |
+| Local development                    | [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md)                                                               |
+| Releases and deployment              | [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)                                                                 |
+| Delivery process                     | [`docs/PROCESS.md`](docs/PROCESS.md)                                                                       |
+| Feature docs                         | [`docs/features/`](docs/features/README.md)                                                                |
+| Architectural decisions (immutable)  | [`docs/adr/`](docs/adr/)                                                                                   |
+| Smaller decisions, newest first      | [`docs/DECISIONS.md`](docs/DECISIONS.md)                                                                   |
+| Known debt with remediation intent   | [`docs/TECH_DEBT.md`](docs/TECH_DEBT.md)                                                                   |
+| Now / Next / Later, candidate work   | [`docs/PRODUCT.md`](docs/PRODUCT.md#roadmap), [`docs/BACKLOG.md`](docs/BACKLOG.md)                         |
 
 An **ADR** records an architecturally significant, hard-to-reverse choice
 (supersede, never edit). **DECISIONS.md** logs smaller choices. **TECH_DEBT.md**
