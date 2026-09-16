@@ -4,8 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>WorkHub</title>
-    <!-- Apply the persisted theme before first paint to avoid a flash of the
-         wrong theme (see docs/FRONTEND_ARCHITECTURE.md → Theme management). -->
+    <!-- Apply the persisted theme and sidebar state before first paint, so the
+         page never flashes the wrong theme or jumps between sidebar widths (see
+         docs/FRONTEND_ARCHITECTURE.md → Theme management and Persisted UI
+         preferences). -->
     <script>
       (function () {
         try {
@@ -18,6 +20,15 @@
         } catch (_) {
           /* default to light */
         }
+        // Sidebar: the versioned envelope written by src/lib/preferences.ts.
+        var collapsed = false;
+        try {
+          var sidebar = JSON.parse(localStorage.getItem('workhub:sidebar'));
+          collapsed = sidebar.version === 1 && sidebar.value.collapsed === true;
+        } catch (_) {
+          /* default to expanded */
+        }
+        document.documentElement.dataset.sidebar = collapsed ? 'collapsed' : 'expanded';
       })();
     </script>
   </head>

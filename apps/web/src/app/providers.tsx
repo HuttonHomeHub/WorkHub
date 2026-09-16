@@ -2,6 +2,7 @@ import { QueryClientProvider, type QueryClient } from '@tanstack/react-query';
 import * as React from 'react';
 
 import { Button } from '@/components/ui/button';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { ThemeProvider } from '@/hooks/use-theme';
 
 interface ErrorBoundaryState {
@@ -45,12 +46,14 @@ interface ProvidersProps {
   children: React.ReactNode;
 }
 
-/** App-wide composition: error boundary → theme → server-state cache. */
+/** App-wide composition: error boundary → theme → server-state cache → tooltips. */
 export function Providers({ queryClient, children }: ProvidersProps) {
   return (
     <RootErrorBoundary>
       <ThemeProvider>
-        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+        <QueryClientProvider client={queryClient}>
+          <TooltipProvider>{children}</TooltipProvider>
+        </QueryClientProvider>
       </ThemeProvider>
     </RootErrorBoundary>
   );

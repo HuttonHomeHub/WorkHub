@@ -26,7 +26,7 @@ export interface ToolManifest {
   /** The Lucide icon shown beside the label in the sidebar. */
   icon: LucideIcon;
   /** The tool's home route. Every route under it marks the tool as current. */
-  path: LinkProps['to'];
+  path: NonNullable<LinkProps['to']>;
   /** Palette commands, starting with "Go to <tool>". */
   commands: readonly ToolCommand[];
 }
