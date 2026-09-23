@@ -8,7 +8,7 @@ import {
 } from '../api/excess-conversions';
 import type { ExcessConversion } from '../api/keys';
 import { useTimeSummaries } from '../api/time-summaries';
-import { figuresFromGroup, type ThisWeekFigures } from '../this-week-figures';
+import { figuresFromGroup, type LiveWeekFigures, type ThisWeekFigures } from '../this-week-figures';
 
 import { Figure } from './figure';
 import { LoadError, LoadingRows, toastSaveError } from './request-states';
@@ -23,12 +23,13 @@ export interface ThisWeekPanelProps {
   /** Today in Europe/London (`londonDateAt(new Date())`): what counts and what has settled. */
   asOf: string;
   /**
-   * The week's figures from the week view's own engine run over saved and
-   * unsaved rows (`thisWeekFigures(result, weekStart)`), so the panel follows
-   * typing before a save. Without it (or with `null`), the panel shows the
-   * saved figures from `time-summaries`.
+   * The week-local figures from the week view's own engine run over saved and
+   * unsaved rows (`liveWeekFigures(result, weekStart)`), laid over the saved
+   * `time-summaries` group so the panel follows typing before a save. The
+   * conversion's state and its TOIL and overtime always come from the saved
+   * group. Without it (or with `null`), every figure is the saved one.
    */
-  live?: ThisWeekFigures | null;
+  live?: LiveWeekFigures | null;
   /**
    * The latest rule 11 message for this week (`useRecalculationNotice`),
    * shown under the figures and announced by a polite live region.
@@ -141,11 +142,11 @@ function ConversionSummary({ figures }: { figures: ThisWeekFigures }) {
  * "Nothing to convert" for a week that is net zero or negative.
  *
  * It loads the week's saved figures and its switch itself; pass `live` for
- * figures that include unsaved rows.
+ * the week-local figures including unsaved rows.
  */
 export function ThisWeekPanel({ weekStart, asOf, live, recalculationNotice }: ThisWeekPanelProps) {
   const range = { from: weekStart, to: addDays(weekStart, 7) };
-  const summaries = useTimeSummaries({ ...range, groupBy: 'week', asOf }, { enabled: !live });
+  const summaries = useTimeSummaries({ ...range, groupBy: 'week', asOf });
   const conversions = useExcessConversions(range);
   const headingId = React.useId();
 
@@ -154,12 +155,14 @@ export function ThisWeekPanel({ weekStart, asOf, live, recalculationNotice }: Th
     void conversions.refetch();
   };
   const group = summaries.data?.find((g) => g.key === weekStart);
-  const figures = live ?? (group ? figuresFromGroup(group) : undefined);
+  const figures: ThisWeekFigures | undefined = group
+    ? { ...figuresFromGroup(group), ...live }
+    : undefined;
 
   let body: React.ReactNode;
-  if ((!live && summaries.isError) || conversions.isError) {
+  if (summaries.isError || conversions.isError) {
     body = <LoadError message="We couldn't load this week's totals." onRetry={retry} />;
-  } else if ((!live && summaries.isPending) || conversions.isPending) {
+  } else if (summaries.isPending || conversions.isPending) {
     body = <LoadingRows label="Loading this week's totals" rows={3} />;
   } else if (!figures) {
     body = <p className="text-muted-foreground">Nothing is tracked this week.</p>;

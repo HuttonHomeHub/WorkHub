@@ -13,10 +13,11 @@ import userEvent from '@testing-library/user-event';
 import type * as React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { WorkTerm } from '../api/keys';
+import type { SummaryGroup, WorkTerm } from '../api/keys';
 import type { WorkDay } from '../api/work-days';
 
 import type * as TimeInputModule from './time-input';
+import { WeekAside } from './week-aside';
 import { WeekView } from './week-view';
 
 /** How often each time field has rendered, by its id (for the memoised rows). */
@@ -34,6 +35,7 @@ vi.mock('./time-input', async (importOriginal) => {
 
 import { dismissToast } from '@/components/ui/toast';
 import { on, page, renderWithApi, stubApi, type ApiCall } from '@/test/api-stub';
+import { summaryGroup, timeBalances } from '@/test/hours-fixtures';
 
 const WEEK = '2026-10-05';
 /** Every day of the week is in the past. */
@@ -124,7 +126,8 @@ function stubWeek(data: Data, ...handlers: Parameters<typeof stubApi>) {
 async function renderWeek({
   weekStart = WEEK,
   today = TODAY,
-}: { weekStart?: string; today?: string } = {}) {
+  withAside = false,
+}: { weekStart?: string; today?: string; withAside?: boolean } = {}) {
   const onWeekChange = vi.fn();
   const rootRoute = createRootRoute({ component: () => <Outlet /> });
   const hours = createRoute({
@@ -133,7 +136,12 @@ async function renderWeek({
     component: () => (
       <>
         <Link to="/hours/settings">Elsewhere</Link>
-        <WeekView weekStart={weekStart} today={today} onWeekChange={onWeekChange} />
+        <WeekView
+          weekStart={weekStart}
+          today={today}
+          onWeekChange={onWeekChange}
+          {...(withAside ? { aside: (context) => <WeekAside {...context} /> } : {})}
+        />
       </>
     ),
   });
@@ -543,5 +551,177 @@ describe('WeekView', () => {
     expect(text).toContain('Date,Start,End');
     expect(text).toContain('2026-10-05,08:00,17:30,No');
     expect(await screen.findByText('Week of 5 Oct 2026 downloaded')).toBeInTheDocument();
+  });
+});
+
+/** The worked example's week of 5 Oct 2026, saved (London times; BST is UTC+1). */
+const EXAMPLE_DAYS = [
+  workDay('2026-10-05', {
+    startsAt: '2026-10-05T07:00:00.000Z',
+    endsAt: '2026-10-05T16:30:00.000Z',
+    breakMinutes: 30,
+  }),
+  workDay('2026-10-06', {
+    startsAt: '2026-10-06T06:30:00.000Z',
+    endsAt: '2026-10-06T17:00:00.000Z',
+    breakMinutes: 30,
+  }),
+  workDay('2026-10-07', {
+    startsAt: '2026-10-07T07:00:00.000Z',
+    endsAt: '2026-10-07T15:00:00.000Z',
+    breakMinutes: 30,
+  }),
+  workDay('2026-10-08', {
+    startsAt: '2026-10-08T07:00:00.000Z',
+    endsAt: '2026-10-08T16:00:00.000Z',
+    breakMinutes: 15,
+  }),
+  workDay('2026-10-09', {
+    startsAt: '2026-10-09T07:00:00.000Z',
+    endsAt: '2026-10-09T12:30:00.000Z',
+  }),
+];
+
+/**
+ * The week view with its aside against a stubbed API: the worked example's
+ * week, a switch that can change, and summaries the test controls.
+ */
+function stubWithAside({
+  switchedOn = true,
+  onSave,
+}: { switchedOn?: boolean; onSave?: () => SummaryGroup } = {}) {
+  const aside = {
+    switchedOn,
+    group: summaryGroup(),
+  };
+  const conversionRow = { id: 'switch-1', ownerId: 'owner', weekStart: WEEK, createdAt: WEEK };
+  const api = stubWeek(
+    { days: EXAMPLE_DAYS },
+    on('PATCH', /^\/api\/v1\/work-days\//, (call: ApiCall) => {
+      const id = call.path.split('/').at(-1);
+      const before = api.state.days.find((day) => day.id === id)!;
+      const saved = { ...before, ...(call.body as Partial<WorkDay>), version: 2 };
+      api.state.days = api.state.days.map((day) => (day.id === id ? saved : day));
+      if (onSave) aside.group = onSave();
+      return { status: 200, body: { data: saved } };
+    }),
+    on('GET', '/api/v1/excess-conversions', () => page(aside.switchedOn ? [conversionRow] : [])),
+    on('POST', '/api/v1/excess-conversions', () => {
+      aside.switchedOn = true;
+      return { status: 201, body: { data: conversionRow } };
+    }),
+    on('DELETE', '/api/v1/excess-conversions/switch-1', () => {
+      aside.switchedOn = false;
+      return { status: 204 };
+    }),
+    on('GET', '/api/v1/time-summaries', () => ({ status: 200, body: { data: [aside.group] } })),
+    on('GET', '/api/v1/time-balances', () => ({ status: 200, body: { data: timeBalances() } })),
+  );
+  return { ...api, aside };
+}
+
+describe('WeekView with its aside', () => {
+  it('shows This week and Balances in a named aside, following unsaved typing', async () => {
+    const user = userEvent.setup();
+    stubWithAside();
+    await renderWeek({ withAside: true });
+
+    const aside = await screen.findByRole('complementary', { name: 'This week and balances' });
+    const thisWeek = within(aside).getByRole('region', { name: 'This week' });
+    expect(await within(thisWeek).findByText('40:30 of 37:30 target')).toBeInTheDocument();
+    expect(within(thisWeek).getByText('+3:00 over')).toBeInTheDocument();
+    expect(within(thisWeek).getByText('2:00 unpaid')).toBeInTheDocument();
+    expect(await within(aside).findByRole('region', { name: 'Balances' })).toHaveTextContent(
+      '+3:12 over',
+    );
+
+    // An unsaved hour more on Wednesday: the week-local figures follow at once;
+    // the TOIL and overtime split waits for the saved figures.
+    const end = field('End', 'Wed 7 Oct');
+    await user.clear(end);
+    await user.type(end, '1700');
+    expect(within(thisWeek).getByText('41:30 of 37:30 target')).toBeInTheDocument();
+    expect(within(thisWeek).getByText('+4:00 over')).toBeInTheDocument();
+    expect(within(thisWeek).getByText('2:00 unpaid')).toBeInTheDocument();
+  });
+
+  it("links to the summary for the week's month, and to settings", async () => {
+    stubWithAside();
+    await renderWeek({ withAside: true });
+    expect(await screen.findByRole('link', { name: 'Summary' })).toHaveAttribute(
+      'href',
+      '/hours/summary?from=2026-10-01&to=2026-10-31&groupBy=week',
+    );
+    expect(screen.getByRole('link', { name: 'Settings' })).toHaveAttribute(
+      'href',
+      '/hours/settings',
+    );
+  });
+
+  it("switching conversion in the aside updates the table's Converted column", async () => {
+    const user = userEvent.setup();
+    const { aside } = stubWithAside({ switchedOn: false });
+    aside.group = summaryGroup({ conversion: 'OFF', conversionToilMinutes: 0 });
+    await renderWeek({ withAside: true });
+    const toggle = await screen.findByRole('switch', {
+      name: "Convert this week's excess to TOIL and overtime",
+    });
+    await screen.findByText('Fri 9 Oct', { selector: 'span' });
+    expect(screen.queryByRole('columnheader', { name: /Converted/ })).not.toBeInTheDocument();
+
+    aside.group = summaryGroup();
+    await user.click(toggle);
+    expect(await screen.findByRole('columnheader', { name: 'Converted' })).toBeInTheDocument();
+    // Tuesday gives 1:50 in the worked example.
+    expect(row('Tue 6 Oct')).toHaveTextContent('1:50');
+
+    aside.group = summaryGroup({ conversion: 'OFF', conversionToilMinutes: 0 });
+    await user.click(toggle);
+    await waitFor(() =>
+      expect(screen.queryByRole('columnheader', { name: /Converted/ })).not.toBeInTheDocument(),
+    );
+  });
+
+  it('tells the owner when a save after settlement moves the TOIL and overtime', async () => {
+    const user = userEvent.setup();
+    const { calls } = stubWithAside({
+      // One hour less on Tuesday: 2:00 excess, 1:00 of it overtime.
+      onSave: () =>
+        summaryGroup({
+          creditedMinutes: 2370,
+          rawFlexiMinutes: 120,
+          excessMinutes: 120,
+          conversionOvertimeUnpaidMinutes: 60,
+        }),
+    });
+    await renderWeek({ withAside: true });
+    const thisWeek = await screen.findByRole('region', { name: 'This week' });
+    await within(thisWeek).findByText('2:00 unpaid');
+
+    const end = field('End', 'Tue 6 Oct');
+    await user.clear(end);
+    await user.type(end, '1700{Enter}');
+
+    const message = 'Week of 5 Oct recalculated: TOIL 1:00 → 1:00, overtime 2:00 → 1:00.';
+    expect(await screen.findByText('Tue 6 Oct saved')).toBeInTheDocument();
+    const notice = await within(thisWeek).findByText(message);
+    expect(notice).toHaveAttribute('aria-live', 'polite');
+    expect(
+      within(screen.getByRole('region', { name: 'Notifications' })).getByText(message),
+    ).toBeInTheDocument();
+    expect(within(thisWeek).getByText('1:00 unpaid')).toBeInTheDocument();
+    expect(calls.some((call) => call.method === 'PATCH')).toBe(true);
+  });
+
+  it('says nothing more than "saved" for an edit before settlement', async () => {
+    const user = userEvent.setup();
+    const { aside } = stubWithAside();
+    aside.group = summaryGroup({ conversion: 'PREVIEW' });
+    await renderWeek({ withAside: true, today: '2026-10-08' });
+    const thisWeek = await screen.findByRole('region', { name: 'This week' });
+    await within(thisWeek).findByText('Preview until Fri 9 Oct');
+    await user.type(field('Break', 'Thu 8 Oct'), '{Control>}a{/Control}0:45{Enter}');
+    expect(await screen.findByText('Thu 8 Oct saved')).toBeInTheDocument();
+    expect(screen.queryByText(/recalculated/)).not.toBeInTheDocument();
   });
 });

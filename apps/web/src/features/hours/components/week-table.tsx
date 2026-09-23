@@ -168,6 +168,12 @@ export interface WeekTableProps {
   onReload: () => void;
   /** The live calculation (saved rows plus readable unsaved ones), for the aside. */
   onCalculated?: (calculation: WeekCalculation | null) => void;
+  /**
+   * Called as a save, a clear or an undo starts; the function it returns (if
+   * any) is called once that edit has succeeded (rule 11's notice,
+   * `useWeekRecalculation`).
+   */
+  onEditStart?: () => (() => void) | undefined;
 }
 
 /**
@@ -193,6 +199,7 @@ export function WeekTable({
   onFocusDone,
   onReload,
   onCalculated,
+  onEditStart,
 }: WeekTableProps) {
   const [drafts, setDrafts] = React.useState<Readonly<Record<IsoDate, Draft>>>({});
   const [saving, setSaving] = React.useState<ReadonlySet<IsoDate>>(new Set());
@@ -299,10 +306,12 @@ export function WeekTable({
     }
     const label = labelOf(date);
     const saved = savedByDate.get(date);
+    const edited = onEditStart?.();
     const callbacks = {
       onSuccess: () => {
         dropDraft(date);
         toast({ title: `${label} saved` });
+        edited?.();
       },
       onError: (error: Error) => {
         if (error instanceof ApiRequestError && error.status === 422) {
@@ -341,26 +350,31 @@ export function WeekTable({
     focusAfterMenu.current = neighbourOf(date);
     dropDraft(date);
     if (!saved) return;
+    const cleared = onEditStart?.();
+    const undo = () => {
+      const restored = onEditStart?.();
+      restore.mutate(saved.id, {
+        onSuccess: () => {
+          toast({ title: `${label} restored` });
+          restored?.();
+        },
+        onError: (error) =>
+          toast({
+            variant: 'error',
+            title: `We couldn't restore ${label}`,
+            description: actionErrorMessage(error, 'Try again in a moment.'),
+          }),
+      });
+    };
     remove.mutate(saved.id, {
-      onSuccess: () =>
+      onSuccess: () => {
         toast({
           title: 'Day cleared',
           description: label,
-          action: {
-            label: 'Undo',
-            altText: `Undo clearing ${label}`,
-            onAction: () =>
-              restore.mutate(saved.id, {
-                onSuccess: () => toast({ title: `${label} restored` }),
-                onError: (error) =>
-                  toast({
-                    variant: 'error',
-                    title: `We couldn't restore ${label}`,
-                    description: actionErrorMessage(error, 'Try again in a moment.'),
-                  }),
-              }),
-          },
-        }),
+          action: { label: 'Undo', altText: `Undo clearing ${label}`, onAction: undo },
+        });
+        cleared?.();
+      },
       onError: (error) =>
         toast({
           variant: 'error',

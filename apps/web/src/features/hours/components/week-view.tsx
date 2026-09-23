@@ -1,10 +1,20 @@
-import { addDays, daysCsvRows, toCsv, weekStartOf, yearOf, type IsoDate } from '@repo/domain';
+import {
+  addDays,
+  daysCsvRows,
+  firstDayOfMonth,
+  lastDayOfMonth,
+  toCsv,
+  weekStartOf,
+  yearOf,
+  type IsoDate,
+} from '@repo/domain';
 import { Link } from '@tanstack/react-router';
 import { ChevronLeft, ChevronRight, Download } from 'lucide-react';
 import * as React from 'react';
 
 import { useWeekConversion, useWeekWorkDays } from '../api/work-days';
 import { useWorkTerms } from '../api/work-terms';
+import { useWeekRecalculation } from '../hooks/use-week-recalculation';
 import { calculateWeek, toEngineTerms, type WeekCalculation } from '../week/week-calculation';
 import { canMoveWeek, weekDates } from '../week/week-dates';
 
@@ -27,9 +37,12 @@ export interface WeekAsideContext {
   asOf: IsoDate;
   /**
    * The live figures for the shown week, unsaved rows included; `null` while
-   * loading, before the tracking start or without terms.
+   * loading, before the tracking start or without terms. Only its week-local
+   * figures are valid (`week/week-calculation.ts`).
    */
   calculation: WeekCalculation | null;
+  /** Rule 11's latest message for the week, for a polite live region. */
+  recalculationNotice: string;
 }
 
 export interface WeekViewProps {
@@ -40,7 +53,7 @@ export interface WeekViewProps {
   onWeekChange: (weekStart: IsoDate) => void;
   /**
    * The aside's content, beside the table on a wide window and below it when
-   * both do not fit (down to the reflow floor). Slice 10 fills it.
+   * both do not fit (down to the reflow floor): `WeekAside`.
    */
   aside?: (context: WeekAsideContext) => React.ReactNode;
 }
@@ -89,9 +102,10 @@ function ErrorTable({ onRetry }: { onRetry: () => void }) {
 
 /**
  * The hours week view (`/hours?week=`, docs/features/hours-tracker.md → UI →
- * Week view): a page header with the week navigator, "Download CSV" and "Go to
- * today" (the primary action, which focuses today's Start field), then the
- * day table and a slot for the aside.
+ * Week view): a page header with the week navigator, links to the summary
+ * (the week's month) and settings, "Download CSV" and "Go to today" (the
+ * primary action, which focuses today's Start field), then the day table and
+ * the aside (`aside`, filled by the route with `WeekAside`).
  *
  * Data: the owner's terms, the week's days, the week's conversion switch and
  * the bank holidays of the week's years. Every figure in the table is
@@ -109,6 +123,7 @@ export function WeekView({ weekStart, today, onWeekChange, aside }: WeekViewProp
   const [focusDate, setFocusDate] = React.useState<IsoDate | null>(null);
   const [calculation, setCalculation] = React.useState<WeekCalculation | null>(null);
   const clearFocus = React.useCallback(() => setFocusDate(null), []);
+  const recalculation = useWeekRecalculation(weekStart, today);
 
   const queries = [terms, days, conversion, holidaysFirst, holidaysLast];
   const pending = queries.some((query) => query.isPending);
@@ -130,6 +145,8 @@ export function WeekView({ weekStart, today, onWeekChange, aside }: WeekViewProp
       : false;
 
   const todayWeek = weekDates(weekStart).includes(today);
+  // "Summary" opens the shown week's month, by week.
+  const summaryRange = { from: firstDayOfMonth(weekStart), to: lastDayOfMonth(weekStart) };
 
   const goToToday = () => {
     if (todayWeek) {
@@ -209,6 +226,7 @@ export function WeekView({ weekStart, today, onWeekChange, aside }: WeekViewProp
         onFocusDone={clearFocus}
         onReload={() => void days.refetch()}
         onCalculated={setCalculation}
+        onEditStart={recalculation.begin}
       />
     );
   }
@@ -242,6 +260,11 @@ export function WeekView({ weekStart, today, onWeekChange, aside }: WeekViewProp
             </Button>
           </div>
           <Button variant="ghost" asChild>
+            <Link to="/hours/summary" search={{ ...summaryRange, groupBy: 'week' }}>
+              Summary
+            </Link>
+          </Button>
+          <Button variant="ghost" asChild>
             <Link to="/hours/settings">Settings</Link>
           </Button>
           <Button variant="outline" onClick={downloadCsv} disabled={!tracked}>
@@ -255,8 +278,8 @@ export function WeekView({ weekStart, today, onWeekChange, aside }: WeekViewProp
         Type times as 0830 or 8:30 and durations as 0:30, 30m or 7.5h. Enter saves a day; Esc undoes
         its changes.
       </p>
-      {/* Layout: the table takes the room; the aside (slice 10) sits beside it on a wide
-          window and wraps below it when both do not fit, down to the reflow floor. */}
+      {/* Layout: the table takes the room; the aside sits beside it on a wide window
+          and wraps below it when both do not fit, down to the reflow floor. */}
       <div className="flex flex-wrap items-start gap-6">
         <section
           aria-labelledby={HEADING_ID}
@@ -271,6 +294,7 @@ export function WeekView({ weekStart, today, onWeekChange, aside }: WeekViewProp
               asOf: today,
               calculation:
                 tracked && calculation?.week.weekStart === weekStart ? calculation : null,
+              recalculationNotice: recalculation.notice,
             })}
           </div>
         ) : null}

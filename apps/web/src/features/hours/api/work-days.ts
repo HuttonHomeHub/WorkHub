@@ -16,12 +16,14 @@ export type ExcessConversion = components['schemas']['ExcessConversionResponseDt
 /**
  * Query keys for the week view's lists, under the tool's `hoursKeys.all`.
  * Kept beside their hooks: `workDays()` and `excessConversions()` are the
- * prefixes any change to those resources invalidates.
+ * prefixes any change to those resources invalidates. `excessConversions()`
+ * is `hoursKeys.excessConversions()`, so the aside's switch
+ * (`useSwitchConversion`) also refreshes the week's Converted column.
  */
 export const weekKeys = {
   workDays: () => [...hoursKeys.all, 'work-days'] as const,
   workDaysWeek: (weekStart: string) => [...weekKeys.workDays(), { weekStart }] as const,
-  excessConversions: () => [...hoursKeys.all, 'excess-conversions'] as const,
+  excessConversions: hoursKeys.excessConversions,
   excessConversionsWeek: (weekStart: string) =>
     [...weekKeys.excessConversions(), { weekStart }] as const,
 };
@@ -72,10 +74,15 @@ export function useWeekConversion(weekStart: string) {
   return useQuery(weekConversionQueryOptions(weekStart));
 }
 
-/** Everything a day's change can move: the week lists and every computed read-model. */
+/**
+ * Everything a day's change can move: the week lists (days, and the switch
+ * rows beside them, so the table, its Converted column and the aside are read
+ * together) and every computed read-model (summaries, balances).
+ */
 function invalidateDays(queryClient: ReturnType<typeof useQueryClient>) {
   return Promise.all([
     queryClient.invalidateQueries({ queryKey: weekKeys.workDays() }),
+    queryClient.invalidateQueries({ queryKey: weekKeys.excessConversions() }),
     queryClient.invalidateQueries({ queryKey: hoursKeys.computed() }),
   ]);
 }

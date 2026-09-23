@@ -1,7 +1,7 @@
 # Hours tracker
 
-- **Status:** Approved (2026-09-16). Building: slices 1–9 of 10 done
-  ([build order](#slices)).
+- **Status:** Shipped (2026-09-23). Approved 2026-09-16; all ten
+  [slices](#slices) built.
 - **Change class:** Feature, built on
   [ADR-0020](../adr/0020-modular-tools-over-shared-core-data.md) (Architectural,
   Accepted 2026-09-16). Escalation triggers: database
@@ -1139,7 +1139,7 @@ to, groupBy)` and `balancesAt(result, asOf)` shape them for `time-summaries`
   it at 1280px (and at the reflow floor), rather than squeezing the table into
   a horizontal scroll at the design floor. `WeekView` takes the aside as
   `aside={(context) => …}` with `{ weekStart, asOf, calculation }`, rendered in
-  a `div[data-slot="week-aside"]`; slice 10 fills it.
+  a `div[data-slot="week-aside"]`; slice 10 part 2 fills it.
 - **Table:** a real `<table>` labelled by the week heading, a row header per
   date (with "Today", "Unsaved" and the bank holiday badge), and no
   `role="grid"`. Columns: Start, End, Break, Leave, TOIL taken, Worked,
@@ -1158,7 +1158,8 @@ to, groupBy)` and `balancesAt(result, asOf)` shape them for `time-summaries`
   `08:30` is not a change). Validation shows for the fields left in a changed
   row, and for every field on save, which moves focus to the first invalid
   one; passing through untouched rows with Tab flags nothing. The End field
-  describes a live "+1 day" tag when the end is at or before the start.
+  describes a "+1 day" tag when the end is at or before the start (not a live
+  region, since slice 10 part 2).
   Instants come from `shiftInstants`, so a night across a clock change is
   exact. A new day is a `POST`, a saved one a `PATCH` with its `version`. A
   422 shows the API's `details` in an alert row under the day (linked from its
@@ -1174,7 +1175,8 @@ to, groupBy)` and `balancesAt(result, asOf)` shape them for `time-summaries`
   guard is a follow-up.
 - **Row menu:** the "⋯" `DropdownMenu`, mirrored by a `ContextMenu` on the
   row. A text field keeps the browser's own right-click menu (copy, paste),
-  so the row menu opens from the rest of the row. Items: Clear day (when the
+  so the row menu opens from the rest of the row; a row with no actions keeps
+  the browser's menu everywhere (since slice 10 part 2). Items: Clear day (when the
   row has anything) and, on a bank holiday, "Mark bank holiday as worked" (or
   "…as not worked"), which changes the row's draft for an explicit save.
   Clear day soft-deletes, removes the day from the cache at once, raises
@@ -1400,16 +1402,18 @@ to, groupBy)` and `balancesAt(result, asOf)` shape them for `time-summaries`
     save is a persistent error toast and the switch shows the saved state),
     then TOIL, overtime ("2:00 unpaid", "1:00 paid, 1:00 unpaid") and "Preview
     until Fri 9 Oct" or "Applied Fri 9 Oct"; or "Nothing to convert" for a
-    week that is net zero or negative. `live` takes
+    week that is net zero or negative. `live` took
     `thisWeekFigures(result, weekStart)` from the week view's own engine run,
-    so the panel follows unsaved typing (the saved summary is then not
-    fetched). `recalculationNotice` fills a polite live region at the foot of
-    the panel.
+    so the panel followed unsaved typing (part 2 narrowed it to the
+    week-local figures, laid over the saved summary). `recalculationNotice`
+    fills a polite live region at the foot of the panel.
   - `BalancesPanel({ asOf })`: flexi (with its word), TOIL this month against
     its cap and TOIL taken, overtime this year (paid and unpaid, both always
     shown), and leave left; "No balances yet" before any terms.
-  - `useRecalculationNotice(weekStart)` → `{ notice, notify(before, after,
-editedWeekStart) }`: `recalculationMessage` runs `recalculation()` and
+  - `useRecalculationNotice(weekStart)` →
+    `{ notice, notify(before, after, editedWeekStart) }` (part 2 made it
+    `announce(message, editedWeekStart)`): `recalculationMessage` runs
+    `recalculation()` and
     writes "Week of 28 Sep recalculated: TOIL 3:00 → 2:00, overtime 0:00 →
     0:00. September totals changed."; `notify` raises a 4s info toast and
     keeps the message for the panel's live region. An edit that moves neither
@@ -1447,3 +1451,97 @@ editedWeekStart) }`: `recalculationMessage` runs `recalculation()` and
 - **Left for the lead (part 2):** mounting the aside in the week view, the
   switch and edit-after-settlement journeys, the browser-equals-API check for
   the seeded week, and links to the summary from the week view.
+
+### Slice 10 (part 2): the aside in the week view
+
+- **Mounted:** the `/hours` route passes `WeekView` an `aside` render prop
+  that renders `WeekAside` (`components/week-aside.tsx`): an `<aside>`
+  landmark named "This week and balances" holding `ThisWeekPanel` over
+  `BalancesPanel`. It sits beside the table on a 1920px window and below it
+  at 1280px and at the reflow floor (slice 7's layout). `WeekAsideContext`
+  gains `recalculationNotice`. The feature's public surface is now what the
+  routes mount (`WeekView`, `WeekAside`, the screens and their types); the
+  panels and rule 11's helpers stay inside the feature.
+- **`live` figures (decided while building):** the week view's calculation
+  runs one week with no history (slice 7), so only its **week-local**
+  figures are passed on: credited, target, the week's raw flexi and its
+  excess E (`liveWeekFigures`, which replaces `thisWeekFigures`). E is
+  week-local (rule 6), and passing it keeps "After conversion" (raw − E)
+  following the typing. The panel **always** loads the week's
+  `time-summaries` group and lays `live` over it: the conversion's state,
+  settlement date and its **TOIL and overtime split** (which depends on the
+  TOIL already converted earlier in the month, rule 7) are always the
+  API's, and move after a save. A test shows why: alone, the worked example
+  week converts 3:00 to TOIL; with October's earlier 6:30 it is 1:00 TOIL
+  and 2:00 overtime. While a row is unsaved the split can therefore trail the
+  live E until the save is re-read. The balances are always the API's.
+- **Rule 11 notice (decided while building):** `recalculationMessage` and
+  `recalculation()` compare engine results, which the week view does not
+  have for anything beyond the shown week, so the notice compares the
+  API's figures instead. `useWeekRecalculation(weekStart, asOf)` observes the
+  week's `time-summaries` group (and, when the week touches a month that has
+  ended, its month groups; otherwise no extra request) and gives `WeekTable`
+  an `onEditStart` callback: as a save, a clear or an undo starts it takes
+  the "before" from the cache; once the edit succeeds (the mutation has
+  already re-read the computed figures) it reads the "after" and
+  `summaryRecalculationMessage` builds the same wording: "Week of 5 Oct
+  recalculated: TOIL 3:00 → 2:00, overtime 0:00 → 0:00" when the week's
+  conversion is **applied** and its TOIL or overtime moved (a preview
+  changes nothing yet, so it says nothing), plus "September totals changed"
+  when an ended month's TOIL, unused TOIL, overtime or flexi moved (the
+  fields `recalculation()` compares). `useRecalculationNotice` now takes the
+  message (`announce(message, weekStart)`) rather than two engine results,
+  so both paths share it: a 4s info toast and the panel's polite live
+  region. An ordinary edit still says only "Mon 5 Oct saved".
+- **Keeping in step:** every day save, clear and undo invalidates the week's
+  days, the switch rows (`weekKeys.excessConversions()`, now the same key
+  as `hoursKeys.excessConversions()`) and `hoursKeys.computed()`; the
+  switch invalidates the switch rows and `computed()`. So the table's
+  Converted column, both panels and the totals move together.
+- **Header:** "Summary" (the shown week's month, by week:
+  `/hours/summary?from=2026-10-01&to=2026-10-31&groupBy=week`) and
+  "Settings" as ghost links before "Download CSV" and "Go to today".
+- **Review fixes to slice 7** (UI, accessibility and security reviews):
+  - the "+1 day" tag is no longer a live region (it re-announced as partial
+    times failed to parse); the End field's description still reads it;
+  - the row's `ContextMenuTrigger` is disabled when the row has no actions,
+    so right-click and Shift+F10 keep the browser's own menu;
+  - `DayRow` is memoised by value with handlers that take the date (created
+    once; `save` and `clear` go through a stable wrapper that calls the
+    latest version), and a row gets only the engine figures it shows
+    (`dayFigures`), because each day's running flexi balance changes with
+    every earlier day: a keystroke re-renders only its own row (a test counts
+    the renders). The engine run stays one `useMemo` per change;
+  - `?week=` is capped at 10 characters in the route's schema;
+  - `downloadText` revokes the file's URL after 10 seconds, not at once;
+  - `e2e/global-setup.ts` refuses to create the journey accounts (whose
+    passwords are in the repository) unless `DATABASE_URL` names a database
+    ending in `_test`, or `CI=true` (TESTING.md → Frontend tests).
+- **Deduplicated in the rebase:** slices 7 and 10 part 1 each added a
+  `Badge` and `lib/download.ts`. Part 1's `Badge` (with its `warning` and
+  `info` variants) is kept, and covers the week view's `default` and
+  `outline` badges; part 1's `downloadText` is kept and the week view calls
+  it. The week view's `formatDate` style `weekday` was the same as
+  `weekdayDayMonth` and is gone; `medium` ("5 Oct 2026") stays.
+- **Bundle** (`pnpm --filter @repo/web build`, gzipped): initial JS 90.5 kB
+  (unchanged). The shared `hours` feature chunk is 42.6 kB (40.0 kB before
+  the aside) and `@repo/domain` with `temporal-polyfill` 20.2 kB: about
+  63 kB of lazy JS for `/hours` against FRONTEND_QUALITY.md's advisory
+  150 kB.
+- **Tests:** unit tests for `liveWeekFigures` and `summaryRecalculationMessage`
+  (applied, preview, unchanged, an ended month); component tests for the
+  mounted aside (the landmark, both panels, live figures following an
+  unsaved row while the split stays saved), the header links, switching in
+  the aside updating the Converted column, the notice after a save in an
+  applied week (toast and live region) and none before settlement, the
+  memoised rows and the context menu on an empty row, and `downloadText`.
+  `e2e/hours-week.spec.ts` adds, on the week journey account and a browser
+  clock set with `page.clock`: Shift+F10 on a row with actions opens its
+  menu and Esc returns focus; the aside beside the table at 1920×1080 with
+  no page scroll; switching conversion on and off before settlement (a
+  preview) and after it (applied, Tuesday converting 1:50); an edit after
+  settlement raising "Week of 5 Oct recalculated: TOIL 3:00 → 2:00, overtime
+  0:00 → 0:00." in the toast and the live region; and the **browser's totals
+  equal the API's** for the worked-example week of 5 Oct 2026 (seeded through
+  the API; the table's totals row and the aside's figures against
+  `GET /time-summaries` and `GET /time-balances`), all with axe.

@@ -130,11 +130,12 @@ features/hours/
 │                 #   row: typed text → the API's body)
 ├── components/   # screens and composites: hours-settings.tsx and a component per tab,
 │                 #   hours-summary.tsx and summary-table.tsx, week-view.tsx, week-table.tsx,
-│                 #   day-row.tsx, the week aside's panels (this-week-panel.tsx,
+│                 #   day-row.tsx, week-aside.tsx and its panels (this-week-panel.tsx,
 │                 #   balances-panel.tsx), and the hours inputs (time-input.tsx, duration-input.tsx)
 ├── week/         # pure week-view logic: week-dates.ts (URL normalisation),
 │                 #   week-calculation.ts (the engine for one week, row warnings)
-├── hooks/        # use-focus-after-removal.ts, use-recalculation-notice.ts
+├── hooks/        # use-focus-after-removal.ts, use-recalculation-notice.ts,
+│                 #   use-week-recalculation.ts (rule 11 from time-summaries)
 ├── settings-tabs.ts # the tab names, dependency-free
 ├── summary-*.ts, warnings.ts, this-week-figures.ts, recalculation-message.ts
 │                 # pure helpers: ranges and presets, columns and CSV rows, warning copy,
@@ -153,6 +154,15 @@ features/hours/
   it with `import()` (the week route normalises `?week=` that way).
 - **Feedback lives in components, data in hooks.** Mutation hooks do the cache
   work; the component raises the toast (with Undo) in the mutate callbacks.
+- **Computed figures come from the API.** The browser runs `@repo/domain`
+  only for what it can compute from what it has loaded (the week view's rows,
+  from the shown week alone); anything that depends on history (balances, the
+  TOIL and overtime split, month totals) is read from `time-summaries` and
+  `time-balances`, which every hours mutation invalidates through
+  `hoursKeys.computed()`.
+- **Memoise rows that re-render on typing.** A table of small forms passes
+  each row stable handlers that take the row's key and memoises the row by
+  value (`DayRow`), so a keystroke re-renders one row, not the table.
 
 ## Component organisation
 

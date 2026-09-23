@@ -235,3 +235,220 @@ test('reflows at the 320 CSS px floor (1280×800 at 400% zoom)', async ({ page }
   await expectNoPageHorizontalScroll(page);
   await expectNoA11yViolations(page);
 });
+
+test('lays the aside beside the table at 1920×1080, with no page scroll', async ({ page }) => {
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  await signIn(page, E2E_WEEK_USER);
+  await page.goto(`/hours?week=${WEEK}`);
+  const table = page.getByRole('table', { name: 'Week of 2 Feb 2026' });
+  const aside = page.getByRole('complementary', { name: 'This week and balances' });
+  await expect(aside.getByRole('region', { name: 'Balances' })).toBeVisible();
+  await expect(table).toBeVisible();
+  await expect(field(page, 'Start', 'Mon 2 Feb')).toBeVisible();
+  const tableBox = (await table.boundingBox())!;
+  const asideBox = (await aside.boundingBox())!;
+  // Beside, not below: to the right of the table and starting level with it.
+  expect(asideBox.x).toBeGreaterThanOrEqual(tableBox.x + tableBox.width);
+  expect(asideBox.y).toBeLessThan(tableBox.y + tableBox.height / 2);
+  await expectNoPageHorizontalScroll(page);
+  // The table fits without scrolling in its own region.
+  expect(
+    await table.evaluate(
+      (element) => element.parentElement!.scrollWidth - element.parentElement!.clientWidth,
+    ),
+  ).toBeLessThanOrEqual(0);
+  await expectNoA11yViolations(page);
+});
+
+/**
+ * The aside's journeys work in the feature doc's worked example, the week of
+ * Monday 5 October 2026, seeded through the API, with the browser's clock set
+ * so the week is before or after its settlement on Friday 9 October.
+ */
+const EXAMPLE_WEEK = '2026-10-05';
+/** Wed 7 Oct 2026, noon in London (BST): before the settlement day. */
+const BEFORE_SETTLEMENT = new Date('2026-10-07T11:00:00Z');
+/** Mon 12 Oct 2026, noon in London: the week has settled. */
+const SETTLED = new Date('2026-10-12T11:00:00Z');
+const SETTLED_DATE = '2026-10-12';
+
+/** The worked example's days, as UTC instants (London is on BST, UTC+1). */
+const EXAMPLE_DAYS = [
+  { date: '2026-10-05', startsAt: '07:00', endsAt: '16:30', breakMinutes: 30 },
+  { date: '2026-10-06', startsAt: '06:30', endsAt: '17:00', breakMinutes: 30 },
+  { date: '2026-10-07', startsAt: '07:00', endsAt: '15:00', breakMinutes: 30 },
+  { date: '2026-10-08', startsAt: '07:00', endsAt: '16:00', breakMinutes: 15 },
+  { date: '2026-10-09', startsAt: '07:00', endsAt: '12:30', breakMinutes: 0 },
+];
+
+/** Resets the example week to the worked example, with its switch on or off. */
+async function seedExampleWeek(request: APIRequestContext, switchOn: boolean): Promise<void> {
+  const terms = await request.post(`${API}/work-terms`, {
+    data: { effectiveFrom: TRACKING_START },
+  });
+  expect([201, 409]).toContain(terms.status());
+  // All of October, so no other day of the month moves its TOIL.
+  const range = 'from=2026-09-28&to=2026-11-02';
+  for (const day of await listAll<Row>(request, `${API}/work-days?${range}`)) {
+    expect((await request.delete(`${API}/work-days/${day.id}`)).ok()).toBe(true);
+  }
+  for (const row of await listAll<Row>(request, `${API}/excess-conversions?${range}`)) {
+    expect((await request.delete(`${API}/excess-conversions/${row.id}`)).ok()).toBe(true);
+  }
+  for (const day of EXAMPLE_DAYS) {
+    const response = await request.post(`${API}/work-days`, {
+      data: {
+        date: day.date,
+        startsAt: `${day.date}T${day.startsAt}:00.000Z`,
+        endsAt: `${day.date}T${day.endsAt}:00.000Z`,
+        breakMinutes: day.breakMinutes,
+        leaveMinutes: 0,
+        toilTakenMinutes: 0,
+        bankHolidayWorked: false,
+      },
+    });
+    expect(response.status(), await response.text()).toBe(201);
+  }
+  if (switchOn) {
+    const conversion = await request.post(`${API}/excess-conversions`, {
+      data: { weekStart: EXAMPLE_WEEK },
+    });
+    expect(conversion.status()).toBe(201);
+  }
+}
+
+/** `h:mm`, as the app writes durations. */
+function hm(minutes: number): string {
+  const sign = minutes < 0 ? '−' : '';
+  const abs = Math.abs(minutes);
+  return `${sign}${String(Math.floor(abs / 60))}:${String(abs % 60).padStart(2, '0')}`;
+}
+
+/** Signed flexi, as the app writes it: `+0:40 over`, `−2:00 under`, `0:00`. */
+function flexi(minutes: number): string {
+  if (minutes > 0) return `+${hm(minutes)} over`;
+  if (minutes < 0) return `${hm(minutes)} under`;
+  return '0:00';
+}
+
+function asideOf(page: Page) {
+  return page.getByRole('complementary', { name: 'This week and balances' });
+}
+
+/** A figure in an aside panel, by its term. */
+function figure(page: Page, term: string) {
+  return asideOf(page)
+    .getByRole('definition')
+    .filter({
+      has: page.locator('xpath=preceding-sibling::dt[1]', { hasText: new RegExp(`^${term}$`) }),
+    });
+}
+
+test('switches conversion on and off: a preview before settlement, applied from it', async ({
+  page,
+}) => {
+  await page.clock.setFixedTime(BEFORE_SETTLEMENT);
+  await signIn(page, E2E_WEEK_USER);
+  await seedExampleWeek(page.request, false);
+  await page.goto(`/hours?week=${EXAMPLE_WEEK}`);
+  const aside = asideOf(page);
+  const toggle = aside.getByRole('switch', {
+    name: "Convert this week's excess to TOIL and overtime",
+  });
+  await expect(toggle).toHaveAttribute('aria-checked', 'false');
+  await expect(page.getByRole('columnheader', { name: /Converted/ })).toHaveCount(0);
+
+  // On, from the keyboard: a preview until Friday, in the aside and the table.
+  await toggle.focus();
+  await page.keyboard.press('Space');
+  await expect(aside.getByText('Saved', { exact: true })).toBeVisible();
+  await expect(toggle).toBeFocused();
+  await expect(aside).toContainText('Preview until Fri 9 Oct');
+  await expect(page.getByRole('columnheader', { name: 'Converted (preview)' })).toBeVisible();
+  await expectNoA11yViolations(page);
+
+  // Off again: the switch is its own undo.
+  await page.keyboard.press('Space');
+  await expect(toggle).toHaveAttribute('aria-checked', 'false');
+  await expect(page.getByRole('columnheader', { name: /Converted/ })).toHaveCount(0);
+  await expect(aside).not.toContainText('Preview until');
+
+  // After the settlement day, switching on applies it.
+  await page.clock.setFixedTime(SETTLED);
+  await page.reload();
+  await asideOf(page)
+    .getByRole('switch', { name: "Convert this week's excess to TOIL and overtime" })
+    .click();
+  await expect(asideOf(page)).toContainText('Applied Fri 9 Oct');
+  await expect(page.getByRole('columnheader', { name: 'Converted', exact: true })).toBeVisible();
+  // The worked example's levelling: Tuesday converts 1:50, and every day is +0:40 or less.
+  await expect(row(page, 'Tue 6 Oct')).toContainText('1:50');
+  await expect(row(page, 'Tue 6 Oct')).toContainText('+0:40 over');
+  await expectNoA11yViolations(page);
+});
+
+test('an edit after settlement says what it recalculated', async ({ page }) => {
+  await page.clock.setFixedTime(SETTLED);
+  await signIn(page, E2E_WEEK_USER);
+  await seedExampleWeek(page.request, true);
+  await page.goto(`/hours?week=${EXAMPLE_WEEK}`);
+  await expect(asideOf(page)).toContainText('Applied Fri 9 Oct');
+  await expect(figure(page, 'TOIL')).toHaveText('3:00');
+
+  // An hour less on Tuesday: the week's 3:00 of TOIL becomes 2:00.
+  await field(page, 'End', 'Tue 6 Oct').focus();
+  await typeInto(page, '1700');
+  await page.keyboard.press('Enter');
+  await expect(toast(page, 'Tue 6 Oct saved')).toBeVisible();
+  const message = 'Week of 5 Oct recalculated: TOIL 3:00 → 2:00, overtime 0:00 → 0:00.';
+  await expect(toast(page, message)).toBeVisible();
+  await expect(
+    asideOf(page).getByRole('region', { name: 'This week' }).getByRole('status').filter({
+      hasText: message,
+    }),
+  ).toBeVisible();
+  await expect(figure(page, 'TOIL')).toHaveText('2:00');
+  await expectNoA11yViolations(page);
+});
+
+test('the browser totals equal the API totals for the worked-example week', async ({ page }) => {
+  await page.clock.setFixedTime(SETTLED);
+  await signIn(page, E2E_WEEK_USER);
+  await seedExampleWeek(page.request, true);
+  const summary = await page.request.get(
+    `${API}/time-summaries?from=${EXAMPLE_WEEK}&to=${SETTLED_DATE}&groupBy=week&asOf=${SETTLED_DATE}`,
+  );
+  expect(summary.ok()).toBe(true);
+  const [group] = ((await summary.json()) as { data: Record<string, number>[] }).data;
+  const balancesResponse = await page.request.get(`${API}/time-balances?asOf=${SETTLED_DATE}`);
+  const balances = ((await balancesResponse.json()) as { data: Record<string, number> }).data;
+  expect(group).toBeDefined();
+  const api = group!;
+  // The feature doc's figures, as the API gives them (no earlier October TOIL here).
+  expect([api.workedMinutes, api.creditedMinutes, api.targetMinutes]).toEqual([2430, 2430, 2250]);
+  expect([api.rawFlexiMinutes, api.convertedMinutes, api.flexiMinutes]).toEqual([180, 180, 0]);
+
+  await page.goto(`/hours?week=${EXAMPLE_WEEK}`);
+  const totals = page.getByRole('row', { name: /^Week/ });
+  const totalCells = totals.getByRole('cell');
+  // Worked, credited (of target), flexi and converted, after the cell under the five inputs.
+  await expect(totalCells.nth(1)).toHaveText(hm(api.workedMinutes!));
+  await expect(totalCells.nth(2)).toHaveText(
+    `${hm(api.creditedMinutes!)} of ${hm(api.targetMinutes!)} target`,
+  );
+  await expect(totalCells.nth(3)).toHaveText(flexi(api.flexiMinutes!));
+  await expect(totalCells.nth(4)).toHaveText(hm(api.convertedMinutes!));
+
+  await expect(figure(page, 'Credited')).toHaveText(
+    `${hm(api.creditedMinutes!)} of ${hm(api.targetMinutes!)} target`,
+  );
+  await expect(figure(page, 'Week flexi')).toHaveText(flexi(api.rawFlexiMinutes!));
+  await expect(figure(page, 'After conversion')).toHaveText(
+    flexi(api.rawFlexiMinutes! - api.excessMinutes!),
+  );
+  await expect(figure(page, 'TOIL')).toHaveText(hm(api.conversionToilMinutes!));
+  await expect(figure(page, 'Overtime')).toHaveText(
+    `${hm(api.conversionOvertimeUnpaidMinutes!)} unpaid`,
+  );
+  await expect(figure(page, 'Flexi')).toHaveText(flexi(balances.flexiMinutes!));
+});
