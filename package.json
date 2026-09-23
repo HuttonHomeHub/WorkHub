@@ -24,6 +24,7 @@
     "gen:feature": "node scripts/gen-feature.mjs",
     "docs:check": "node scripts/check-docs.mjs",
     "db:seed": "pnpm --filter \"@repo/api^...\" build && pnpm --filter @repo/api db:seed",
+    "data:export": "pnpm --filter \"@repo/api^...\" build && pnpm --filter @repo/api data:export",
     "user:create": "pnpm --filter \"@repo/api^...\" build && pnpm --filter @repo/api user create",
     "user:reset-password": "pnpm --filter \"@repo/api^...\" build && pnpm --filter @repo/api user reset-password",
     "clean": "turbo run clean && rimraf node_modules .turbo",

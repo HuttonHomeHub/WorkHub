@@ -202,8 +202,10 @@ database, writes `apps/api/openapi.json`, and regenerates the web's types in
 
 `cli/user.ts` and `cli/seed.ts` boot the module graph as an application context
 (no HTTP server) through `runWithAuthContext` and use Better Auth's own
-password hashing (ADR-0018). New operational commands — the planned data export,
-passkey recovery — follow the same pattern.
+password hashing (ADR-0018). `cli/data-export.ts` (`pnpm data:export`) boots the
+same way through `runWithApp`, for commands that need providers such as
+`PrismaService` rather than Better Auth. New operational commands (passkey
+recovery) follow the same pattern.
 
 ## Deferred infrastructure
 

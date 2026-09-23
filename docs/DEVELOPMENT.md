@@ -81,6 +81,7 @@ Public sign-up is off by default and nothing sends email (ADR-0018):
 ```bash
 pnpm db:seed                                           # (re)create dev@example.com / dev-password-123; refuses in production
 pnpm user:create --email you@example.com --name "You"  # prompts for the password
+pnpm data:export --email you@example.com               # your data as JSON (DATABASE.md → Data export)
 pnpm user:reset-password --email you@example.com       # new password; signs out existing sessions
 ```
 

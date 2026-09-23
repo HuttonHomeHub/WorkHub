@@ -1,6 +1,6 @@
 # Hours tracker
 
-- **Status:** Approved (2026-09-16). Building: slices 1–4, 6 and 9 of 10 done
+- **Status:** Approved (2026-09-16). Building: slices 1–4, 6, 8 and 9 of 10 done
   ([build order](#slices)).
 - **Change class:** Feature, built on
   [ADR-0020](../adr/0020-modular-tools-over-shared-core-data.md) (Architectural,
@@ -1032,3 +1032,30 @@ to, groupBy)` and `balancesAt(result, asOf)` shape them for `time-summaries`
   week, month and balances; widening a partial range; the TOIL cap with paid
   overtime switched on from a later Monday; and another owner's rows never
   counted.
+
+### Slice 8: export
+
+- **`pnpm data:export --email <owner> [--out <file>] [--force]`**
+  (`apps/api/src/cli/data-export.ts`, documented in DATABASE.md → Data
+  export): every owned table as JSON in the API's wire shapes, soft-deleted
+  rows included, from one `REPEATABLE READ` snapshot. The file is mode 0600,
+  and an existing one is never overwritten without `--force`. A unit test
+  fails if a model with an `ownerId` is missing from `EXPORTED_TABLES`.
+  `cli/bootstrap.ts` gains `runWithApp` for commands that need providers
+  rather than Better Auth.
+- **CSV in `@repo/domain`**, not the web folder, so it is pure, unit-tested and
+  shared:
+  - `toCsv` (`core/csv.ts`) writes RFC 4180 with CRLF and a UTF-8 BOM, so Excel
+    reads the true minus sign. It has the formula-injection guard: text
+    starting with `=`, `+`, `-`, `@`, a tab or a carriage return gets a `'`
+    prefix, and numbers are never prefixed;
+  - `daysCsvRows` (`hours/csv.ts`) builds one row per recorded or credited day
+    in `[from, to)`: London `HH:MM` start and end, "Ends next day", and every
+    duration in `h:mm` and decimal hours.
+- **Decided while building:** the week view's "Download CSV" is wired in slice
+  7 with the view itself; this slice ships the builder and the CLI.
+- **Tests:** `export.spec.ts` (the table registry); an e2e test against the
+  `_test` database (only the owner's rows, soft-deleted rows kept, wire
+  shapes, an unknown email refused); domain tests for quoting, the injection
+  guard, numbers, and the day rows (a night shift, a raised break, a negative
+  flexi).

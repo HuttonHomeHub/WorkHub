@@ -21,6 +21,7 @@
     "openapi": "nest build && node dist/generate-openapi.js openapi.json && prettier --write openapi.json",
     "user": "nest build && node --env-file-if-exists=../../.env dist/cli/user.js",
     "db:seed": "nest build && node --env-file-if-exists=../../.env dist/cli/seed.js",
+    "data:export": "nest build && node --env-file-if-exists=../../.env dist/cli/data-export.js",
     "clean": "rimraf dist .turbo *.tsbuildinfo"
   },
   "dependencies": {

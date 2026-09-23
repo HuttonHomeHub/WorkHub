@@ -413,7 +413,9 @@ The agreed design, to be built as the backups item in PRODUCT.md's Next list:
 - **Pre-migration dump** as part of the upgrade path, not only by hand
   (BACKLOG.md).
 - A data export for the owner's own use sits alongside
-  ([DATABASE.md](DATABASE.md#data-export-planned)).
+  ([DATABASE.md](DATABASE.md#data-export)): inside the `api` container,
+  `node dist/cli/data-export.js --email <owner email> --out /tmp/export.json`,
+  then `docker compose cp api:/tmp/export.json .`.
 
 ### Restore drill
 

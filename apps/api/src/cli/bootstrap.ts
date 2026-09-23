@@ -1,3 +1,4 @@
+import type { INestApplicationContext } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 
 import type { AuthInstance } from '../common/auth/auth.instance';
@@ -13,16 +14,29 @@ import type { AccountAuthContext } from './accounts';
 export async function runWithAuthContext(
   task: (ctx: AccountAuthContext) => Promise<void>,
 ): Promise<never> {
+  return runWithApp(async (app) => {
+    const { AUTH_INSTANCE } = await import('../common/auth/auth.instance');
+    const auth = app.get<AuthInstance>(AUTH_INSTANCE);
+    await task(await auth.$context);
+  });
+}
+
+/**
+ * Boots the API's module graph without an HTTP server and hands the
+ * application context to `task` — for commands that need providers such as
+ * `PrismaService` rather than Better Auth. Always exits the process.
+ */
+export async function runWithApp(
+  task: (app: INestApplicationContext) => Promise<void>,
+): Promise<never> {
   process.env.LOG_LEVEL ??= 'warn';
   // Imported lazily: ConfigModule validates the environment on import.
   const { AppModule } = await import('../app.module');
-  const { AUTH_INSTANCE } = await import('../common/auth/auth.instance');
 
   const app = await NestFactory.createApplicationContext(AppModule, { logger: ['error'] });
   let exitCode = 0;
   try {
-    const auth = app.get<AuthInstance>(AUTH_INSTANCE);
-    await task(await auth.$context);
+    await task(app);
   } catch (error: unknown) {
     exitCode = 1;
     process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
