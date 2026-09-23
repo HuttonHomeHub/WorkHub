@@ -41,7 +41,7 @@ type. This is what exists today, plus the folders a feature adds.
 ```text
 apps/web/
 ├── index.html                # Pre-paint theme and sidebar-state script
-├── e2e/                      # Playwright journeys (auth, app-shell, hours-settings), support.ts, global-setup.ts
+├── e2e/                      # Playwright journeys (auth, app-shell, hours-settings, hours-summary), support.ts, global-setup.ts
 └── src/
     ├── main.tsx              # Creates the query client + router, mounts providers
     ├── app/
@@ -53,6 +53,7 @@ apps/web/
     │   ├── _authed.tsx       # Auth guard layout → AppShell (with app/tools.ts)
     │   ├── _authed/index.tsx # Signed-in home
     │   ├── _authed/hours/    # settings.tsx: /hours/settings?tab=&year=
+    │   │                     #   summary.tsx: /hours/summary?from=&to=&groupBy=
     │   └── (public)/         # sign-in.tsx, sign-up.tsx
     ├── features/
     │   ├── auth/             # api/ (session, auth-client, auth-config), components/, schemas/
@@ -62,8 +63,8 @@ apps/web/
     │   │   └── public-holidays/  # api/ + index.ts: a core entity any tool may import
     │   └── hours/            # A tool's web folder: the worked example (below)
     ├── components/
-    │   ├── ui/               # Primitives: alert, button, card, form, input, label, native-select,
-    │   │                     #   skeleton, switch, tabs, toast, tooltip
+    │   ├── ui/               # Primitives: alert, badge, button, card, form, input, label,
+    │   │                     #   native-select, skeleton, switch, tabs, toast, tooltip
     │   └── layout/           # app-shell.tsx (TooltipProvider, skip link, header, main, Toaster), sidebar.tsx
     ├── hooks/                # use-theme.tsx, use-delayed-flag.ts (nothing before 300ms)
     ├── lib/
@@ -72,11 +73,13 @@ apps/web/
     │   ├── query/client.ts   # createQueryClient() with cache defaults
     │   ├── query/optimistic.ts # removeFromLists()/restoreLists(): optimistic deletes
     │   ├── format.ts         # formatDate(): en-GB calendar dates
+    │   ├── download.ts       # downloadText(): save text built in the browser (CSV)
     │   ├── preferences.ts    # Persisted UI preferences (localStorage)
     │   ├── tool-manifest.ts  # ToolManifest and ToolCommand types
     │   └── utils.ts          # cn()
     ├── styles/globals.css    # Design tokens
-    └── test/                 # setup.ts (Vitest + jest-dom), api-stub.tsx (stubbed API for screen tests)
+    └── test/                 # setup.ts (Vitest + jest-dom), api-stub.tsx (stubbed API for screen tests),
+                              #   hours-fixtures.ts (hours API response shapes)
 ```
 
 A feature grows `components/`, `api/`, `hooks/` and `schemas/` as it needs them,
@@ -121,11 +124,17 @@ features/hours/
 │                 #   queryOptions + a hook for the list, a hook per mutation,
 │                 #   delete with an optimistic removal, and restore for undo
 ├── schemas/      # fields.ts (Zod fields: typed h:mm / HH:MM text → minutes),
-│                 #   settings.ts (one schema per form; bounds from @repo/types)
+│                 #   settings.ts (one schema per form; bounds from @repo/types),
+│                 #   summary.ts (the summary's custom range)
 ├── components/   # screens and composites: hours-settings.tsx and a component per tab,
-│                 #   plus the hours inputs (time-input.tsx, duration-input.tsx)
-├── hooks/        # use-focus-after-removal.ts
+│                 #   hours-summary.tsx and summary-table.tsx, the week aside's panels
+│                 #   (this-week-panel.tsx, balances-panel.tsx), and the hours inputs
+│                 #   (time-input.tsx, duration-input.tsx)
+├── hooks/        # use-focus-after-removal.ts, use-recalculation-notice.ts
 ├── settings-tabs.ts # the tab names, dependency-free
+├── summary-*.ts, warnings.ts, this-week-figures.ts, recalculation-message.ts
+│                 # pure helpers: ranges and presets, columns and CSV rows, warning copy,
+│                 #   the aside's figures, rule 11's message
 └── index.ts      # the public surface the routes import
 ```
 
