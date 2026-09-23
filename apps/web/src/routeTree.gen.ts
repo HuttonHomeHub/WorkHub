@@ -13,6 +13,7 @@ import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as publicSignInRouteImport } from './routes/(public)/sign-in'
 import { Route as publicSignUpRouteImport } from './routes/(public)/sign-up'
 import { Route as AuthedIndexRouteImport } from './routes/_authed/index'
+import { Route as AuthedHoursSettingsRouteImport } from './routes/_authed/hours/settings'
 
 const AuthedRoute = AuthedRouteImport.update({
   id: '/_authed',
@@ -33,16 +34,23 @@ const AuthedIndexRoute = AuthedIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedHoursSettingsRoute = AuthedHoursSettingsRouteImport.update({
+  id: '/hours/settings',
+  path: '/hours/settings',
+  getParentRoute: () => AuthedRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthedIndexRoute
   '/sign-in': typeof publicSignInRoute
   '/sign-up': typeof publicSignUpRoute
+  '/hours/settings': typeof AuthedHoursSettingsRoute
 }
 export interface FileRoutesByTo {
   '/sign-in': typeof publicSignInRoute
   '/sign-up': typeof publicSignUpRoute
   '/': typeof AuthedIndexRoute
+  '/hours/settings': typeof AuthedHoursSettingsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -50,18 +58,20 @@ export interface FileRoutesById {
   '/(public)/sign-in': typeof publicSignInRoute
   '/(public)/sign-up': typeof publicSignUpRoute
   '/_authed/': typeof AuthedIndexRoute
+  '/_authed/hours/settings': typeof AuthedHoursSettingsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/sign-in' | '/sign-up'
+  fullPaths: '/' | '/sign-in' | '/sign-up' | '/hours/settings'
   fileRoutesByTo: FileRoutesByTo
-  to: '/sign-in' | '/sign-up' | '/'
+  to: '/sign-in' | '/sign-up' | '/' | '/hours/settings'
   id:
     | '__root__'
     | '/_authed'
     | '/(public)/sign-in'
     | '/(public)/sign-up'
     | '/_authed/'
+    | '/_authed/hours/settings'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -100,15 +110,24 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedIndexRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/hours/settings': {
+      id: '/_authed/hours/settings'
+      path: '/hours/settings'
+      fullPath: '/hours/settings'
+      preLoaderRoute: typeof AuthedHoursSettingsRouteImport
+      parentRoute: typeof AuthedRoute
+    }
   }
 }
 
 interface AuthedRouteChildren {
   AuthedIndexRoute: typeof AuthedIndexRoute
+  AuthedHoursSettingsRoute: typeof AuthedHoursSettingsRoute
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedIndexRoute: AuthedIndexRoute,
+  AuthedHoursSettingsRoute: AuthedHoursSettingsRoute,
 }
 
 const AuthedRouteWithChildren =

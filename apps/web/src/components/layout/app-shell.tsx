@@ -3,6 +3,7 @@ import * as React from 'react';
 
 import { Sidebar } from '@/components/layout/sidebar';
 import { Button } from '@/components/ui/button';
+import { Toaster } from '@/components/ui/toast';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useTheme } from '@/hooks/use-theme';
 import { readPreference, writePreference } from '@/lib/preferences';
@@ -106,8 +107,8 @@ function SkipLink() {
 
 /**
  * The authenticated app shell (docs/UX_STANDARDS.md → App shell): a skip link,
- * a 48px sticky header (`<header>`), the tools sidebar (`<nav>`) and the page
- * (`<main>`). Content fills the window up to `--width-page`; pages cap prose
+ * a 48px sticky header (`<header>`), the tools sidebar (`<nav>`), the page
+ * (`<main>`) and the one toaster. Content fills the window up to `--width-page`; pages cap prose
  * and forms themselves.
  *
  * Below 48rem (a 1280px window at 200% zoom and beyond, down to the 320 CSS px
@@ -139,6 +140,8 @@ export function AppShell({ tools, actions, children }: AppShellProps) {
             <div className="max-w-(--width-page) break-words">{children}</div>
           </main>
         </div>
+        {/* After <main> in the DOM, so Tab from the page reaches a toast's action. */}
+        <Toaster label="Notifications" dismissLabel="Dismiss notification" />
       </div>
     </TooltipProvider>
   );

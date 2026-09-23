@@ -29,10 +29,15 @@ interface FormFieldContextValue<
 
 const FormFieldContext = React.createContext<FormFieldContextValue | null>(null);
 
+/**
+ * One field bound to the form. `TTransformedValues` is the schema's output
+ * type, for forms whose Zod schema transforms the typed text (hours durations).
+ */
 function FormField<
   TFieldValues extends FieldValues = FieldValues,
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
->(props: ControllerProps<TFieldValues, TName>) {
+  TTransformedValues = TFieldValues,
+>(props: ControllerProps<TFieldValues, TName, TTransformedValues>) {
   return (
     <FormFieldContext.Provider value={{ name: props.name }}>
       <Controller {...props} />

@@ -106,11 +106,15 @@
   --sidebar-width: 240px;
   --sidebar-rail: 56px;
   --width-prose: 72ch;
+  --width-form: 880px;
   --width-page: 1600px;
+  /* The toaster's width (DESIGN_SYSTEM.md → Toast). */
+  --width-toast: 24rem;
 
   /* Z-index (DESIGN_SYSTEM.md → Z-index). Use as `z-(--z-header)`; never a numeric z-*. */
   --z-header: 20;
   --z-popover: 40;
+  --z-toast: 60;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -236,6 +240,15 @@
     font-feature-settings:
       'rlig' 1,
       'calt' 1;
+  }
+
+  /*
+   * Native form controls (the date picker's icon and popup, select popups)
+   * follow the theme. Scoped to the controls: switching `color-scheme` on the
+   * root restyles the whole page and briefly mixes old and new colours.
+   */
+  .dark :is(input, select, textarea) {
+    color-scheme: dark;
   }
 
   /* Honour reduced-motion preferences globally. */

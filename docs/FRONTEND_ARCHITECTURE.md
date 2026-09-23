@@ -8,7 +8,8 @@
 > [`FRONTEND_QUALITY.md`](FRONTEND_QUALITY.md).
 
 **Status:** a walking skeleton. The entry, providers, router, auth and account
-features, the app shell with its tools sidebar, and seven primitives exist.
+features, the app shell with its tools sidebar, the hours settings screens
+and twelve primitives exist.
 Anything marked **_planned_** is the agreed pattern for when a feature first
 needs it — it is not in the code, so don't cite it as existing.
 
@@ -40,7 +41,7 @@ type. This is what exists today, plus the folders a feature adds.
 ```text
 apps/web/
 ├── index.html                # Pre-paint theme and sidebar-state script
-├── e2e/                      # Playwright journeys (auth, app-shell), support.ts, global-setup.ts
+├── e2e/                      # Playwright journeys (auth, app-shell, hours-settings), support.ts, global-setup.ts
 └── src/
     ├── main.tsx              # Creates the query client + router, mounts providers
     ├── app/
@@ -51,23 +52,31 @@ apps/web/
     │   ├── __root.tsx        # Outlet + notFoundComponent
     │   ├── _authed.tsx       # Auth guard layout → AppShell (with app/tools.ts)
     │   ├── _authed/index.tsx # Signed-in home
+    │   ├── _authed/hours/    # settings.tsx: /hours/settings?tab=&year=
     │   └── (public)/         # sign-in.tsx, sign-up.tsx
     ├── features/
     │   ├── auth/             # api/ (session, auth-client, auth-config), components/, schemas/
-    │   └── account/          # api/me.ts
-    │       └── index.ts      # A feature's public surface
+    │   ├── account/          # api/me.ts
+    │   │   └── index.ts      # A feature's public surface
+    │   ├── core/
+    │   │   └── public-holidays/  # api/ + index.ts: a core entity any tool may import
+    │   └── hours/            # A tool's web folder: the worked example (below)
     ├── components/
-    │   ├── ui/               # Primitives: alert, button, card, form, input, label, tooltip
-    │   └── layout/           # app-shell.tsx (TooltipProvider, skip link, header, main), sidebar.tsx
-    ├── hooks/                # use-theme.tsx
+    │   ├── ui/               # Primitives: alert, button, card, form, input, label, native-select,
+    │   │                     #   skeleton, switch, tabs, toast, tooltip
+    │   └── layout/           # app-shell.tsx (TooltipProvider, skip link, header, main, Toaster), sidebar.tsx
+    ├── hooks/                # use-theme.tsx, use-delayed-flag.ts (nothing before 300ms)
     ├── lib/
     │   ├── api/client.ts     # apiClient, ApiRequestError, unwrap()
+    │   ├── api/pages.ts      # unwrapPage(), fetchAllPages() for short bounded lists
     │   ├── query/client.ts   # createQueryClient() with cache defaults
+    │   ├── query/optimistic.ts # removeFromLists()/restoreLists(): optimistic deletes
+    │   ├── format.ts         # formatDate(): en-GB calendar dates
     │   ├── preferences.ts    # Persisted UI preferences (localStorage)
     │   ├── tool-manifest.ts  # ToolManifest and ToolCommand types
     │   └── utils.ts          # cn()
     ├── styles/globals.css    # Design tokens
-    └── test/setup.ts         # Vitest + jest-dom setup
+    └── test/                 # setup.ts (Vitest + jest-dom), api-stub.tsx (stubbed API for screen tests)
 ```
 
 A feature grows `components/`, `api/`, `hooks/` and `schemas/` as it needs them,
@@ -101,6 +110,34 @@ plus a **manifest** that tells the shell about it.
   link is `aria-current="page"` on every route under its path, whatever the
   search params.
 - The command palette will read the same manifests when it is built.
+
+### A tool's web folder: `features/hours`
+
+The hours tool is the worked example (slice 5 of the hours tracker):
+
+```text
+features/hours/
+├── api/          # keys.ts (hoursKeys + contract types), one file per resource:
+│                 #   queryOptions + a hook for the list, a hook per mutation,
+│                 #   delete with an optimistic removal, and restore for undo
+├── schemas/      # fields.ts (Zod fields: typed h:mm / HH:MM text → minutes),
+│                 #   settings.ts (one schema per form; bounds from @repo/types)
+├── components/   # screens and composites: hours-settings.tsx and a component per tab,
+│                 #   plus the hours inputs (time-input.tsx, duration-input.tsx)
+├── hooks/        # use-focus-after-removal.ts
+├── settings-tabs.ts # the tab names, dependency-free
+└── index.ts      # the public surface the routes import
+```
+
+- **Core entities are not the tool's.** Public holidays are core (ADR-0020
+  §3), so their hooks are in `features/core/public-holidays/` and hours
+  imports them.
+- **Keep `validateSearch` light.** Only a route's component is code-split; the
+  rest of the route file is in the initial bundle. Don't import a feature's
+  values there (the settings route lists its tab names itself, checked by
+  type); `import type` is free.
+- **Feedback lives in components, data in hooks.** Mutation hooks do the cache
+  work; the component raises the toast (with Undo) in the mutate callbacks.
 
 ## Component organisation
 
@@ -204,21 +241,24 @@ first paint, and no API surface. Rules:
   the generated `paths`: same-origin cookies, non-2xx → `ApiRequestError` with the
   error envelope, and `unwrap()` returns `data`.
 
-### Optimistic updates and undo — _planned pattern_
+### Optimistic updates and undo — implemented
 
 Reversible deletes act immediately and offer undo (UX_STANDARDS.md → Feedback).
 With TanStack Query:
 
-1. `onMutate`: cancel the list query, snapshot it, remove the row from the cache,
-   and show the undo toast.
+1. `onMutate`: cancel the list query, snapshot it and remove the row from the
+   cache (`removeFromLists` in `lib/query/optimistic.ts`); the component shows
+   the undo toast once the delete succeeds.
 2. The **mutation is the soft delete** (`DELETE` → `deletedAt` set). **Undo** calls
    the entity's `POST /:id/restore` (generated from the reference template) and
    invalidates the list; it does not rely on delaying the
    request, so closing the tab never loses a delete the owner saw happen.
-3. `onError`: restore the snapshot and raise an error toast.
+3. `onError`: restore the snapshot (`restoreLists`) and raise an error toast.
 4. `onSettled`: invalidate the affected list and detail keys.
 
-Focus moves to the next row after the removal (ACCESSIBILITY.md).
+Focus moves to the next row after the removal (ACCESSIBILITY.md;
+`features/hours/hooks/use-focus-after-removal.ts`). The hours settings tabs
+are the first users.
 
 ### Lists and virtualisation — _planned_
 
@@ -238,6 +278,10 @@ React Hook Form + Zod through the shared `Form` primitive
 - **_Planned_:** an **error summary** listing each failure as a link to its field
   (ADR-0007 describes one; the primitive does not render it), and a `Button`
   pending state instead of swapping the label.
+- **Transforming schemas:** when a Zod schema turns typed text into another
+  type (the hours durations), type the form as
+  `useForm<z.input<S>, unknown, z.output<S>>`; `FormField` passes the output
+  type through.
 - **Unsaved-changes guard — _planned_:** an explicit-save form with
   `formState.isDirty` uses TanStack Router's `useBlocker` to confirm in-app
   navigation, with `enableBeforeUnload` for reload and tab close; the block is

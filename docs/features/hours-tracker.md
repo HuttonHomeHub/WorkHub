@@ -1,6 +1,6 @@
 # Hours tracker
 
-- **Status:** Approved (2026-09-16). Building: slices 1–4, 6, 8 and 9 of 10 done
+- **Status:** Approved (2026-09-16). Building: slices 1–6, 8 and 9 of 10 done
   ([build order](#slices)).
 - **Change class:** Feature, built on
   [ADR-0020](../adr/0020-modular-tools-over-shared-core-data.md) (Architectural,
@@ -964,6 +964,110 @@ to, groupBy)` and `balancesAt(result, asOf)` shape them for `time-summaries`
   restore into a taken key (409, the case slice 2 deferred to here), and the
   422 rules.
 
+### Slice 5: settings UI
+
+- **Route:** `/hours/settings?tab=terms|leave|balances|holidays&year=YYYY`
+  (`routes/_authed/hours/settings.tsx`). An unknown tab or year falls back to
+  the default (terms; this year in London) instead of failing. **`year` was
+  added while building:** the Holidays tab lists one year at a time, and the
+  year shown is view state, so it is in the URL (UX_STANDARDS.md → URL state).
+  The route lists the tab names itself, checked against the feature's
+  `SettingsTab` type with `satisfies`: a value import from `features/hours` in
+  `validateSearch` (which is not code-split) pulled the whole screen and
+  `temporal-polyfill` into the initial bundle (measured: 135.7 kB gzipped
+  instead of 90.3 kB). The Hours manifest is not in the sidebar yet (slice 7).
+- **Feature folder:** `features/hours/` has `api/` (a `hoursKeys` factory and
+  query and mutation hooks for work terms, leave years and time adjustments,
+  with delete and restore), `schemas/` (`fields.ts`, Zod fields that turn typed
+  `h:mm` and `HH:MM` text into minutes; `settings.ts`, one schema per form,
+  every bound from `@repo/types`), `components/`, `hooks/` and `index.ts`.
+  **Public holidays are core** (ADR-0020 §3), so their hooks live in
+  `features/core/public-holidays/`, which hours imports; hours does not own
+  them.
+- **Lists** are short and bounded, so each list hook follows the cursor to the
+  end (`lib/api/pages.ts`, at most 50 pages) and caches an array. The contract
+  types `limit` as an empty object (the pagination DTO's `@ApiPropertyOptional`
+  has no `type`), so the web sends no `limit` and pages at the default 20; a
+  one-line API fix, left for an API slice.
+- **The hours inputs are hours-specific** (they parse with `@repo/domain` and
+  carry hours copy), so `TimeInput` and `DurationInput` live in
+  `features/hours/components/`, not `components/ui/`. Both keep the typed text
+  and rewrite it on blur only when it reads (`830` → `08:30`, `7.5h` → `7:30`);
+  unreadable text stays for the form to flag. Their hint is linked after any
+  description or error the form links, and can be `sr-only` where a visible
+  hint covers a group (the weekday grid). `DurationInput signed` takes a
+  leading minus for adjustments and shows a true minus (U+2212).
+- **Terms tab:** the form adds terms from a Monday (next week's by default, or
+  this week's for the first terms) prefilled from the latest terms, or edits
+  the latest terms (`PATCH`; the Monday is read-only). Saved terms are listed
+  latest first with the weekly target and paid overtime; each can be deleted
+  with undo, and the API's 422 for the last terms comes back as a persistent
+  error toast with its message. Clearing a target makes a day non-working; a
+  minimum without a target, or above it, is a field error before anything is
+  sent.
+- **Leave tab:** a row per year: the allowance edits in its row with its own
+  Save (explicit), bought leave is a switch that saves at once with a quiet
+  "Saved" (a `role="status"` beside it), and the total is worked out in the
+  browser. **Used and remaining show "—"** with the plain note "Used and
+  remaining hours are not worked out yet. They will appear here once the hours
+  summaries are built." (slice 9 provides them). A 409 on a row's save is a
+  persistent error toast with Reload.
+- **Balances tab:** add an opening balance, confirmed forfeit or correction
+  (date, balance, reason, signed amount; dated on the tracking start by
+  default), and delete with undo. There is no edit: delete and add again.
+- **Holidays tab:** previous and next year buttons around the heading, the
+  import as the tab's primary action ("Add England and Wales bank holidays for
+  2026"; a toast says how many were added, or that the year is complete), a
+  manual add form, and delete with undo.
+- **States:** loading is `aria-busy` with skeleton rows after 300ms
+  (`useDelayedFlag`); a failed load is an inline error with Retry in place of
+  the tab's content; a 422 on a form shows the API's message and `details` in
+  an Alert at the top of the form; a 409 explains itself (a stale version
+  offers "Reload the latest", a duplicate says what already exists).
+- **Undo:** the delete removes the row from the cache at once
+  (`lib/query/optimistic.ts`), the toast offers Undo for 8 seconds, and Undo
+  calls the entity's `POST /:id/restore`; a failed delete restores the cache
+  and raises a persistent error toast. Focus moves to the next row (or the
+  list) after a delete (`hooks/use-focus-after-removal.ts`).
+- **Not built here:** the in-app unsaved-changes guard needs `AlertDialog`,
+  which slice 7 builds for the week rows; until then a dirty terms form only
+  asks before a reload or tab close (`beforeunload`). `DropdownMenu` and
+  `ContextMenu` are deferred to slice 7 too: no settings screen needs a menu.
+- **Primitives** (`components/ui/`): `Tabs` (`@radix-ui/react-tabs`),
+  `Switch` (`@radix-ui/react-switch`), `Toast` (`@radix-ui/react-toast`, with a
+  `toast()` function and one `Toaster` in `AppShell`), `Skeleton`, and
+  `NativeSelect` (a styled native `<select>`, added for the adjustment's
+  balance and reason). `Button` gained a `wrap` variant, so a long label wraps
+  at the reflow floor. `FormField` takes the schema's output type, for forms
+  whose Zod schema transforms text. Radix Toast's F8 hotkey is off (Ctrl/Cmd+K
+  is the only custom shortcut); the toaster follows `<main>` in the tab order,
+  and its timers pause while it has focus or the pointer.
+- **Global CSS:** in the dark theme, inputs and selects take
+  `color-scheme: dark`, so native date pickers and select popups are dark.
+  It is scoped to the controls: on the root it made the app-shell journey's
+  dark-theme axe check flaky (colours were sampled mid-restyle). Tokens
+  `--z-toast`, `--width-form` and `--width-toast`.
+- **Dependencies:** `@radix-ui/react-tabs` 1.1.21, `@radix-ui/react-switch`
+  1.3.7 and `@radix-ui/react-toast` 1.2.23 (MIT), and `@repo/domain` in the
+  web (its `package.json` is now in the web Dockerfile's `deps` stage). Toast
+  and its shared Radix parts are a 12.8 kB gzipped chunk loaded with the
+  signed-in shell; Tabs and Switch load with the settings route.
+- **Bundle** (`pnpm --filter @repo/web build`, gzipped): initial JS 90.3 kB
+  (unchanged); the `/hours/settings` route chunk 33.3 kB, of which
+  `temporal-polyfill` is most (the page uses the London date for defaults),
+  against FRONTEND_QUALITY.md's advisory 150 kB.
+- **Tests:** component tests for Tabs, Switch, Toast (lifetimes, the error
+  toast persisting, Undo reached by Tab), Skeleton, NativeSelect, Button's
+  wrap, `useDelayedFlag`, `formatDate`, the two inputs, the schemas, the terms
+  form, and each tab against a stubbed API (`src/test/api-stub.tsx`): saves,
+  undo, focus after delete, 422 details, 409 reload, load errors with Retry.
+  `e2e/hours-settings.spec.ts` covers setting terms (and a field error),
+  deleting terms and undoing from the keyboard, the tab in the URL with back
+  and reload, bought leave, a holidays import with undo, axe on every screen
+  in light and dark at 1280×800, and every tab reflowed at 320 CSS px. The
+  journeys keep anchor terms from 26 Dec 2089 on the journey account, so their
+  own terms are never the last (the API refuses to delete those).
+
 ### Slice 6: work days and excess conversions API
 
 - **Endpoints:** `work-days` (CRUD and restore, `from`/`to` in date order) and
@@ -997,6 +1101,40 @@ to, groupBy)` and `balancesAt(result, asOf)` shape them for `time-summaries`
   duplicate switch 409s, the tracking-start, time, BST-night and night-shift
   collision 422s (both ways round, and on restore), rule 4's limits with an
   imported bank holiday, the non-Monday 422, and ownership on every route.
+
+### Slice 8: export
+
+- **`pnpm data:export --email <owner> [--out <file>] [--force]`**
+  (`apps/api/src/cli/data-export.ts`, documented in DATABASE.md → Data
+  export): every owned table as JSON in the API's wire shapes, soft-deleted
+  rows included, from one `REPEATABLE READ` snapshot. The file is mode 0600,
+  and an existing one is never overwritten without `--force`. A unit test
+  fails if a model with an `ownerId` is missing from `EXPORTED_TABLES`.
+  `cli/bootstrap.ts` gains `runWithApp` for commands that need providers
+  rather than Better Auth.
+- **CSV in `@repo/domain`**, not the web folder, so it is pure, unit-tested and
+  shared:
+  - `toCsv` (`core/csv.ts`) writes RFC 4180 with CRLF and a UTF-8 BOM, so Excel
+    reads the true minus sign. It has the formula-injection guard: text
+    starting with `=`, `+`, `-`, `@`, a tab or a carriage return gets a `'`
+    prefix, and numbers are never prefixed;
+  - `daysCsvRows` (`hours/csv.ts`) builds one row per recorded or credited day
+    in `[from, to)`: London `HH:MM` start and end, "Ends next day", and every
+    duration in `h:mm` and decimal hours.
+- **Security review fixes:** `--force` over an existing world-readable file
+  kept its old mode, and a dangling symlink was followed. The file is now
+  created exclusively (`wx`, 0600), or written to a temporary file and
+  renamed when forced. The default name no longer carries the email, export
+  files are gitignored, and the production steps use `wh` and remove the
+  container copy. The CSV guard also covers a leading line feed and
+  full-width `＝＋－＠`, and quotes `;` for semicolon-separated readers.
+- **Decided while building:** the week view's "Download CSV" is wired in slice
+  7 with the view itself; this slice ships the builder and the CLI.
+- **Tests:** `export.spec.ts` (the table registry); an e2e test against the
+  `_test` database (only the owner's rows, soft-deleted rows kept, wire
+  shapes, an unknown email refused); domain tests for quoting, the injection
+  guard, numbers, and the day rows (a night shift, a raised break, a negative
+  flexi).
 
 ### Slice 9: summaries and balances API
 
@@ -1032,37 +1170,3 @@ to, groupBy)` and `balancesAt(result, asOf)` shape them for `time-summaries`
   week, month and balances; widening a partial range; the TOIL cap with paid
   overtime switched on from a later Monday; and another owner's rows never
   counted.
-
-### Slice 8: export
-
-- **`pnpm data:export --email <owner> [--out <file>] [--force]`**
-  (`apps/api/src/cli/data-export.ts`, documented in DATABASE.md → Data
-  export): every owned table as JSON in the API's wire shapes, soft-deleted
-  rows included, from one `REPEATABLE READ` snapshot. The file is mode 0600,
-  and an existing one is never overwritten without `--force`. A unit test
-  fails if a model with an `ownerId` is missing from `EXPORTED_TABLES`.
-  `cli/bootstrap.ts` gains `runWithApp` for commands that need providers
-  rather than Better Auth.
-- **CSV in `@repo/domain`**, not the web folder, so it is pure, unit-tested and
-  shared:
-  - `toCsv` (`core/csv.ts`) writes RFC 4180 with CRLF and a UTF-8 BOM, so Excel
-    reads the true minus sign. It has the formula-injection guard: text
-    starting with `=`, `+`, `-`, `@`, a tab or a carriage return gets a `'`
-    prefix, and numbers are never prefixed;
-  - `daysCsvRows` (`hours/csv.ts`) builds one row per recorded or credited day
-    in `[from, to)`: London `HH:MM` start and end, "Ends next day", and every
-    duration in `h:mm` and decimal hours.
-- **Security review fixes:** `--force` over an existing world-readable file
-  kept its old mode, and a dangling symlink was followed. The file is now
-  created exclusively (`wx`, 0600), or written to a temporary file and
-  renamed when forced. The default name no longer carries the email, export
-  files are gitignored, and the production steps use `wh` and remove the
-  container copy. The CSV guard also covers a leading line feed and
-  full-width `＝＋－＠`, and quotes `;` for semicolon-separated readers.
-- **Decided while building:** the week view's "Download CSV" is wired in slice
-  7 with the view itself; this slice ships the builder and the CLI.
-- **Tests:** `export.spec.ts` (the table registry); an e2e test against the
-  `_test` database (only the owner's rows, soft-deleted rows kept, wire
-  shapes, an unknown email refused); domain tests for quoting, the injection
-  guard, numbers, and the day rows (a night shift, a raised break, a negative
-  flexi).

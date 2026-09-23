@@ -20,6 +20,7 @@ COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 COPY apps/web/package.json apps/web/
 COPY packages/config/package.json packages/config/
 COPY packages/types/package.json packages/types/
+COPY packages/domain/package.json packages/domain/
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
     pnpm install --frozen-lockfile --filter @repo/web...
 
