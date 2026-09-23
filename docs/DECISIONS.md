@@ -10,6 +10,23 @@ get an ADR instead (and may be linked from here).
 
 ---
 
+### 2026-09-23 — Pin the dev container to Debian bookworm
+
+**Decision.** The dev container image is
+`mcr.microsoft.com/devcontainers/typescript-node:24-bookworm`, not the floating
+`24` tag.
+
+**Why.** The `24` tag moved to Debian trixie. The Docker-in-Docker feature's
+default Moby engine has no trixie packages, so the image failed to build and
+Codespaces opened a bare Alpine recovery container with no Node, pnpm or Docker.
+Pinning the distribution makes the build reproducible.
+
+**Consequences.** Moving to trixie is a deliberate change: switch the tag and
+set the feature's `"moby": false` (Docker CE), then confirm a fresh Codespace
+runs `scripts/setup.sh` cleanly.
+
+---
+
 ### 2026-09-16 — Operations documentation defaults
 
 **Decision.** The operations documentation is written for one owner running one

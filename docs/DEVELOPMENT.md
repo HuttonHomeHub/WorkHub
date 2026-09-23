@@ -14,8 +14,8 @@ How to set up a local environment and work day-to-day.
 ## Codespaces / dev container (zero setup)
 
 Open the repo in GitHub Codespaces or VS Code's "Reopen in Container". The
-[`.devcontainer/`](../.devcontainer/devcontainer.json) pins Node 24, provides
-Docker, and runs `./scripts/setup.sh` on creation — so dependencies, `.env`,
+[`.devcontainer/`](../.devcontainer/devcontainer.json) pins Node 24 on Debian
+bookworm, provides Docker, and runs `./scripts/setup.sh` on creation — so dependencies, `.env`,
 Postgres, migrations and the dev account are ready when the editor opens. Then
 `pnpm dev`. Recommended editor extensions come from
 [`.vscode/extensions.json`](../.vscode/extensions.json). Codespaces behave
@@ -190,6 +190,14 @@ The single home for how a GitHub Codespace differs from a local machine.
   Never use `pkill -f` with a pattern such as `vite` or `node.*vite`: it matches
   the shell running the command and kills it.
 
+- **A recovery container means the build failed.** If the terminal is Alpine
+  with no `node`, `pnpm` or `docker`, the dev container did not build and
+  Codespaces fell back to a recovery image. The cause is in
+  `/workspaces/.codespaces/.persistedshare/creation.log`; fix
+  `.devcontainer/devcontainer.json`, then run **Codespaces: Rebuild Container**.
+  The image is pinned to the `24-bookworm` variant because the unpinned `24`
+  tag moved to Debian trixie, where the Docker-in-Docker feature cannot install
+  (`DECISIONS.md`, 2026-09-23).
 - **An old `blank-app-db-1` container** may still hold port 5432 — see
   [Migrating the old dev database container](#migrating-the-old-dev-database-container).
 - The dev container asks for 4 CPUs and 8 GB of memory and forwards ports 5173,
