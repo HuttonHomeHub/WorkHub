@@ -1,3 +1,4 @@
+import { isIsoInstant } from '@repo/domain';
 import { isHoursDate, isMonday, TIME_OF_DAY_PATTERN } from '@repo/types';
 import { ValidateBy, type ValidationOptions } from 'class-validator';
 
@@ -44,6 +45,21 @@ export function IsTimeOfDay(options?: ValidationOptions): PropertyDecorator {
       validator: {
         validate: (value: unknown) => typeof value === 'string' && TIME_OF_DAY_PATTERN.test(value),
         defaultMessage: (args) => `${args?.property ?? 'value'} must be a 24-hour time (HH:MM)`,
+      },
+    },
+    options,
+  );
+}
+
+/** An instant in UTC, `YYYY-MM-DDTHH:MM[:SS[.fff]]Z` — the form the engine accepts. */
+export function IsIsoInstant(options?: ValidationOptions): PropertyDecorator {
+  return ValidateBy(
+    {
+      name: 'isIsoInstant',
+      validator: {
+        validate: (value: unknown) => typeof value === 'string' && isIsoInstant(value),
+        defaultMessage: (args) =>
+          `${args?.property ?? 'value'} must be a UTC instant (ISO 8601 with Z)`,
       },
     },
     options,

@@ -103,6 +103,14 @@ export class WorkTermsService {
     return { items, meta: { nextCursor, hasMore } };
   }
 
+  /**
+   * The caller's terms in force on a date (rule 1), or `null` before the
+   * tracking start. Exported for the tool's other modules.
+   */
+  async findInForce(principal: Principal, date: string): Promise<WorkTerm | null> {
+    return this.repository.findInForce(principal.userId, toDbDate(date));
+  }
+
   async getById(principal: Principal, id: string): Promise<WorkTerm> {
     return this.findOwnedOrThrow(principal, id);
   }

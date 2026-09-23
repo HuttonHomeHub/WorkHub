@@ -214,6 +214,60 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/work-days': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List the caller's work days (cursor-paginated) */
+    get: operations['WorkDaysController_list_v1'];
+    put?: never;
+    /** Create a work day (owned by the caller) */
+    post: operations['WorkDaysController_create_v1'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/work-days/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get one of the caller’s work days by id */
+    get: operations['WorkDaysController_getById_v1'];
+    put?: never;
+    post?: never;
+    /** Soft-delete a work day */
+    delete: operations['WorkDaysController_remove_v1'];
+    options?: never;
+    head?: never;
+    /** Update a work day (optimistic locking) */
+    patch: operations['WorkDaysController_update_v1'];
+    trace?: never;
+  };
+  '/api/v1/work-days/{id}/restore': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Restore a soft-deleted work day (undo a delete) */
+    post: operations['WorkDaysController_restore_v1'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/public-holidays': {
     parameters: {
       query?: never;
@@ -280,6 +334,41 @@ export interface paths {
     /** Add a year's England and Wales bank holidays the caller does not already have */
     post: operations['PublicHolidayImportsController_create_v1'];
     delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/excess-conversions': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List the weeks whose conversion is on (cursor-paginated) */
+    get: operations['ExcessConversionsController_list_v1'];
+    put?: never;
+    /** Create a excess conversion (owned by the caller) */
+    post: operations['ExcessConversionsController_create_v1'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/excess-conversions/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** Soft-delete a excess conversion */
+    delete: operations['ExcessConversionsController_remove_v1'];
     options?: never;
     head?: never;
     patch?: never;
@@ -532,6 +621,85 @@ export interface components {
       /** @description Expected current version (optimistic locking). */
       version: number;
     };
+    WorkDayResponseDto: {
+      /** Format: uuid */
+      id: string;
+      /**
+       * Format: uuid
+       * @description The owning user.
+       */
+      ownerId: string;
+      /** Format: date */
+      date: string;
+      /** Format: date-time */
+      startsAt: string | null;
+      /** Format: date-time */
+      endsAt: string | null;
+      /** @description The recorded break; rule 3 may deduct more. */
+      breakMinutes: number;
+      leaveMinutes: number;
+      toilTakenMinutes: number;
+      bankHolidayWorked: boolean;
+      /** @description Optimistic-locking version. */
+      version: number;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+    };
+    CreateWorkDayDto: {
+      /**
+       * Format: date
+       * @example 2026-10-05
+       */
+      date: string;
+      /**
+       * Format: date-time
+       * @description Start instant (UTC, with Z); on `date` in Europe/London. Null with endsAt.
+       */
+      startsAt?: string | null;
+      /**
+       * Format: date-time
+       * @description End instant (UTC, with Z), after startsAt and within 24 hours.
+       */
+      endsAt?: string | null;
+      /** @default 0 */
+      breakMinutes: number;
+      /** @default 0 */
+      leaveMinutes: number;
+      /** @default 0 */
+      toilTakenMinutes: number;
+      /**
+       * @description On a bank holiday: worked, so no holiday credit.
+       * @default false
+       */
+      bankHolidayWorked: boolean;
+    };
+    UpdateWorkDayDto: {
+      /**
+       * Format: date-time
+       * @description Start instant (UTC, with Z); on `date` in Europe/London. Null with endsAt.
+       */
+      startsAt?: string | null;
+      /**
+       * Format: date-time
+       * @description End instant (UTC, with Z), after startsAt and within 24 hours.
+       */
+      endsAt?: string | null;
+      /** @default 0 */
+      breakMinutes: number;
+      /** @default 0 */
+      leaveMinutes: number;
+      /** @default 0 */
+      toilTakenMinutes: number;
+      /**
+       * @description On a bank holiday: worked, so no holiday credit.
+       * @default false
+       */
+      bankHolidayWorked: boolean;
+      /** @description Expected current version (optimistic locking). */
+      version: number;
+    };
     PublicHolidayResponseDto: {
       /** Format: uuid */
       id: string;
@@ -578,6 +746,33 @@ export interface components {
     CreatePublicHolidayImportDto: {
       /** @example 2026 */
       year: number;
+    };
+    ExcessConversionResponseDto: {
+      /** Format: uuid */
+      id: string;
+      /**
+       * Format: uuid
+       * @description The owning user.
+       */
+      ownerId: string;
+      /**
+       * Format: date
+       * @description The week's Monday.
+       */
+      weekStart: string;
+      /**
+       * Format: date-time
+       * @description When the switch was turned on.
+       */
+      createdAt: string;
+    };
+    CreateExcessConversionDto: {
+      /**
+       * Format: date
+       * @description The week's Monday.
+       * @example 2026-10-05
+       */
+      weekStart: string;
     };
   };
   responses: never;
@@ -1271,6 +1466,157 @@ export interface operations {
       };
     };
   };
+  WorkDaysController_list_v1: {
+    parameters: {
+      query?: {
+        /** @description Page size. */
+        limit?: components['schemas']['Object'];
+        /** @description Opaque cursor from a previous response. */
+        cursor?: string;
+        /** @description Sort direction. */
+        order?: 'asc' | 'desc';
+        /** @description On or after (inclusive). */
+        from?: string;
+        /** @description Before (exclusive). */
+        to?: string;
+        sort?: 'date';
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['WorkDayResponseDto'][];
+            meta: components['schemas']['PageMetaDto'];
+          };
+        };
+      };
+    };
+  };
+  WorkDaysController_create_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateWorkDayDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['WorkDayResponseDto'];
+          };
+        };
+      };
+    };
+  };
+  WorkDaysController_getById_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['WorkDayResponseDto'];
+          };
+        };
+      };
+    };
+  };
+  WorkDaysController_remove_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  WorkDaysController_update_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateWorkDayDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['WorkDayResponseDto'];
+          };
+        };
+      };
+    };
+  };
+  WorkDaysController_restore_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['WorkDayResponseDto'];
+          };
+        };
+      };
+    };
+  };
   PublicHolidaysController_list_v1: {
     parameters: {
       query?: {
@@ -1454,6 +1800,84 @@ export interface operations {
             data: components['schemas']['PublicHolidayImportResponseDto'];
           };
         };
+      };
+    };
+  };
+  ExcessConversionsController_list_v1: {
+    parameters: {
+      query?: {
+        /** @description Page size. */
+        limit?: components['schemas']['Object'];
+        /** @description Opaque cursor from a previous response. */
+        cursor?: string;
+        /** @description Sort direction. */
+        order?: 'asc' | 'desc';
+        /** @description Week start on or after (inclusive). */
+        from?: string;
+        /** @description Week start before (exclusive). */
+        to?: string;
+        sort?: 'weekStart';
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['ExcessConversionResponseDto'][];
+            meta: components['schemas']['PageMetaDto'];
+          };
+        };
+      };
+    };
+  };
+  ExcessConversionsController_create_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateExcessConversionDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['ExcessConversionResponseDto'];
+          };
+        };
+      };
+    };
+  };
+  ExcessConversionsController_remove_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
     };
   };

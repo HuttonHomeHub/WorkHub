@@ -107,6 +107,9 @@ their rows. Check Better Auth's upgrade notes before renaming anything in them.
 - **`CHECK` constraints** for invariants the database can see: non-negative
   pence, `ends_at > starts_at`. Prisma cannot declare them — add them to the
   migration SQL, name them `ck_…`, and note them in a comment on the model.
+  Optional columns that only mean something together (a start and an end) get
+  a both-or-neither check, `CHECK ((starts_at IS NULL) = (ends_at IS NULL))`; a
+  check that compares them passes when both are null, so it needs no guard.
 - **Unique constraints** are scoped to the owner (`@@unique([ownerId, name])`),
   and to active rows when the table soft-deletes (below).
 - Normalise by default; denormalise only with a measurement and a comment.

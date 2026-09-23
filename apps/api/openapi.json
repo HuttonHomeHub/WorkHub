@@ -1162,6 +1162,303 @@
         "tags": ["Hours"]
       }
     },
+    "/api/v1/work-days": {
+      "post": {
+        "operationId": "WorkDaysController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWorkDayDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/WorkDayResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Create a work day (owned by the caller)",
+        "tags": ["Hours"]
+      },
+      "get": {
+        "operationId": "WorkDaysController_list_v1",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Page size.",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "description": "Opaque cursor from a previous response.",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "order",
+            "required": false,
+            "in": "query",
+            "description": "Sort direction.",
+            "schema": {
+              "default": "asc",
+              "type": "string",
+              "enum": ["asc", "desc"]
+            }
+          },
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "description": "On or after (inclusive).",
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "description": "Before (exclusive).",
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "date",
+              "type": "string",
+              "enum": ["date"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data", "meta"],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/WorkDayResponseDto"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMetaDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "List the caller's work days (cursor-paginated)",
+        "tags": ["Hours"]
+      }
+    },
+    "/api/v1/work-days/{id}": {
+      "get": {
+        "operationId": "WorkDaysController_getById_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/WorkDayResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Get one of the caller’s work days by id",
+        "tags": ["Hours"]
+      },
+      "patch": {
+        "operationId": "WorkDaysController_update_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWorkDayDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/WorkDayResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Update a work day (optimistic locking)",
+        "tags": ["Hours"]
+      },
+      "delete": {
+        "operationId": "WorkDaysController_remove_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Soft-delete a work day",
+        "tags": ["Hours"]
+      }
+    },
+    "/api/v1/work-days/{id}/restore": {
+      "post": {
+        "operationId": "WorkDaysController_restore_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/WorkDayResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Restore a soft-deleted work day (undo a delete)",
+        "tags": ["Hours"]
+      }
+    },
     "/api/v1/public-holidays": {
       "post": {
         "operationId": "PublicHolidaysController_create_v1",
@@ -1514,6 +1811,177 @@
         ],
         "summary": "Add a year's England and Wales bank holidays the caller does not already have",
         "tags": ["Core"]
+      }
+    },
+    "/api/v1/excess-conversions": {
+      "post": {
+        "operationId": "ExcessConversionsController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateExcessConversionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ExcessConversionResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Create a excess conversion (owned by the caller)",
+        "tags": ["Hours"]
+      },
+      "get": {
+        "operationId": "ExcessConversionsController_list_v1",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Page size.",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "description": "Opaque cursor from a previous response.",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "order",
+            "required": false,
+            "in": "query",
+            "description": "Sort direction.",
+            "schema": {
+              "default": "asc",
+              "type": "string",
+              "enum": ["asc", "desc"]
+            }
+          },
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "description": "Week start on or after (inclusive).",
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "description": "Week start before (exclusive).",
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "weekStart",
+              "type": "string",
+              "enum": ["weekStart"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data", "meta"],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ExcessConversionResponseDto"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMetaDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "List the weeks whose conversion is on (cursor-paginated)",
+        "tags": ["Hours"]
+      }
+    },
+    "/api/v1/excess-conversions/{id}": {
+      "delete": {
+        "operationId": "ExcessConversionsController_remove_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Soft-delete a excess conversion",
+        "tags": ["Hours"]
       }
     }
   },
@@ -2156,6 +2624,165 @@
         },
         "required": ["version"]
       },
+      "WorkDayResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The owning user."
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "breakMinutes": {
+            "type": "number",
+            "description": "The recorded break; rule 3 may deduct more."
+          },
+          "leaveMinutes": {
+            "type": "number"
+          },
+          "toilTakenMinutes": {
+            "type": "number"
+          },
+          "bankHolidayWorked": {
+            "type": "boolean"
+          },
+          "version": {
+            "type": "number",
+            "description": "Optimistic-locking version."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "ownerId",
+          "date",
+          "startsAt",
+          "endsAt",
+          "breakMinutes",
+          "leaveMinutes",
+          "toilTakenMinutes",
+          "bankHolidayWorked",
+          "version",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreateWorkDayDto": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-10-05"
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Start instant (UTC, with Z); on `date` in Europe/London. Null with endsAt."
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "End instant (UTC, with Z), after startsAt and within 24 hours."
+          },
+          "breakMinutes": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1440,
+            "default": 0
+          },
+          "leaveMinutes": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1440,
+            "default": 0
+          },
+          "toilTakenMinutes": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1440,
+            "default": 0
+          },
+          "bankHolidayWorked": {
+            "type": "boolean",
+            "default": false,
+            "description": "On a bank holiday: worked, so no holiday credit."
+          }
+        },
+        "required": ["date"]
+      },
+      "UpdateWorkDayDto": {
+        "type": "object",
+        "properties": {
+          "startsAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Start instant (UTC, with Z); on `date` in Europe/London. Null with endsAt."
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "End instant (UTC, with Z), after startsAt and within 24 hours."
+          },
+          "breakMinutes": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1440,
+            "default": 0
+          },
+          "leaveMinutes": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1440,
+            "default": 0
+          },
+          "toilTakenMinutes": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1440,
+            "default": 0
+          },
+          "bankHolidayWorked": {
+            "type": "boolean",
+            "default": false,
+            "description": "On a bank holiday: worked, so no holiday credit."
+          },
+          "version": {
+            "type": "number",
+            "minimum": 1,
+            "description": "Expected current version (optimistic locking)."
+          }
+        },
+        "required": ["version"]
+      },
       "PublicHolidayResponseDto": {
         "type": "object",
         "properties": {
@@ -2256,6 +2883,43 @@
           }
         },
         "required": ["year"]
+      },
+      "ExcessConversionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The owning user."
+          },
+          "weekStart": {
+            "type": "string",
+            "format": "date",
+            "description": "The week's Monday."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the switch was turned on."
+          }
+        },
+        "required": ["id", "ownerId", "weekStart", "createdAt"]
+      },
+      "CreateExcessConversionDto": {
+        "type": "object",
+        "properties": {
+          "weekStart": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-10-05",
+            "description": "The week's Monday."
+          }
+        },
+        "required": ["weekStart"]
       }
     }
   }

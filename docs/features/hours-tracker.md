@@ -1,6 +1,6 @@
 # Hours tracker
 
-- **Status:** Approved (2026-09-16). Building: slice 4 of 10 done
+- **Status:** Approved (2026-09-16). Building: slices 1–4 and 6 of 10 done
   ([build order](#slices)).
 - **Change class:** Feature, built on
   [ADR-0020](../adr/0020-modular-tools-over-shared-core-data.md) (Architectural,
@@ -963,3 +963,37 @@ to, groupBy)` and `balancesAt(result, asOf)` shape them for `time-summaries`
   control characters, the foreign cursor, and both races), ownership 404s on every route, duplicate and stale-version 409s,
   restore into a taken key (409, the case slice 2 deferred to here), and the
   422 rules.
+
+### Slice 6: work days and excess conversions API
+
+- **Endpoints:** `work-days` (CRUD and restore, `from`/`to` in date order) and
+  `excess-conversions` (list, `POST` to switch a week on, `DELETE` to switch it
+  off; no get, update or restore, because switching on again is the undo).
+- **Migration 2** (`add_hours_work_days`, database-architect): two additive
+  tables with `CHECK`s for paired times, order, the 24-hour span, per-day
+  minute bounds, a 2000–2100 date window and an ISO Monday, plus partial
+  unique indexes on `(owner_id, date)` and `(owner_id, week_start)`.
+- **The API now depends on `@repo/domain`** (planned for slice 9): the day
+  rules use its `localDateOf`, `minutesBetween`, `addDays` and `isIsoInstant`.
+  `apps/api/Dockerfile` copies `packages/domain/package.json` into its install
+  stage. Node 24 `require`s the ESM package directly, as it does `@repo/types`.
+- **Day rules** (`work-day-rules.ts`, unit-tested; 422 with every problem in
+  `details`):
+  - terms must be in force (`WorkTermsService.findInForce`, exported to the
+    tool's other modules);
+  - times both or neither, strict `…Z` instants, the end after the start and
+    within 24 hours, the start on `date` in Europe/London, and the break less
+    than the span. **Decided while building:** a break needs times;
+  - a night shift may not run into the next day's start, and a start may not
+    be before the previous day's end;
+  - rule 4: leave at most the maximum per day; leave and TOIL taken only on
+    working days and, with any bank holiday credit, at most the target. So
+    leave on an unworked bank holiday is refused. `bankHolidayWorked` is only
+    for a bank holiday (`PublicHolidaysService.isHoliday`, core, exported).
+- **Restore re-checks the rules**, since the neighbouring days or the terms
+  may have changed since the day was cleared.
+- **Tests:** unit tests for every rule and the switch; e2e (17 tests) for
+  CRUD, restore and the restore-into-a-re-entered-date 409, duplicate date and
+  duplicate switch 409s, the tracking-start, time, BST-night and night-shift
+  collision 422s (both ways round, and on restore), rule 4's limits with an
+  imported bank holiday, the non-Monday 422, and ownership on every route.

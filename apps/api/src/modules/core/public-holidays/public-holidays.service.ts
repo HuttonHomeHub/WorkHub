@@ -112,6 +112,19 @@ export class PublicHolidaysService {
     return added.sort((a, b) => a.date.getTime() - b.date.getTime());
   }
 
+  /**
+   * Whether the caller has an active public holiday on a date. Exported for
+   * tools (ADR-0020 §3); scoped to the caller like every read.
+   */
+  async isHoliday(principal: Principal, date: string): Promise<boolean> {
+    const rows = await this.repository.findManyActive({
+      where: { ownerId: principal.userId, date: toDbDate(date) },
+      orderBy: [{ date: 'asc' }],
+      take: 1,
+    });
+    return rows.length > 0;
+  }
+
   async getById(principal: Principal, id: string): Promise<PublicHoliday> {
     return this.findOwnedOrThrow(principal, id);
   }
