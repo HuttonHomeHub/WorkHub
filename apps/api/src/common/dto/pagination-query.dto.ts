@@ -10,7 +10,13 @@ import { IsCursor } from '../validation/cursor';
  * `sort` field.
  */
 export class PaginationQueryDto {
-  @ApiPropertyOptional({ minimum: 1, maximum: 100, default: 20, description: 'Page size.' })
+  @ApiPropertyOptional({
+    type: 'integer',
+    minimum: 1,
+    maximum: 100,
+    default: 20,
+    description: 'Page size.',
+  })
   @IsOptional()
   @Type(() => Number)
   @IsInt()

@@ -75,7 +75,8 @@
 
   /* Lines & focus */
   --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
+  /* Control boundaries (WCAG 1.4.11): ≥ 3:1 on background, card and muted (tokens-contrast.test.ts). */
+  --input: oklch(0.63 0 0);
   --ring: oklch(0.51 0.18 255);
 
   /* Data visualisation (see dataviz standards in DESIGN_SYSTEM.md) */
@@ -106,11 +107,15 @@
   --sidebar-width: 240px;
   --sidebar-rail: 56px;
   --width-prose: 72ch;
+  --width-form: 880px;
   --width-page: 1600px;
+  /* The toaster's width (DESIGN_SYSTEM.md → Toast). */
+  --width-toast: 24rem;
 
   /* Z-index (DESIGN_SYSTEM.md → Z-index). Use as `z-(--z-header)`; never a numeric z-*. */
   --z-header: 20;
   --z-popover: 40;
+  --z-toast: 60;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -143,7 +148,7 @@
   --info-foreground: oklch(0.205 0 0);
 
   --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
+  --input: oklch(0.56 0 0);
   --ring: oklch(0.65 0.17 255);
 
   --chart-1: oklch(0.65 0.17 255);
@@ -236,6 +241,15 @@
     font-feature-settings:
       'rlig' 1,
       'calt' 1;
+  }
+
+  /*
+   * Native form controls (the date picker's icon and popup, select popups)
+   * follow the theme. Scoped to the controls: switching `color-scheme` on the
+   * root restyles the whole page and briefly mixes old and new colours.
+   */
+  .dark :is(input, select, textarea) {
+    color-scheme: dark;
   }
 
   /* Honour reduced-motion preferences globally. */

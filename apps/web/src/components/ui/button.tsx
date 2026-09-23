@@ -22,10 +22,24 @@ const buttonVariants = cva(
         lg: 'h-10 rounded-md px-6',
         icon: 'size-9',
       },
+      /**
+       * `true` lets a long label wrap onto more lines instead of widening the
+       * page (WCAG 1.4.10 reflow); the button grows taller from its size's height.
+       */
+      wrap: {
+        true: 'h-auto whitespace-normal text-left',
+        false: '',
+      },
     },
+    compoundVariants: [
+      { wrap: true, size: 'default', class: 'min-h-9' },
+      { wrap: true, size: 'sm', class: 'min-h-8' },
+      { wrap: true, size: 'lg', class: 'min-h-10' },
+    ],
     defaultVariants: {
       variant: 'default',
       size: 'default',
+      wrap: false,
     },
   },
 );
@@ -36,9 +50,9 @@ interface ButtonProps
   asChild?: boolean;
 }
 
-function Button({ className, variant, size, asChild = false, ...props }: ButtonProps) {
+function Button({ className, variant, size, wrap, asChild = false, ...props }: ButtonProps) {
   const Comp = asChild ? Slot : 'button';
-  return <Comp className={cn(buttonVariants({ variant, size }), className)} {...props} />;
+  return <Comp className={cn(buttonVariants({ variant, size, wrap }), className)} {...props} />;
 }
 
 export { Button, buttonVariants, type ButtonProps };

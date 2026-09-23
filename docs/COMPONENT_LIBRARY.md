@@ -91,11 +91,13 @@ where focus goes — and its tests exercise them. Base contracts:
 | Dialog             | Esc closes; Tab cycles inside                                                            | Trapped; initial focus on first field; returns to trigger |
 | AlertDialog        | Esc cancels; Enter on the focused button                                                 | Initial focus on **Cancel**; returns to trigger           |
 | Popover / Tooltip  | Esc closes; Tab leaves (popover); tooltip opens on focus                                 | Popover returns to trigger                                |
-| Toast              | Tab reaches the action; Esc dismisses when focused                                       | Never steals focus                                        |
+| Toast              | Tab (from the page) reaches the action; Esc dismisses when focused; no hotkey            | Never steals focus; timers pause while focused            |
 | Command palette    | Ctrl/Cmd+K opens; ↑↓ move (`aria-activedescendant`); Enter runs; Esc closes              | Input focused; returns to previous element                |
 | DataTable / list   | ↑↓ Home End PageUp PageDown move; Enter opens; Space selects; Shift+↑↓ extends           | One tab stop (roving tabindex); next row after delete     |
 | Resizable handle   | ←→ (or ↑↓) resize by a step; Home/End to min/max                                         | Stays on the handle                                       |
 | Tabs               | ←→ move and activate; Home/End                                                           | Roving tabindex                                           |
+| Switch             | Space (and Enter) toggles                                                                | Stays on the switch                                       |
+| NativeSelect       | The browser's own: ↑↓ change, Alt+↓ opens, typeahead, Esc closes                         | Stays on the select                                       |
 
 No component binds a custom shortcut or a single-character key
 ([UX_STANDARDS.md](UX_STANDARDS.md#keyboard-model)).

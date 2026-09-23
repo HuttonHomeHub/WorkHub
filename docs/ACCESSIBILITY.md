@@ -117,11 +117,12 @@ one that catches the rest — do it for every interactive change.
       shape. (1.4.1)
 - [ ] Correct in **light and dark**; check both.
 
-> **Known gap.** The current `--border`, `--input` and `--sidebar-border` tokens
-> (`oklch(0.922 0 0)` on white in light; `oklch(1 0 0 / 15%)` on
-> `oklch(0.145 0 0)` in dark) are **suspect against 1.4.11 and have not been
-> measured**. Do not treat them as passing. Measuring and fixing them is tracked
-> in [TECH_DEBT.md](TECH_DEBT.md) and [BACKLOG.md](BACKLOG.md).
+> **Control boundaries use `--input`.** It is `oklch(0.63 0 0)` in light and
+> `oklch(0.56 0 0)` in dark: at least 3:1 (1.4.11) against the background,
+> card and muted surfaces in both themes, and
+> `apps/web/src/styles/tokens-contrast.test.ts` fails if a change drops it
+> below. `--border` and `--sidebar-border` draw dividers and surfaces, which
+> 1.4.11 does not cover: never make them a control's only boundary.
 
 ### Zoom and reflow
 
