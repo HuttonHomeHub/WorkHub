@@ -70,6 +70,221 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/work-terms': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List the caller's work terms, latest first (cursor-paginated) */
+    get: operations['WorkTermsController_list_v1'];
+    put?: never;
+    /** Create work terms, effective from a Monday */
+    post: operations['WorkTermsController_create_v1'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/work-terms/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get one of the caller’s work terms by id */
+    get: operations['WorkTermsController_getById_v1'];
+    put?: never;
+    post?: never;
+    /** Soft-delete work terms (422 for the last remaining terms) */
+    delete: operations['WorkTermsController_remove_v1'];
+    options?: never;
+    head?: never;
+    /** Update a work term (optimistic locking) */
+    patch: operations['WorkTermsController_update_v1'];
+    trace?: never;
+  };
+  '/api/v1/work-terms/{id}/restore': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Restore a soft-deleted work term (undo a delete) */
+    post: operations['WorkTermsController_restore_v1'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/leave-years': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List the caller's leave years (cursor-paginated) */
+    get: operations['LeaveYearsController_list_v1'];
+    put?: never;
+    /** Create the settings for a leave year (one per year) */
+    post: operations['LeaveYearsController_create_v1'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/leave-years/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get one of the caller’s leave years by id */
+    get: operations['LeaveYearsController_getById_v1'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Update a leave year (optimistic locking) */
+    patch: operations['LeaveYearsController_update_v1'];
+    trace?: never;
+  };
+  '/api/v1/time-adjustments': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List the caller's time adjustments (cursor-paginated) */
+    get: operations['TimeAdjustmentsController_list_v1'];
+    put?: never;
+    /** Create a time adjustment (owned by the caller) */
+    post: operations['TimeAdjustmentsController_create_v1'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/time-adjustments/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get one of the caller’s time adjustments by id */
+    get: operations['TimeAdjustmentsController_getById_v1'];
+    put?: never;
+    post?: never;
+    /** Soft-delete a time adjustment */
+    delete: operations['TimeAdjustmentsController_remove_v1'];
+    options?: never;
+    head?: never;
+    /** Update a time adjustment (optimistic locking) */
+    patch: operations['TimeAdjustmentsController_update_v1'];
+    trace?: never;
+  };
+  '/api/v1/time-adjustments/{id}/restore': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Restore a soft-deleted time adjustment (undo a delete) */
+    post: operations['TimeAdjustmentsController_restore_v1'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/public-holidays': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List the caller's public holidays (cursor-paginated) */
+    get: operations['PublicHolidaysController_list_v1'];
+    put?: never;
+    /** Create a public holiday (owned by the caller) */
+    post: operations['PublicHolidaysController_create_v1'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/public-holidays/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get one of the caller’s public holidays by id */
+    get: operations['PublicHolidaysController_getById_v1'];
+    put?: never;
+    post?: never;
+    /** Soft-delete a public holiday */
+    delete: operations['PublicHolidaysController_remove_v1'];
+    options?: never;
+    head?: never;
+    /** Update a public holiday (optimistic locking) */
+    patch: operations['PublicHolidaysController_update_v1'];
+    trace?: never;
+  };
+  '/api/v1/public-holidays/{id}/restore': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Restore a soft-deleted public holiday (undo a delete) */
+    post: operations['PublicHolidaysController_restore_v1'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/public-holiday-imports': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Add a year's England and Wales bank holidays the caller does not already have */
+    post: operations['PublicHolidayImportsController_create_v1'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -84,6 +299,285 @@ export interface components {
     PublicConfigResponseDto: {
       /** @description Whether the public sign-up page is available (ADR-0018). */
       signUpEnabled: boolean;
+    };
+    WeekdayMinutesResponseDto: {
+      mon: number | null;
+      tue: number | null;
+      wed: number | null;
+      thu: number | null;
+      fri: number | null;
+      sat: number | null;
+      sun: number | null;
+    };
+    WorkTermResponseDto: {
+      /** Format: uuid */
+      id: string;
+      /**
+       * Format: uuid
+       * @description The owning user.
+       */
+      ownerId: string;
+      /**
+       * Format: date
+       * @description The Monday these terms apply from.
+       */
+      effectiveFrom: string;
+      targetMinutes: components['schemas']['WeekdayMinutesResponseDto'];
+      minimumMinutes: components['schemas']['WeekdayMinutesResponseDto'];
+      breakThresholdMinutes: number;
+      breakMinimumMinutes: number;
+      /** @example 07:00 */
+      bandStart: string;
+      /** @example 19:00 */
+      bandEnd: string;
+      paidOvertimeAllowed: boolean;
+      toilMonthlyCapMinutes: number;
+      leaveDayMaxMinutes: number;
+      flexiCreditCapMinutes: number | null;
+      flexiDebitCapMinutes: number | null;
+      /** @description Optimistic-locking version. */
+      version: number;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+    };
+    WeekdayTargetsDto: {
+      mon: number | null;
+      tue: number | null;
+      wed: number | null;
+      thu: number | null;
+      fri: number | null;
+      sat: number | null;
+      sun: number | null;
+    };
+    WeekdayMinimumsDto: {
+      mon: number | null;
+      tue: number | null;
+      wed: number | null;
+      thu: number | null;
+      fri: number | null;
+      sat: number | null;
+      sun: number | null;
+    };
+    CreateWorkTermDto: {
+      /**
+       * Format: date
+       * @description A Monday.
+       * @example 2026-10-05
+       */
+      effectiveFrom: string;
+      /** @description Flexi target per weekday; null makes the day non-working. */
+      targetMinutes?: components['schemas']['WeekdayTargetsDto'];
+      /** @description Warning-only minimum per weekday; null where the target is null. */
+      minimumMinutes?: components['schemas']['WeekdayMinimumsDto'];
+      /** @default 360 */
+      breakThresholdMinutes: number;
+      /** @default 30 */
+      breakMinimumMinutes: number;
+      /**
+       * @description HH:MM
+       * @default 07:00
+       * @example 07:00
+       */
+      bandStart: string;
+      /**
+       * @description HH:MM, after bandStart
+       * @default 19:00
+       * @example 19:00
+       */
+      bandEnd: string;
+      /** @default false */
+      paidOvertimeAllowed: boolean;
+      /** @default 450 */
+      toilMonthlyCapMinutes: number;
+      /** @default 450 */
+      leaveDayMaxMinutes: number;
+      flexiCreditCapMinutes?: number | null;
+      flexiDebitCapMinutes?: number | null;
+    };
+    PageMetaDto: {
+      /** @description Cursor for the next page; null on the last page. */
+      nextCursor: string | null;
+      hasMore: boolean;
+    };
+    Object: Record<string, never>;
+    UpdateWorkTermDto: {
+      /** @description Flexi target per weekday; null makes the day non-working. */
+      targetMinutes?: components['schemas']['WeekdayTargetsDto'];
+      /** @description Warning-only minimum per weekday; null where the target is null. */
+      minimumMinutes?: components['schemas']['WeekdayMinimumsDto'];
+      /** @default 360 */
+      breakThresholdMinutes: number;
+      /** @default 30 */
+      breakMinimumMinutes: number;
+      /**
+       * @description HH:MM
+       * @default 07:00
+       * @example 07:00
+       */
+      bandStart: string;
+      /**
+       * @description HH:MM, after bandStart
+       * @default 19:00
+       * @example 19:00
+       */
+      bandEnd: string;
+      /** @default false */
+      paidOvertimeAllowed: boolean;
+      /** @default 450 */
+      toilMonthlyCapMinutes: number;
+      /** @default 450 */
+      leaveDayMaxMinutes: number;
+      flexiCreditCapMinutes?: number | null;
+      flexiDebitCapMinutes?: number | null;
+      /** @description Expected current version (optimistic locking). */
+      version: number;
+    };
+    LeaveYearResponseDto: {
+      /** Format: uuid */
+      id: string;
+      /**
+       * Format: uuid
+       * @description The owning user.
+       */
+      ownerId: string;
+      year: number;
+      /** @description Allowance in minutes, before bought leave. */
+      allowanceMinutes: number;
+      boughtLeave: boolean;
+      /** @description Optimistic-locking version. */
+      version: number;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+    };
+    CreateLeaveYearDto: {
+      /** @example 2026 */
+      year: number;
+      /**
+       * @description The yearly allowance in minutes, bank holidays included (247:30).
+       * @default 14850
+       */
+      allowanceMinutes: number;
+      /**
+       * @description Bought leave adds 37:30 for the year.
+       * @default false
+       */
+      boughtLeave: boolean;
+    };
+    UpdateLeaveYearDto: {
+      /**
+       * @description The yearly allowance in minutes, bank holidays included (247:30).
+       * @default 14850
+       */
+      allowanceMinutes: number;
+      /**
+       * @description Bought leave adds 37:30 for the year.
+       * @default false
+       */
+      boughtLeave: boolean;
+      /** @description Expected current version (optimistic locking). */
+      version: number;
+    };
+    TimeAdjustmentResponseDto: {
+      /** Format: uuid */
+      id: string;
+      /**
+       * Format: uuid
+       * @description The owning user.
+       */
+      ownerId: string;
+      /** Format: date */
+      effectiveDate: string;
+      /** @enum {string} */
+      balance: 'FLEXI' | 'TOIL' | 'LEAVE';
+      /** @description Signed minutes. */
+      minutes: number;
+      /** @enum {string} */
+      reason: 'OPENING_BALANCE' | 'FORFEIT' | 'CORRECTION';
+      /** @description Optimistic-locking version. */
+      version: number;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+    };
+    CreateTimeAdjustmentDto: {
+      /**
+       * Format: date
+       * @example 2026-10-05
+       */
+      effectiveDate: string;
+      /** @enum {string} */
+      balance: 'FLEXI' | 'TOIL' | 'LEAVE';
+      /** @description Signed minutes, never 0. For LEAVE, a positive value adds to the leave remaining. */
+      minutes: number;
+      /** @enum {string} */
+      reason: 'OPENING_BALANCE' | 'FORFEIT' | 'CORRECTION';
+    };
+    UpdateTimeAdjustmentDto: {
+      /**
+       * Format: date
+       * @example 2026-10-05
+       */
+      effectiveDate?: string;
+      /** @enum {string} */
+      balance?: 'FLEXI' | 'TOIL' | 'LEAVE';
+      /** @description Signed minutes, never 0. For LEAVE, a positive value adds to the leave remaining. */
+      minutes?: number;
+      /** @enum {string} */
+      reason?: 'OPENING_BALANCE' | 'FORFEIT' | 'CORRECTION';
+      /** @description Expected current version (optimistic locking). */
+      version: number;
+    };
+    PublicHolidayResponseDto: {
+      /** Format: uuid */
+      id: string;
+      /**
+       * Format: uuid
+       * @description The owning user.
+       */
+      ownerId: string;
+      /** Format: date */
+      date: string;
+      name: string;
+      /** @description Optimistic-locking version. */
+      version: number;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+    };
+    CreatePublicHolidayDto: {
+      /**
+       * Format: date
+       * @example 2026-12-25
+       */
+      date: string;
+      /** @example Christmas Day */
+      name: string;
+    };
+    UpdatePublicHolidayDto: {
+      /**
+       * Format: date
+       * @example 2026-12-25
+       */
+      date?: string;
+      /** @example Christmas Day */
+      name?: string;
+      /** @description Expected current version (optimistic locking). */
+      version: number;
+    };
+    PublicHolidayImportResponseDto: {
+      year: number;
+      /** @description The holidays added, in date order. */
+      added: components['schemas']['PublicHolidayResponseDto'][];
+    };
+    CreatePublicHolidayImportDto: {
+      /** @example 2026 */
+      year: number;
     };
   };
   responses: never;
@@ -367,6 +861,597 @@ export interface operations {
         content: {
           'application/json': {
             data: components['schemas']['PublicConfigResponseDto'];
+          };
+        };
+      };
+    };
+  };
+  WorkTermsController_list_v1: {
+    parameters: {
+      query?: {
+        /** @description Page size. */
+        limit?: components['schemas']['Object'];
+        /** @description Opaque cursor from a previous response. */
+        cursor?: string;
+        /** @description Sort direction. */
+        order?: 'asc' | 'desc';
+        sort?: 'effectiveFrom' | 'createdAt';
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['WorkTermResponseDto'][];
+            meta: components['schemas']['PageMetaDto'];
+          };
+        };
+      };
+    };
+  };
+  WorkTermsController_create_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateWorkTermDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['WorkTermResponseDto'];
+          };
+        };
+      };
+    };
+  };
+  WorkTermsController_getById_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['WorkTermResponseDto'];
+          };
+        };
+      };
+    };
+  };
+  WorkTermsController_remove_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  WorkTermsController_update_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateWorkTermDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['WorkTermResponseDto'];
+          };
+        };
+      };
+    };
+  };
+  WorkTermsController_restore_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['WorkTermResponseDto'];
+          };
+        };
+      };
+    };
+  };
+  LeaveYearsController_list_v1: {
+    parameters: {
+      query?: {
+        /** @description Page size. */
+        limit?: components['schemas']['Object'];
+        /** @description Opaque cursor from a previous response. */
+        cursor?: string;
+        /** @description Sort direction. */
+        order?: 'asc' | 'desc';
+        sort?: 'year' | 'createdAt';
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['LeaveYearResponseDto'][];
+            meta: components['schemas']['PageMetaDto'];
+          };
+        };
+      };
+    };
+  };
+  LeaveYearsController_create_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateLeaveYearDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['LeaveYearResponseDto'];
+          };
+        };
+      };
+    };
+  };
+  LeaveYearsController_getById_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['LeaveYearResponseDto'];
+          };
+        };
+      };
+    };
+  };
+  LeaveYearsController_update_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateLeaveYearDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['LeaveYearResponseDto'];
+          };
+        };
+      };
+    };
+  };
+  TimeAdjustmentsController_list_v1: {
+    parameters: {
+      query?: {
+        /** @description Page size. */
+        limit?: components['schemas']['Object'];
+        /** @description Opaque cursor from a previous response. */
+        cursor?: string;
+        /** @description Sort direction. */
+        order?: 'asc' | 'desc';
+        /** @description Effective on or after (inclusive). */
+        from?: string;
+        /** @description Effective before (exclusive). */
+        to?: string;
+        /** @description Filter by balance. */
+        balance?: 'FLEXI' | 'TOIL' | 'LEAVE';
+        sort?: 'effectiveDate' | 'createdAt';
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['TimeAdjustmentResponseDto'][];
+            meta: components['schemas']['PageMetaDto'];
+          };
+        };
+      };
+    };
+  };
+  TimeAdjustmentsController_create_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateTimeAdjustmentDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['TimeAdjustmentResponseDto'];
+          };
+        };
+      };
+    };
+  };
+  TimeAdjustmentsController_getById_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['TimeAdjustmentResponseDto'];
+          };
+        };
+      };
+    };
+  };
+  TimeAdjustmentsController_remove_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  TimeAdjustmentsController_update_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateTimeAdjustmentDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['TimeAdjustmentResponseDto'];
+          };
+        };
+      };
+    };
+  };
+  TimeAdjustmentsController_restore_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['TimeAdjustmentResponseDto'];
+          };
+        };
+      };
+    };
+  };
+  PublicHolidaysController_list_v1: {
+    parameters: {
+      query?: {
+        /** @description Page size. */
+        limit?: components['schemas']['Object'];
+        /** @description Opaque cursor from a previous response. */
+        cursor?: string;
+        /** @description Sort direction. */
+        order?: 'asc' | 'desc';
+        /** @description On or after (inclusive). */
+        from?: string;
+        /** @description Before (exclusive). */
+        to?: string;
+        sort?: 'date' | 'createdAt';
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['PublicHolidayResponseDto'][];
+            meta: components['schemas']['PageMetaDto'];
+          };
+        };
+      };
+    };
+  };
+  PublicHolidaysController_create_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreatePublicHolidayDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['PublicHolidayResponseDto'];
+          };
+        };
+      };
+    };
+  };
+  PublicHolidaysController_getById_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['PublicHolidayResponseDto'];
+          };
+        };
+      };
+    };
+  };
+  PublicHolidaysController_remove_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  PublicHolidaysController_update_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdatePublicHolidayDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['PublicHolidayResponseDto'];
+          };
+        };
+      };
+    };
+  };
+  PublicHolidaysController_restore_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['PublicHolidayResponseDto'];
+          };
+        };
+      };
+    };
+  };
+  PublicHolidayImportsController_create_v1: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreatePublicHolidayImportDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['PublicHolidayImportResponseDto'];
+          };
+        };
+      };
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['PublicHolidayImportResponseDto'];
           };
         };
       };

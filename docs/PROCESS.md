@@ -83,6 +83,11 @@ tag and upgrade steps. Versioning and the release mechanics are in
 
 - **Dependencies:** when Dependabot PRs pile up, `/deps` combines them into one
   verified PR and records deferred majors in [TECH_DEBT.md](TECH_DEBT.md).
+- **Bank holidays, once a year:** when GOV.UK publishes a further year
+  (https://www.gov.uk/bank-holidays.json), copy the England and Wales dates into
+  `OFFICIAL` in `apps/api/src/modules/core/public-holidays/england-and-wales.ts`
+  and move `OFFICIAL_LAST_YEAR`. Later years are computed from the standing
+  rules, so a missed refresh only misses one-off holidays.
 - **Before a release:** a quick standards check — docs still true, `TECH_DEBT`
   and [BACKLOG.md](BACKLOG.md) current, no "Pending rewrite" banner older than
   its planned PR.

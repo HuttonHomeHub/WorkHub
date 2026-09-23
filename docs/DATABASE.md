@@ -62,15 +62,16 @@ their rows. Check Better Auth's upgrade notes before renaming anything in them.
 
 ## Data types
 
-| Data                         | Type                               | Notes                                                                                                                    |
-| ---------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| An **instant** (happened at) | `timestamptz(3)`                   | Stored in UTC; sent as ISO-8601 with `Z` ([API.md](API.md#dates-money-and-other-values))                                 |
-| A **calendar date**          | `@db.Date`                         | A due date or a day worked — no time or zone. Never store a date as midnight in a `timestamptz`                          |
-| **Money**                    | `Int` pence, column `<name>_pence` | GBP only, so **no currency column**. `Int` holds ±£21.4m; use `BigInt` only for a sum that could exceed it. Never floats |
-| A quantity with decimals     | `Decimal @db.Decimal(p, s)`        | Exact (hours, rates). Never `Float` for anything summed or compared                                                      |
-| Text                         | `String` (`text`)                  | Length limits live in DTOs; add `varchar(n)` only for a real external limit                                              |
-| A closed set of values       | Prisma `enum`                      | Adding a value is a migration                                                                                            |
-| Opaque structured data       | `Json`                             | Only when never filtered or joined on; otherwise model columns                                                           |
+| Data                         | Type                               | Notes                                                                                                                                      |
+| ---------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| An **instant** (happened at) | `timestamptz(3)`                   | Stored in UTC; sent as ISO-8601 with `Z` ([API.md](API.md#dates-money-and-other-values))                                                   |
+| A **calendar date**          | `@db.Date`                         | A due date or a day worked — no time or zone. Never store a date as midnight in a `timestamptz`                                            |
+| A **wall-clock time**        | `DateTime @db.Time(0)`             | A time of day with no date or zone, such as a working band edge (07:00). Defaults need `dbgenerated("'07:00:00'::time without time zone")` |
+| **Money**                    | `Int` pence, column `<name>_pence` | GBP only, so **no currency column**. `Int` holds ±£21.4m; use `BigInt` only for a sum that could exceed it. Never floats                   |
+| A quantity with decimals     | `Decimal @db.Decimal(p, s)`        | Exact (hours, rates). Never `Float` for anything summed or compared                                                                        |
+| Text                         | `String` (`text`)                  | Length limits live in DTOs; add `varchar(n)` only for a real external limit                                                                |
+| A closed set of values       | Prisma `enum`                      | Adding a value is a migration                                                                                                              |
+| Opaque structured data       | `Json`                             | Only when never filtered or joined on; otherwise model columns                                                                             |
 
 ### Time
 
@@ -139,7 +140,9 @@ their rows. Check Better Auth's upgrade notes before renaming anything in them.
   ```
 
   Prisma does not know about the index, so check that later generated
-  migrations do not drop it.
+  migrations do not drop it. Name it `uq_<table>_<cols>_active`. When its
+  columns are what a list filters and sorts by (`owner_id`, then the date), it
+  is also that list's index; do not declare a duplicate `@@index` in Prisma.
 
 ## Optimistic locking
 

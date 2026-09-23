@@ -39,8 +39,12 @@ model User {
   createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  sessions Session[]
-  accounts Account[]
+  sessions        Session[]
+  accounts        Account[]
+  workTerms       WorkTerm[]
+  leaveYears      LeaveYear[]
+  timeAdjustments TimeAdjustment[]
+  publicHolidays  PublicHoliday[]
 
   @@map("users")
 }
@@ -94,10 +98,149 @@ model Verification {
   @@map("verifications")
 }
 
-// ---------------------------------------------------------------------------
-// No domain models yet — the real application starts from the auth schema
-// above. The first feature adds the first domain model and its migration
-// (`prisma migrate dev`). Use the reference-feature template in
-// `apps/api/examples/reference-feature/` as the pattern to copy
-// (see docs/REFERENCE_FEATURE.md).
-// ---------------------------------------------------------------------------
+// === Core ===
+
+// Public holidays: the owner's list of bank holidays, imported from a bundled
+// England and Wales list or added by hand (docs/features/hours-tracker.md).
+//
+// Constraints in the migration SQL (Prisma cannot declare them):
+// - ck_public_holidays_name_length: 1–100 characters after trimming;
+// - uq_public_holidays_owner_id_date_active: one active holiday per date
+//   (partial unique on deleted_at IS NULL). It is also the index for the
+//   owner-scoped date-range list, so Prisma declares no other index here.
+model PublicHoliday {
+  id        String    @id @default(uuid(7)) @db.Uuid
+  ownerId   String    @map("owner_id") @db.Uuid
+  date      DateTime  @db.Date
+  name      String
+  version   Int       @default(1)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@map("public_holidays")
+}
+
+// === Tool: hours ===
+
+// Work terms: effective-dated settings. A row applies from its effective_from
+// Monday until the next active row's; the earliest active row is the tracking
+// start. Null target = not a working day. Defaults are the owner's terms
+// (37:30 a week; minimums 7:30 Mon–Thu, 5:30 Fri; band 07:00–19:00).
+//
+// Constraints in the migration SQL (Prisma cannot declare them):
+// - ck_work_terms_effective_from_monday: ISODOW = 1;
+// - ck_work_terms_target_minutes_range: each target_minutes_* NULL or 0–1440;
+// - ck_work_terms_min_minutes_range: each min_minutes_* NULL or 0–1440;
+// - ck_work_terms_min_requires_target: each min_minutes_* NULL where its
+//   target_minutes_* is NULL;
+// - ck_work_terms_break_threshold_range, ck_work_terms_break_minimum_range,
+//   ck_work_terms_leave_day_max_range: 0–1440 (per-day quantities);
+// - ck_work_terms_band_order: band_end > band_start;
+// - ck_work_terms_toil_monthly_cap_range, ck_work_terms_flexi_credit_cap_range,
+//   ck_work_terms_flexi_debit_cap_range: 0–10080 (one week of minutes; these
+//   are balances, not a single day, so the per-day 1440 bound is too tight);
+// - uq_work_terms_owner_id_effective_from_active: one active row per Monday
+//   (partial unique on deleted_at IS NULL); also the list/lookup index.
+model WorkTerm {
+  id                    String    @id @default(uuid(7)) @db.Uuid
+  ownerId               String    @map("owner_id") @db.Uuid
+  effectiveFrom         DateTime  @map("effective_from") @db.Date
+  targetMinutesMon      Int?      @default(450) @map("target_minutes_mon")
+  targetMinutesTue      Int?      @default(450) @map("target_minutes_tue")
+  targetMinutesWed      Int?      @default(450) @map("target_minutes_wed")
+  targetMinutesThu      Int?      @default(450) @map("target_minutes_thu")
+  targetMinutesFri      Int?      @default(450) @map("target_minutes_fri")
+  targetMinutesSat      Int?      @map("target_minutes_sat")
+  targetMinutesSun      Int?      @map("target_minutes_sun")
+  minMinutesMon         Int?      @default(450) @map("min_minutes_mon")
+  minMinutesTue         Int?      @default(450) @map("min_minutes_tue")
+  minMinutesWed         Int?      @default(450) @map("min_minutes_wed")
+  minMinutesThu         Int?      @default(450) @map("min_minutes_thu")
+  minMinutesFri         Int?      @default(330) @map("min_minutes_fri")
+  minMinutesSat         Int?      @map("min_minutes_sat")
+  minMinutesSun         Int?      @map("min_minutes_sun")
+  breakThresholdMinutes Int       @default(360) @map("break_threshold_minutes")
+  breakMinimumMinutes   Int       @default(30) @map("break_minimum_minutes")
+  bandStart             DateTime  @default(dbgenerated("'07:00:00'::time without time zone")) @map("band_start") @db.Time(0)
+  bandEnd               DateTime  @default(dbgenerated("'19:00:00'::time without time zone")) @map("band_end") @db.Time(0)
+  paidOvertimeAllowed   Boolean   @default(false) @map("paid_overtime_allowed")
+  toilMonthlyCapMinutes Int       @default(450) @map("toil_monthly_cap_minutes")
+  leaveDayMaxMinutes    Int       @default(450) @map("leave_day_max_minutes")
+  flexiCreditCapMinutes Int?      @map("flexi_credit_cap_minutes")
+  flexiDebitCapMinutes  Int?      @map("flexi_debit_cap_minutes")
+  version               Int       @default(1)
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt             DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@map("work_terms")
+}
+
+// Leave years: the annual leave allowance per calendar year. bought_leave adds
+// 2250 minutes (5 days at 7:30) in the domain; it is not stored in the allowance.
+//
+// Constraints in the migration SQL (Prisma cannot declare them):
+// - ck_leave_years_year_range: 2000–2100;
+// - ck_leave_years_allowance_minutes_range: 0–100000;
+// - uq_leave_years_owner_id_year_active: one active row per year (partial
+//   unique on deleted_at IS NULL); also the list/lookup index.
+model LeaveYear {
+  id               String    @id @default(uuid(7)) @db.Uuid
+  ownerId          String    @map("owner_id") @db.Uuid
+  year             Int
+  allowanceMinutes Int       @default(14850) @map("allowance_minutes")
+  boughtLeave      Boolean   @default(false) @map("bought_leave")
+  version          Int       @default(1)
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt        DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@map("leave_years")
+}
+
+// The balance a time adjustment applies to.
+enum TimeAdjustmentBalance {
+  FLEXI
+  TOIL
+  LEAVE
+}
+
+// Why a time adjustment was made.
+enum TimeAdjustmentReason {
+  OPENING_BALANCE
+  FORFEIT
+  CORRECTION
+}
+
+// Time adjustments: signed manual changes to a balance on a date (opening
+// balances, forfeits, corrections). Several may share a date, so there is no
+// unique key.
+//
+// Constraints in the migration SQL (Prisma cannot declare them):
+// - ck_time_adjustments_minutes_nonzero: minutes <> 0;
+// - ck_time_adjustments_minutes_range: -100000 to 100000 (matches the leave
+//   allowance bound, so an opening leave balance always fits).
+model TimeAdjustment {
+  id            String                @id @default(uuid(7)) @db.Uuid
+  ownerId       String                @map("owner_id") @db.Uuid
+  effectiveDate DateTime              @map("effective_date") @db.Date
+  balance       TimeAdjustmentBalance
+  minutes       Int
+  reason        TimeAdjustmentReason
+  version       Int                   @default(1)
+  createdAt     DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime              @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt     DateTime?             @map("deleted_at") @db.Timestamptz(3)
+
+  owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@index([ownerId, effectiveDate])
+  @@map("time_adjustments")
+}
