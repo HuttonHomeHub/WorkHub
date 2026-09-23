@@ -11,12 +11,11 @@ import {
   NotFoundError,
   ValidationError,
 } from '../../../common/errors/domain-errors';
+import { PrismaService } from '../../../prisma/prisma.service';
 
 import type { CreateWorkTermDto } from './dto/create-work-term.dto';
 import type { ListWorkTermsQueryDto } from './dto/list-work-terms-query.dto';
 import type { UpdateWorkTermDto } from './dto/update-work-term.dto';
-import { PrismaService } from '../../../prisma/prisma.service';
-
 import { WorkTermsRepository } from './work-terms.repository';
 
 type WeekdayMinutes = Record<Weekday, number | null>;

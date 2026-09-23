@@ -4,7 +4,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Principal } from '../../../common/auth/principal';
 import { toDbDate, toDbTime } from '../../../common/dates';
 import { NotFoundError, ValidationError } from '../../../common/errors/domain-errors';
-
 import type { PrismaService } from '../../../prisma/prisma.service';
 
 import type { WorkTermsRepository } from './work-terms.repository';
