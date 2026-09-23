@@ -4,10 +4,14 @@ import {
   balancesAt,
   calculateHours,
   daysBetween,
+  ENGINE_YEAR_MAX,
+  ENGINE_YEAR_MIN,
+  HoursInputError,
   type GroupBy,
   type HoursResult,
   lastDayOfMonth,
   maxDate,
+  minDate,
   monthOf,
   summarise,
   weekStartOf,
@@ -68,7 +72,9 @@ export class HoursCalculationService {
     const from = groupBounds(query.from, query.groupBy).start;
     const to = groupBounds(addDays(query.to, -1), query.groupBy).end;
 
-    const result = await this.calculate(principal, query.asOf, addDays(to, -1));
+    // The engine covers whole weeks itself; widening can reach past its
+    // 2100-12-31 window, so cap what it is asked for (security review).
+    const result = await this.calculate(principal, query.asOf, minDate(addDays(to, -1), LAST_DATE));
     const weeks = new Map(result.weeks.map((week) => [week.weekStart, week]));
     return summarise(result, from, to, query.groupBy).map((group) => {
       const firstDay = query.groupBy === 'month' ? `${group.key}-01` : group.key;
@@ -102,8 +108,23 @@ export class HoursCalculationService {
     };
   }
 
-  /** Run the engine over the caller's rows. */
+  /**
+   * Run the engine over the caller's rows. The DTOs keep every date inside the
+   * engine's window, so `HoursInputError` means a bug; it is still a fixed
+   * 422, never a 500 or the engine's message.
+   */
   async calculate(principal: Principal, asOf: string, until: string = asOf): Promise<HoursResult> {
+    try {
+      return await this.run(principal, asOf, until);
+    } catch (error) {
+      if (error instanceof HoursInputError) {
+        throw new ValidationError('The dates are outside the range hours can be calculated for.');
+      }
+      throw error;
+    }
+  }
+
+  private async run(principal: Principal, asOf: string, until: string): Promise<HoursResult> {
     const terms = await this.workTerms.listForCalculation(principal);
     const first = terms[0];
     if (!first) return calculateHours({ ...EMPTY, asOf }, { until });
@@ -116,7 +137,7 @@ export class HoursCalculationService {
       this.workDays.listForCalculation(principal, from, to),
       this.conversions.listForCalculation(principal, from, to),
       // Adjustments dated before the tracking start take effect on it.
-      this.adjustments.listForCalculation(principal, '2000-01-01', to),
+      this.adjustments.listForCalculation(principal, `${ENGINE_YEAR_MIN}-01-01`, to),
       this.leaveYears.listForCalculation(principal),
       this.publicHolidays.listForCalculation(principal, from, to),
     ]);
@@ -147,6 +168,8 @@ const EMPTY = {
 const toIso = (date: Date): string => date.toISOString().slice(0, 10);
 
 const MAX_RANGE_DAYS = 366;
+/** The engine's last date (`ENGINE_YEAR_MAX`). */
+const LAST_DATE = `${ENGINE_YEAR_MAX}-12-31`;
 
 /** The group containing a date: `[start, end)`. */
 function groupBounds(date: string, groupBy: GroupBy): { start: string; end: string } {

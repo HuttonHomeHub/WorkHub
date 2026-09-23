@@ -258,4 +258,18 @@ describe.skipIf(!hasDatabase)('Time summaries and balances API (e2e)', () => {
       { key: '2026-10-12', toilMinutes: 0, overtimeUnpaidMinutes: 0, overtimePaidMinutes: 60 },
     ]);
   });
+
+  it('answers at the edges of the 2000–2100 window, never a 500 (security review)', async () => {
+    await post('work-terms', { effectiveFrom: '2100-11-29' });
+    // Widening the last partial week of 2100 would end in 2101.
+    await summaries({ from: '2100-12-01', to: '2100-12-31', asOf: '2100-12-31' }).expect(200);
+    await summaries({
+      from: '2100-12-01',
+      to: '2100-12-31',
+      groupBy: 'week',
+      asOf: '2100-12-31',
+    }).expect(200);
+    await balances('2100-12-31').expect(200);
+    await summaries({ from: '2000-01-01', to: '2000-01-08', asOf: '2000-01-05' }).expect(200);
+  });
 });

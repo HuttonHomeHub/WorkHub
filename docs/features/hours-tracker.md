@@ -1022,7 +1022,12 @@ to, groupBy)` and `balancesAt(result, asOf)` shape them for `time-summaries`
     `toilCapMinutes`, and the leave year's `leaveAllowanceMinutes` and
     `leaveUsedMinutes` for the leave strip.
   - A computed list is documented with the new `ApiDataListResponse`.
-- **Tests:** e2e (7): the range 422s and a missing `asOf`; no terms; the
+- **Review fix** (security and backend reviews): widening the last partial
+  week of 2100 asked the engine for a date in 2101, and its guard threw a 500.
+  The horizon is now capped at the engine's last date, and any
+  `HoursInputError` becomes a fixed-message 422.
+- **Tests:** e2e (8): the range 422s and a missing `asOf`; the 2000 and 2100
+  window edges; no terms; the
   cross-month example as a preview (asOf 1 Oct) and applied (asOf 2 Oct) by
   week, month and balances; widening a partial range; the TOIL cap with paid
   overtime switched on from a later Monday; and another owner's rows never
