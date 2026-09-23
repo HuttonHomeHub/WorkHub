@@ -66,8 +66,8 @@ export function SaveErrorAlert({ error, conflictMessage, onReload }: SaveErrorAl
         {details.length > 0 ? (
           <AlertDescription>
             <ul className="list-disc pl-4">
-              {details.map((detail) => (
-                <li key={detail}>{detail}</li>
+              {details.map((detail, index) => (
+                <li key={index}>{detail}</li>
               ))}
             </ul>
           </AlertDescription>

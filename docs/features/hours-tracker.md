@@ -1071,6 +1071,17 @@ to, groupBy)` and `balancesAt(result, asOf)` shape them for `time-summaries`
   journeys keep anchor terms from 26 Dec 2089 on the journey account, so their
   own terms are never the last (the API refuses to delete those).
 
+- **Review fixes:** accessibility review measured `--input` at about 1.3:1
+  (light) and 1.5:1 (dark), under 1.4.11's 3:1 for control boundaries, and
+  this slice's fields depend on it. It is now `oklch(0.63 0 0)` and
+  `oklch(0.56 0 0)`: at least 3.2:1 on background, card and muted in both
+  themes, guarded by `styles/tokens-contrast.test.ts` (TECH_DEBT #16 closed).
+  Also: 422 detail lines are keyed by index, and the leave row's pending cells
+  are `aria-busy` with a "Loading" text alternative.
+- **Settings keep actions inside each tab** (ui review): a tabbed settings
+  screen has several forms, so each tab carries its own primary action rather
+  than one in the page header.
+
 ### Slice 6: work days and excess conversions API
 
 - **Endpoints:** `work-days` (CRUD and restore, `from`/`to` in date order) and

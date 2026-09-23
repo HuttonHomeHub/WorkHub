@@ -255,10 +255,16 @@ function LeaveUsage({ year }: { year: number }) {
   const balances = useTimeBalances(`${year}-12-31`);
   const cell = (value: string) => <span className="inline-flex h-9 items-center">{value}</span>;
   if (balances.isPending) {
+    const pending = (
+      <span className="inline-flex h-9 items-center" aria-busy="true">
+        <span aria-hidden>…</span>
+        <span className="sr-only">Loading</span>
+      </span>
+    );
     return (
       <>
-        <td className="py-2 pr-4 text-right">{cell('…')}</td>
-        <td className="py-2 text-right">{cell('…')}</td>
+        <td className="py-2 pr-4 text-right">{pending}</td>
+        <td className="py-2 text-right">{pending}</td>
       </>
     );
   }

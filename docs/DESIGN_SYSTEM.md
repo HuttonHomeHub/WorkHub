@@ -66,10 +66,10 @@ records the roles; `globals.css` holds the values.
   when you touch a colour token. Measure, don't eyeball
   ([ACCESSIBILITY.md](ACCESSIBILITY.md#how-to-verify)).
 - Status is never colour alone — pair with an icon or text.
-- **Open question:** `--border`, `--input` and `--sidebar-border` are the tokens most likely to fail
-  1.4.11 (3:1 for control boundaries), in both themes. They have **not** been
-  measured. Treat them as suspect and fix them before claiming compliance
-  ([TECH_DEBT.md](TECH_DEBT.md), [BACKLOG.md](BACKLOG.md)).
+- **Control boundaries:** `--input` (Input, NativeSelect, the outline Button)
+  is at least 3:1 against background, card and muted in both themes, checked
+  by `tokens-contrast.test.ts`. `--border` and `--sidebar-border` are for
+  dividers only ([ACCESSIBILITY.md](ACCESSIBILITY.md)).
 
 ### Dark-mode quality rules
 

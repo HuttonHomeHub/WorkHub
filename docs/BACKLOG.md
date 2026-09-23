@@ -10,8 +10,9 @@ finished item; move a scheduled one to PRODUCT.md.
 
 - `S` Lint PR titles in CI with commitlint (squash-merge titles skip the local
   hook); Dependabot's `chore(deps-dev)` prefix must pass the scope list.
-- `S` Automated contrast check of the design tokens in `globals.css` (every
-  fill/foreground pair meets WCAG AA in light and dark).
+- `S` Extend `apps/web/src/styles/tokens-contrast.test.ts` (today `--input`
+  only) to every fill/foreground pair in `globals.css`, light and dark, with a
+  general OKLCH → sRGB conversion for chromatic tokens.
 - `M` Extend `pnpm gen:feature` to scaffold the frontend side (`api/` hooks on
   `apiClient`, list route, form) so the web pattern is generated and CI-verified.
 - `S` Review the template's indexes with database-architect: `@@index([ownerId])`
@@ -22,8 +23,6 @@ finished item; move a scheduled one to PRODUCT.md.
 - `S` Bundle-size budget check for the web app in CI.
 - `S` Load Inter (self-hosted `woff2`, preloaded) or drop it from `--font-sans`
   (DESIGN_SYSTEM.md → Typography).
-- `S` Measure `--border`, `--input` and `--sidebar-border` against WCAG 1.4.11
-  in both themes and retune them (ACCESSIBILITY.md).
 - `S` `Button` pending state (spinner, `disabled`, `aria-busy`) replacing
   label-swapping in forms.
 - `S` Error summary in the `Form` primitive, linking each failure to its field.
