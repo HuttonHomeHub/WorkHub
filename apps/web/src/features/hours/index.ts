@@ -1,9 +1,10 @@
 /**
  * Public surface of the hours tool (docs/FRONTEND_ARCHITECTURE.md). The Hours
- * manifest (`tool.ts`) joins the sidebar with the week view (slice 7); until
- * then the settings screen is reachable at `/hours/settings`.
+ * manifest (`tool.ts`) is imported by `app/tools.ts` directly, so the sidebar
+ * does not pull these screens into the initial bundle.
  */
 export { HoursSettings } from './components/hours-settings';
+export { WeekView, type WeekAsideContext } from './components/week-view';
 export { SETTINGS_TABS, type SettingsTab } from './settings-tabs';
 export { hoursKeys } from './api/keys';
 export { HoursSummary } from './components/hours-summary';

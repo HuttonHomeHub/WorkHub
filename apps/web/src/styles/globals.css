@@ -111,10 +111,16 @@
   --width-page: 1600px;
   /* The toaster's width (DESIGN_SYSTEM.md → Toast). */
   --width-toast: 24rem;
+  /* An AlertDialog's width (DESIGN_SYSTEM.md → Dialog / AlertDialog). */
+  --width-dialog: 28rem;
+  /* A page's side column, such as the hours week view's aside; it stacks below
+     the main content when both do not fit (DESIGN_SYSTEM.md → Layout). */
+  --width-aside: 20rem;
 
   /* Z-index (DESIGN_SYSTEM.md → Z-index). Use as `z-(--z-header)`; never a numeric z-*. */
   --z-header: 20;
   --z-popover: 40;
+  --z-modal: 50;
   --z-toast: 60;
 }
 

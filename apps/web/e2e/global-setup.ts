@@ -1,7 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
-import { E2E_USER } from './fixtures';
+import { E2E_USER, E2E_WEEK_USER } from './fixtures';
 
 /**
  * Public sign-up is off by default (ADR-0018), so the journeys sign in with an
@@ -10,6 +10,10 @@ import { E2E_USER } from './fixtures';
  * `dist/cli/user.js`. Needs DATABASE_URL (CI env, or the repo-root .env).
  */
 export default function globalSetup(): void {
+  for (const user of [E2E_USER, E2E_WEEK_USER]) createUser(user);
+}
+
+function createUser(user: { email: string; name: string; password: string }): void {
   execFileSync(
     'node',
     [
@@ -17,15 +21,15 @@ export default function globalSetup(): void {
       'dist/cli/user.js',
       'create',
       '--email',
-      E2E_USER.email,
+      user.email,
       '--name',
-      E2E_USER.name,
+      user.name,
       '--password-stdin',
       '--upsert',
     ],
     {
       cwd: fileURLToPath(new URL('../../api', import.meta.url)),
-      input: E2E_USER.password,
+      input: user.password,
       stdio: ['pipe', 'inherit', 'inherit'],
     },
   );

@@ -6,6 +6,8 @@ describe('formatDate', () => {
   it('formats a calendar date in en-GB without a comma', () => {
     expect(formatDate('2026-10-05')).toBe('Mon 5 Oct 2026');
     expect(formatDate('2026-10-05', 'long')).toBe('Monday 5 October 2026');
+    expect(formatDate('2026-10-05', 'weekdayDayMonth')).toBe('Mon 5 Oct');
+    expect(formatDate('2026-10-05', 'medium')).toBe('5 Oct 2026');
   });
 
   it('formats the short styles the hours views use', () => {

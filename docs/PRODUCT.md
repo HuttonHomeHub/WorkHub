@@ -162,7 +162,7 @@ candidates are in [BACKLOG.md](BACKLOG.md).
 
 ### Now
 
-- `L` [Hours tracker](features/hours-tracker.md) (slices 1–6, 8 and 9 of 10 done — the settings screens at `/hours/settings`; next the week view) — the
+- `L` [Hours tracker](features/hours-tracker.md) (slices 1–9 of 10 done — the week view at `/hours` and the settings at `/hours/settings`; next the aside and summary view) — the
   first tool, on the modular-tools structure of ADR-0020.
 
 ### Next

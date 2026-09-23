@@ -1,5 +1,6 @@
 import { House } from 'lucide-react';
 
+import { hoursTool } from '@/features/hours/tool';
 import type { ToolManifest } from '@/lib/tool-manifest';
 
 /**
@@ -18,4 +19,4 @@ const homeTool: ToolManifest = {
  * Every tool, in sidebar order (ADR-0020). `app/` is the web's composition
  * root, so this is the one module that imports each feature's `tool.ts`.
  */
-export const tools: readonly ToolManifest[] = [homeTool];
+export const tools: readonly ToolManifest[] = [homeTool, hoursTool];

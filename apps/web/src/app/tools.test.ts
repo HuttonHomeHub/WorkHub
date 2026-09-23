@@ -8,6 +8,12 @@ describe('tool registry', () => {
     expect(tools[0]?.path).toBe('/');
   });
 
+  it('lists Hours after Home, opening the week view', () => {
+    expect(tools[1]?.id).toBe('hours');
+    expect(tools[1]?.label).toBe('Hours');
+    expect(tools[1]?.path).toBe('/hours');
+  });
+
   it('gives every tool a unique, kebab-case id and never the reserved `core`', () => {
     const ids = tools.map((tool) => tool.id);
     expect(new Set(ids).size).toBe(ids.length);

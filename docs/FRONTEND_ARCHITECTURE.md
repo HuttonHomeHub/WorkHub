@@ -8,8 +8,8 @@
 > [`FRONTEND_QUALITY.md`](FRONTEND_QUALITY.md).
 
 **Status:** a walking skeleton. The entry, providers, router, auth and account
-features, the app shell with its tools sidebar, the hours settings screens
-and twelve primitives exist.
+features, the app shell with its tools sidebar, the hours week view and
+settings screens, and sixteen primitives exist.
 Anything marked **_planned_** is the agreed pattern for when a feature first
 needs it — it is not in the code, so don't cite it as existing.
 
@@ -41,7 +41,7 @@ type. This is what exists today, plus the folders a feature adds.
 ```text
 apps/web/
 ├── index.html                # Pre-paint theme and sidebar-state script
-├── e2e/                      # Playwright journeys (auth, app-shell, hours-settings, hours-summary), support.ts, global-setup.ts
+├── e2e/                      # Playwright journeys (auth, app-shell, hours-settings, hours-summary, hours-week), support.ts, global-setup.ts
 └── src/
     ├── main.tsx              # Creates the query client + router, mounts providers
     ├── app/
@@ -52,7 +52,7 @@ apps/web/
     │   ├── __root.tsx        # Outlet + notFoundComponent
     │   ├── _authed.tsx       # Auth guard layout → AppShell (with app/tools.ts)
     │   ├── _authed/index.tsx # Signed-in home
-    │   ├── _authed/hours/    # settings.tsx: /hours/settings?tab=&year=
+    │   ├── _authed/hours/    # index.tsx: /hours?week= (the week view); settings.tsx: /hours/settings?tab=&year=
     │   │                     #   summary.tsx: /hours/summary?from=&to=&groupBy=
     │   └── (public)/         # sign-in.tsx, sign-up.tsx
     ├── features/
@@ -63,8 +63,9 @@ apps/web/
     │   │   └── public-holidays/  # api/ + index.ts: a core entity any tool may import
     │   └── hours/            # A tool's web folder: the worked example (below)
     ├── components/
-    │   ├── ui/               # Primitives: alert, badge, button, card, form, input, label,
-    │   │                     #   native-select, skeleton, switch, tabs, toast, tooltip
+    │   ├── ui/               # Primitives: alert, alert-dialog, badge, button, card, context-menu,
+    │   │                     #   dropdown-menu, form, input, label, native-select, skeleton, switch,
+    │   │                     #   tabs, toast, tooltip
     │   └── layout/           # app-shell.tsx (TooltipProvider, skip link, header, main, Toaster), sidebar.tsx
     ├── hooks/                # use-theme.tsx, use-delayed-flag.ts (nothing before 300ms)
     ├── lib/
@@ -116,7 +117,7 @@ plus a **manifest** that tells the shell about it.
 
 ### A tool's web folder: `features/hours`
 
-The hours tool is the worked example (slice 5 of the hours tracker):
+The hours tool is the worked example (slices 5 and 7 of the hours tracker):
 
 ```text
 features/hours/
@@ -125,16 +126,20 @@ features/hours/
 │                 #   delete with an optimistic removal, and restore for undo
 ├── schemas/      # fields.ts (Zod fields: typed h:mm / HH:MM text → minutes),
 │                 #   settings.ts (one schema per form; bounds from @repo/types),
-│                 #   summary.ts (the summary's custom range)
+│                 #   summary.ts (the summary's custom range), work-day.ts (a week-view
+│                 #   row: typed text → the API's body)
 ├── components/   # screens and composites: hours-settings.tsx and a component per tab,
-│                 #   hours-summary.tsx and summary-table.tsx, the week aside's panels
-│                 #   (this-week-panel.tsx, balances-panel.tsx), and the hours inputs
-│                 #   (time-input.tsx, duration-input.tsx)
+│                 #   hours-summary.tsx and summary-table.tsx, week-view.tsx, week-table.tsx,
+│                 #   day-row.tsx, the week aside's panels (this-week-panel.tsx,
+│                 #   balances-panel.tsx), and the hours inputs (time-input.tsx, duration-input.tsx)
+├── week/         # pure week-view logic: week-dates.ts (URL normalisation),
+│                 #   week-calculation.ts (the engine for one week, row warnings)
 ├── hooks/        # use-focus-after-removal.ts, use-recalculation-notice.ts
 ├── settings-tabs.ts # the tab names, dependency-free
 ├── summary-*.ts, warnings.ts, this-week-figures.ts, recalculation-message.ts
 │                 # pure helpers: ranges and presets, columns and CSV rows, warning copy,
 │                 #   the aside's figures, rule 11's message
+├── tool.ts       # the manifest; app/tools.ts imports it directly
 └── index.ts      # the public surface the routes import
 ```
 
@@ -144,7 +149,8 @@ features/hours/
 - **Keep `validateSearch` light.** Only a route's component is code-split; the
   rest of the route file is in the initial bundle. Don't import a feature's
   values there (the settings route lists its tab names itself, checked by
-  type); `import type` is free.
+  type); `import type` is free. A `beforeLoad` that needs feature code loads
+  it with `import()` (the week route normalises `?week=` that way).
 - **Feedback lives in components, data in hooks.** Mutation hooks do the cache
   work; the component raises the toast (with Undo) in the mutate callbacks.
 
@@ -291,10 +297,13 @@ React Hook Form + Zod through the shared `Form` primitive
   type (the hours durations), type the form as
   `useForm<z.input<S>, unknown, z.output<S>>`; `FormField` passes the output
   type through.
-- **Unsaved-changes guard — _planned_:** an explicit-save form with
-  `formState.isDirty` uses TanStack Router's `useBlocker` to confirm in-app
-  navigation, with `enableBeforeUnload` for reload and tab close; the block is
-  released on successful save. Behaviour is specified in
+- **Unsaved-changes guard — implemented in the hours week view:** while any
+  row is changed, `WeekTable` calls TanStack Router's `useBlocker` with
+  `withResolver` and `enableBeforeUnload`, and renders an `AlertDialog`
+  ("Discard changes?": Keep editing / Discard changes) while the navigation
+  is blocked; saving or reverting the rows releases it. Other explicit-save
+  forms follow the same pattern (the settings terms form still only has
+  `beforeunload`). Behaviour is specified in
   [UX_STANDARDS.md](UX_STANDARDS.md#forms).
 
 ## Error handling

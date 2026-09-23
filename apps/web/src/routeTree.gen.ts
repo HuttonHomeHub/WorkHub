@@ -13,6 +13,7 @@ import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as publicSignInRouteImport } from './routes/(public)/sign-in'
 import { Route as publicSignUpRouteImport } from './routes/(public)/sign-up'
 import { Route as AuthedIndexRouteImport } from './routes/_authed/index'
+import { Route as AuthedHoursIndexRouteImport } from './routes/_authed/hours/index'
 import { Route as AuthedHoursSettingsRouteImport } from './routes/_authed/hours/settings'
 import { Route as AuthedHoursSummaryRouteImport } from './routes/_authed/hours/summary'
 
@@ -35,6 +36,11 @@ const AuthedIndexRoute = AuthedIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedHoursIndexRoute = AuthedHoursIndexRouteImport.update({
+  id: '/hours/',
+  path: '/hours/',
+  getParentRoute: () => AuthedRoute,
+} as any)
 const AuthedHoursSettingsRoute = AuthedHoursSettingsRouteImport.update({
   id: '/hours/settings',
   path: '/hours/settings',
@@ -52,6 +58,7 @@ export interface FileRoutesByFullPath {
   '/sign-up': typeof publicSignUpRoute
   '/hours/settings': typeof AuthedHoursSettingsRoute
   '/hours/summary': typeof AuthedHoursSummaryRoute
+  '/hours/': typeof AuthedHoursIndexRoute
 }
 export interface FileRoutesByTo {
   '/sign-in': typeof publicSignInRoute
@@ -59,6 +66,7 @@ export interface FileRoutesByTo {
   '/': typeof AuthedIndexRoute
   '/hours/settings': typeof AuthedHoursSettingsRoute
   '/hours/summary': typeof AuthedHoursSummaryRoute
+  '/hours': typeof AuthedHoursIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -68,13 +76,25 @@ export interface FileRoutesById {
   '/_authed/': typeof AuthedIndexRoute
   '/_authed/hours/settings': typeof AuthedHoursSettingsRoute
   '/_authed/hours/summary': typeof AuthedHoursSummaryRoute
+  '/_authed/hours/': typeof AuthedHoursIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/sign-in' | '/sign-up' | '/hours/settings' | '/hours/summary'
+    | '/'
+    | '/sign-in'
+    | '/sign-up'
+    | '/hours/settings'
+    | '/hours/summary'
+    | '/hours/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/sign-in' | '/sign-up' | '/' | '/hours/settings' | '/hours/summary'
+  to:
+    | '/sign-in'
+    | '/sign-up'
+    | '/'
+    | '/hours/settings'
+    | '/hours/summary'
+    | '/hours'
   id:
     | '__root__'
     | '/_authed'
@@ -83,6 +103,7 @@ export interface FileRouteTypes {
     | '/_authed/'
     | '/_authed/hours/settings'
     | '/_authed/hours/summary'
+    | '/_authed/hours/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -121,6 +142,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedIndexRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/hours/': {
+      id: '/_authed/hours/'
+      path: '/hours'
+      fullPath: '/hours/'
+      preLoaderRoute: typeof AuthedHoursIndexRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/hours/settings': {
       id: '/_authed/hours/settings'
       path: '/hours/settings'
@@ -142,12 +170,14 @@ interface AuthedRouteChildren {
   AuthedIndexRoute: typeof AuthedIndexRoute
   AuthedHoursSettingsRoute: typeof AuthedHoursSettingsRoute
   AuthedHoursSummaryRoute: typeof AuthedHoursSummaryRoute
+  AuthedHoursIndexRoute: typeof AuthedHoursIndexRoute
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedIndexRoute: AuthedIndexRoute,
   AuthedHoursSettingsRoute: AuthedHoursSettingsRoute,
   AuthedHoursSummaryRoute: AuthedHoursSummaryRoute,
+  AuthedHoursIndexRoute: AuthedHoursIndexRoute,
 }
 
 const AuthedRouteWithChildren =

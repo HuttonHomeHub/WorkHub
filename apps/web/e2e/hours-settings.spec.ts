@@ -1,6 +1,14 @@
-import { expect, test, type APIRequestContext, type Locator, type Page } from '@playwright/test';
+import { expect, test, type APIRequestContext } from '@playwright/test';
 
-import { expectNoA11yViolations, signIn } from './support';
+import {
+  expectNoA11yViolations,
+  expectNoPageHorizontalScroll,
+  listAll,
+  signIn,
+  tabTo,
+  toast,
+  type Row,
+} from './support';
 
 /**
  * The hours settings journeys (hours tracker slice 5): setting terms, bought
@@ -16,27 +24,6 @@ test.describe.configure({ mode: 'serial' });
 test.use({ viewport: { width: 1280, height: 800 } });
 
 const API = '/api/v1';
-
-interface Row {
-  id: string;
-}
-
-async function listAll<T extends Row>(request: APIRequestContext, path: string): Promise<T[]> {
-  const rows: T[] = [];
-  let cursor: string | null = null;
-  do {
-    const url: string = cursor ? `${path}${path.includes('?') ? '&' : '?'}cursor=${cursor}` : path;
-    const response = await request.get(url);
-    expect(response.ok()).toBe(true);
-    const body = (await response.json()) as {
-      data: T[];
-      meta: { nextCursor: string | null; hasMore: boolean };
-    };
-    rows.push(...body.data);
-    cursor = body.meta.hasMore ? body.meta.nextCursor : null;
-  } while (cursor);
-  return rows;
-}
 
 /** A Monday in 2090 no other journey uses, so repeated runs never collide. */
 function farMonday(week: number): string {
@@ -66,39 +53,6 @@ async function deleteTermsFrom(request: APIRequestContext, effectiveFrom: string
   for (const row of terms.filter((term) => term.effectiveFrom === effectiveFrom)) {
     await request.delete(`${API}/work-terms/${row.id}`);
   }
-}
-
-/** A toast's text, in the toaster (Radix also copies it into a live region). */
-function toast(page: Page, text: string): Locator {
-  return page.getByRole('region', { name: 'Notifications' }).getByText(text);
-}
-
-/** Tab alone moves focus to the target, as a keyboard user would. */
-async function tabTo(page: Page, target: Locator, maxStops = 60): Promise<void> {
-  for (let stop = 0; stop < maxStops; stop += 1) {
-    await page.keyboard.press('Tab');
-    if (await target.evaluate((element) => element === document.activeElement)) return;
-  }
-  throw new Error(`Tab did not reach the target within ${String(maxStops)} stops`);
-}
-
-async function expectNoPageHorizontalScroll(page: Page): Promise<void> {
-  const overflow = await page.evaluate(
-    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
-  );
-  // Name the elements that stick out, so a failure says where to look.
-  const offenders = await page.evaluate(() => {
-    const width = document.documentElement.clientWidth;
-    return [...document.querySelectorAll('body *')]
-      .filter((element) => element.getBoundingClientRect().right > width + 0.5)
-      .filter((element) => !element.parentElement?.closest('.overflow-x-auto'))
-      .slice(0, 5)
-      .map(
-        (element) =>
-          `${element.tagName.toLowerCase()} "${(element.textContent ?? '').slice(0, 40)}"`,
-      );
-  });
-  expect(overflow, `${page.url()}: ${offenders.join('; ')}`).toBeLessThanOrEqual(0);
 }
 
 test('sets new terms from a Monday, and they are there after a reload', async ({ page }) => {

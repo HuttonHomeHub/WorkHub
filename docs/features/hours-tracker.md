@@ -1,6 +1,6 @@
 # Hours tracker
 
-- **Status:** Approved (2026-09-16). Building: slices 1–6, 8 and 9 of 10 done
+- **Status:** Approved (2026-09-16). Building: slices 1–9 of 10 done
   ([build order](#slices)).
 - **Change class:** Feature, built on
   [ADR-0020](../adr/0020-modular-tools-over-shared-core-data.md) (Architectural,
@@ -1115,6 +1115,145 @@ to, groupBy)` and `balancesAt(result, asOf)` shape them for `time-summaries`
   duplicate switch 409s, the tracking-start, time, BST-night and night-shift
   collision 422s (both ways round, and on restore), rule 4's limits with an
   imported bank holiday, the non-Monday 422, and ownership on every route.
+
+### Slice 7: week view
+
+- **Route and URL:** `/hours?week=YYYY-MM-DD` (`routes/_authed/hours/index.tsx`).
+  `beforeLoad` normalises the week with a replace redirect: another valid date
+  becomes its Monday, and a missing, unreadable or out-of-range one (a week not
+  wholly in 2000–2100) becomes this week's Monday in Europe/London
+  (`week/week-dates.ts`, on `@repo/domain`'s `londonDateAt` and `weekStartOf`).
+  The helpers load with `import()` in `beforeLoad`, because only the component
+  is code-split; the initial bundle stays at 90.2 kB gzipped.
+- **Manifest:** `features/hours/tool.ts` (Hours, Lucide `Clock`, `/hours`, the
+  five palette commands), listed in `app/tools.ts` after Home. `app/tools.ts`
+  imports `tool.ts` directly, not the feature's `index.ts`, so the sidebar
+  never pulls the screens into the initial bundle.
+- **Layout (decided while building):** the page header holds the `<h1>`, the
+  week navigator (previous, "Week of 5 Oct 2026" as an `<h2>` that labels the
+  table and is a polite live region, next), a Settings link, "Download CSV"
+  and "Go to today" (the primary action). Below it the table and the aside
+  slot sit in a wrapping flex row: the table's basis is 56rem and the aside's
+  `--width-aside` (20rem, a new token). The table's eleven columns need about
+  60rem, so the aside sits beside the table on a 1920px window and wraps below
+  it at 1280px (and at the reflow floor), rather than squeezing the table into
+  a horizontal scroll at the design floor. `WeekView` takes the aside as
+  `aside={(context) => …}` with `{ weekStart, asOf, calculation }`, rendered in
+  a `div[data-slot="week-aside"]`; slice 10 fills it.
+- **Table:** a real `<table>` labelled by the week heading, a row header per
+  date (with "Today", "Unsaved" and the bank holiday badge), and no
+  `role="grid"`. Columns: Start, End, Break, Leave, TOIL taken, Worked,
+  Credited (the acceptance criteria ask for credited time per day), Flexi
+  (`formatFlexi`: a sign and a word), Converted when the week's switch is on
+  ("Converted (preview)" in the header before settlement), Warnings, and the
+  actions (Save when the row is changed, then the "⋯" menu). A totals row
+  shows worked, credited "of 37:30 target" and the week's flexi. An empty
+  value is a dash read as "None" (or "Not counted yet" for flexi).
+- **Rows as small forms:** each row keeps the typed text in a draft
+  (`schemas/work-day.ts`, a Zod schema: both times or neither, a break only
+  with times and shorter than the day, durations within a day). Enter in any
+  field saves the row and Esc reverts it; there is no `<form>` per row (a form
+  cannot wrap a `<tr>`), so the fields handle the two keys. A row is "Unsaved"
+  only when its text reads differently from the saved day (`830` typed over
+  `08:30` is not a change). Validation shows for the fields left in a changed
+  row, and for every field on save, which moves focus to the first invalid
+  one; passing through untouched rows with Tab flags nothing. The End field
+  describes a live "+1 day" tag when the end is at or before the start.
+  Instants come from `shiftInstants`, so a night across a clock change is
+  exact. A new day is a `POST`, a saved one a `PATCH` with its `version`. A
+  422 shows the API's `details` in an alert row under the day (linked from its
+  fields) and keeps the input; a 409 or any other failure is a persistent
+  error toast (the 409 offers Reload, which drops the row's draft). Each save
+  raises a brief "Mon 5 Oct saved" toast.
+- **Unsaved changes:** the app's first in-app guard. `WeekTable` uses TanStack
+  Router's `useBlocker` (with `enableBeforeUnload`) while any row is changed;
+  the new `AlertDialog` asks "Discard changes?" with "Keep editing" (focused)
+  and "Discard changes". Changing week is a navigation, so it asks too; the
+  table remounts per week, so drafts never leak into another week. The
+  settings terms form still has only `beforeunload`; moving it to the same
+  guard is a follow-up.
+- **Row menu:** the "⋯" `DropdownMenu`, mirrored by a `ContextMenu` on the
+  row. A text field keeps the browser's own right-click menu (copy, paste),
+  so the row menu opens from the rest of the row. Items: Clear day (when the
+  row has anything) and, on a bank holiday, "Mark bank holiday as worked" (or
+  "…as not worked"), which changes the row's draft for an explicit save.
+  Clear day soft-deletes, removes the day from the cache at once, raises
+  "Day cleared · Undo" (8s; Undo calls restore) and moves focus to the next
+  row's Start (the previous row's for Sunday) instead of the menu's trigger.
+  Clearing a row with nothing saved just drops its draft.
+- **Live totals (the data choice):** the table's figures are computed in the
+  browser with `calculateHours`, from the saved days with each readable
+  unsaved row in their place, and re-read from the server after each save
+  (a save invalidates the week's days and `hoursKeys.computed()`). **Only the
+  shown week is loaded** (at most seven days, the week's switch, the holidays
+  of the week's years, and the terms): every figure the table shows is
+  week-local — worked and credited time, day flexi, the week's excess and its
+  levelling, and the per-day warnings. `calculateWeek`
+  (`week/week-calculation.ts`) gives the engine the terms in force re-dated to
+  the week's Monday (plus any later terms), so it computes from this Monday to
+  the year's end instead of from the tracking start. A test proves every shown
+  figure matches a run from the real tracking start with history, conversions
+  and adjustments. The result's balances, TOIL-by-month split and history
+  warnings (flexi caps, month-end TOIL, the leave allowance) are **not** valid
+  in this calculation: the rows show only the week-local warnings, and the
+  aside takes balances from `time-balances` and `time-summaries`.
+- **Engine timing:** the first calculation runs as the week's data arrives (a
+  `useMemo` over the loaded data), never first on a keypress, and with the
+  re-dated terms it covers less than a year of days.
+- **Warnings in the row:** "Below 5:30 minimum", "Before 07:00", "After 19:00"
+  (an end after the band or on the next day), "Nothing recorded", "Time off
+  over the 7:30 target" and "Times not valid", each with a ⚠ icon and a
+  screen-reader "Warning:"; "Break raised to 0:30" is a note (ℹ, "Note:").
+- **Download CSV:** the shown week's saved days (not unsaved rows), through
+  `daysCsvRows` and `toCsv`, saved as `hours-<weekStart>.csv` from a Blob
+  (`lib/download.ts`), with a "Week of 5 Oct 2026 downloaded" toast.
+- **States:** skeleton rows at the final height after 300ms, under the real
+  table head; a load error inside the table with Retry (the head and the page
+  header stay); no terms: "Set your working terms to start tracking hours"
+  with a "Set working terms" link; before the tracking start: "Tracking
+  starts on Mon 7 Sep 2026" with "Go to the first week"; an empty week: seven
+  editable rows and "No time recorded this week."
+- **Primitives:** `DropdownMenu` and `ContextMenu` (sharing one menu look;
+  non-modal, because Radix's modal menus hide the page with `aria-hidden`
+  while it stays focusable, which axe flags; Tab closes them),
+  `AlertDialog` (it remembers what had focus when it opened, so a dialog
+  raised by a blocker returns focus there; Radix returns focus only to a
+  trigger), and `Badge` (no dependency). Tokens: `--z-modal`,
+  `--width-dialog` and `--width-aside`.
+- **Dependencies:** `@radix-ui/react-dropdown-menu` 2.1.24,
+  `@radix-ui/react-context-menu` 2.3.7 and `@radix-ui/react-alert-dialog`
+  1.1.23 (MIT). Measured with esbuild (minified, React external): 30.9, 31.2
+  and 13.7 kB gzipped alone, 33.5 kB together, and **13.5 kB** on top of the
+  Radix packages already in the app (they share the menu, popper and focus
+  code with Tooltip, Toast, Tabs and Switch).
+- **Bundle** (`pnpm --filter @repo/web build`, gzipped): initial JS 90.2 kB
+  (unchanged). `/hours` loads its 0.3 kB route chunk, the hours feature chunk
+  (36.6 kB, shared with `/hours/settings`, with the three Radix packages) and
+  `@repo/domain` with `temporal-polyfill` (20.2 kB, shared): 57 kB of lazy JS
+  against FRONTEND_QUALITY.md's advisory 150 kB, besides the chunks the
+  signed-in shell already loads.
+- **Tests:** unit tests for the row schema (the four time formats, a night
+  shift, the October clock change, both-or-neither, a break without times or
+  as long as the day, bounds), week normalisation and the navigator's limits,
+  and `calculateWeek` (equal to a run from the tracking start, both worked
+  examples, the preview before settlement, the terms in force, the row
+  warnings); component tests for `WeekView` against a stubbed API (live
+  figures, Enter saves with the right body, "+1 day" announced, Esc reverts,
+  validation on blur and on save, `PATCH` with the version, 422 details
+  inline, 409 Reload, Clear day with focus and Undo, the bank holiday badge
+  and menu, the Converted column, every state, the navigator and Go to today,
+  the unsaved-changes dialog, CSV); and tests for the four primitives and the
+  registry. `e2e/hours-week.spec.ts` runs on its own account
+  (`E2E_WEEK_USER`, terms from 5 Jan 2026, created in `global-setup.ts`), so
+  its past tracking start never moves the settings journeys': the URL
+  normalisation and the sidebar's `aria-current`; the keyboard-only journey
+  (a day with a break, a raised break, a night shift, leave, the totals,
+  Clear day and Undo from the keyboard, the guard and Esc revert, reload);
+  axe at 1280×800 on each screen and the dialog; and reflow at 320 CSS px.
+  The shared journey helpers moved to `e2e/support.ts`.
+- **Found while building:** the table's scroll container needs `relative`:
+  the fields' `sr-only` hints are absolutely positioned, and without a
+  positioned container they widened the page at 320 CSS px.
 
 ### Slice 8: export
 

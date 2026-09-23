@@ -103,9 +103,11 @@ journey (`e2e/auth.spec.ts`) runs at Playwright's default `Desktop Chrome`
 viewport. The app shell journey (`e2e/app-shell.spec.ts`) sets **1280×800 and
 1920×1080** itself, covers the shell by keyboard (skip link, sidebar toggle,
 tool links), and checks reflow at **320×200 CSS px** (a 1280×800 window at
-400%). Axe runs on every state, and once in the dark theme. There is no
-keyboard-only journey through a whole task yet, and the 400% check covers only
-the shell and the signed-in home.
+400%). Axe runs on every state, and once in the dark theme. The hours journeys
+(`e2e/hours-settings.spec.ts`, `e2e/hours-week.spec.ts`) set 1280×800, run axe
+on every screen and reflow their screens at 320 CSS px; the week journey is the
+first keyboard-only journey through a whole task (entering a week, clearing a
+day and undoing it).
 
 The gap is standing debt, not an exemption
 ([TECH_DEBT.md](TECH_DEBT.md)). Closing it — a Firefox project in CI, the design
