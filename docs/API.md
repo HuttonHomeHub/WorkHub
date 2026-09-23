@@ -280,7 +280,8 @@ The server never formats for display: the web renders instants in
 
 - The spec is generated from `@nestjs/swagger` decorators. Swagger UI is served
   at `/api/docs` **outside production only** (`apps/api/src/main.ts`).
-- Document responses with `ApiDataResponse(Dto)` / `ApiPaginatedResponse(Dto)`
+- Document responses with `ApiDataResponse(Dto)` / `ApiPaginatedResponse(Dto)`,
+  or `ApiDataListResponse(Dto)` for a computed read-model's `{ data: [] }`
   (`apps/api/src/common/openapi/api-responses.ts`) so the spec includes the
   envelope — never a bare `@ApiOkResponse({ type })`. Every endpoint has an
   `@ApiOperation` summary.

@@ -374,6 +374,40 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/time-summaries': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Totals by day, week or month for a date range (computed) */
+    get: operations['TimeSummariesController_list_v1'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/time-balances': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Balances as of a date (computed) */
+    get: operations['TimeBalancesController_get_v1'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -773,6 +807,92 @@ export interface components {
        * @example 2026-10-05
        */
       weekStart: string;
+    };
+    HoursWarningDto: {
+      /** @enum {string} */
+      code:
+        | 'BELOW_MINIMUM'
+        | 'OUTSIDE_BAND'
+        | 'MISSING_DAY'
+        | 'FLEXI_CREDIT_CAP'
+        | 'FLEXI_DEBIT_CAP'
+        | 'TOIL_UNUSED'
+        | 'TOIL_NOT_EARNED'
+        | 'LEAVE_OVER_ALLOWANCE'
+        | 'BREAK_RAISED'
+        | 'INVALID_SPAN'
+        | 'TIME_OFF_OVER_TARGET';
+      /** Format: date */
+      date: string;
+    };
+    SummaryGroupDto: {
+      /** @description The date, the week’s Monday, or YYYY-MM. */
+      key: string;
+      /**
+       * Format: date
+       * @description First day of the group.
+       */
+      start: string;
+      /**
+       * Format: date
+       * @description Day after the group (exclusive).
+       */
+      end: string;
+      targetMinutes: number;
+      creditedMinutes: number;
+      workedMinutes: number;
+      leaveMinutes: number;
+      bankHolidayMinutes: number;
+      rawFlexiMinutes: number;
+      convertedMinutes: number;
+      /** @description Day flexi less month-end debits; adjustments are in the balance only. */
+      flexiMinutes: number;
+      toilMinutes: number;
+      toilTakenMinutes: number;
+      toilUnusedMinutes: number;
+      overtimePaidMinutes: number;
+      overtimeUnpaidMinutes: number;
+      /** @description Flexi balance at the end of the group, adjustments included. */
+      flexiBalanceEndMinutes: number;
+      /**
+       * @description Week groups only.
+       * @enum {string}
+       */
+      conversion?: 'OFF' | 'PREVIEW' | 'APPLIED';
+      /**
+       * Format: date
+       * @description Week groups only: the last working day.
+       */
+      settlementDate?: string | null;
+      /** @description Week groups only: E, the net positive flexi. */
+      excessMinutes?: number;
+      /** @description Week groups only: TOIL from the conversion (preview or applied). */
+      conversionToilMinutes?: number;
+      /** @description Week groups only: paid overtime from the conversion. */
+      conversionOvertimePaidMinutes?: number;
+      /** @description Week groups only: unpaid overtime from the conversion. */
+      conversionOvertimeUnpaidMinutes?: number;
+      warnings: components['schemas']['HoursWarningDto'][];
+    };
+    TimeBalancesDto: {
+      /** Format: date */
+      asOf: string;
+      /**
+       * Format: date
+       * @description Null with no terms.
+       */
+      trackingStart: string | null;
+      /** @description Flexi balance at the end of asOf. */
+      flexiMinutes: number;
+      /** @description TOIL converted in the month of asOf. */
+      toilMonthMinutes: number;
+      toilTakenMonthMinutes: number;
+      toilCapMinutes: number;
+      leaveAllowanceMinutes: number;
+      leaveUsedMinutes: number;
+      leaveRemainingMinutes: number;
+      overtimePaidYearMinutes: number;
+      overtimeUnpaidYearMinutes: number;
     };
   };
   responses: never;
@@ -1878,6 +1998,59 @@ export interface operations {
           [name: string]: unknown;
         };
         content?: never;
+      };
+    };
+  };
+  TimeSummariesController_list_v1: {
+    parameters: {
+      query: {
+        /** @description Start (inclusive). */
+        from: string;
+        /** @description End (exclusive); after from, at most 366 days on. */
+        to: string;
+        groupBy?: 'day' | 'week' | 'month';
+        /** @description Today in Europe/London, from the caller: what counts and what has settled. */
+        asOf: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['SummaryGroupDto'][];
+          };
+        };
+      };
+    };
+  };
+  TimeBalancesController_get_v1: {
+    parameters: {
+      query: {
+        /** @description Today in Europe/London, from the caller. */
+        asOf: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['TimeBalancesDto'];
+          };
+        };
       };
     };
   };

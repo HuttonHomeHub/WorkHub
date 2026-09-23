@@ -1983,6 +1983,123 @@
         "summary": "Switch a week's excess conversion off",
         "tags": ["Hours"]
       }
+    },
+    "/api/v1/time-summaries": {
+      "get": {
+        "operationId": "TimeSummariesController_list_v1",
+        "parameters": [
+          {
+            "name": "from",
+            "required": true,
+            "in": "query",
+            "description": "Start (inclusive).",
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": true,
+            "in": "query",
+            "description": "End (exclusive); after from, at most 366 days on.",
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "name": "groupBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "week",
+              "type": "string",
+              "enum": ["day", "week", "month"]
+            }
+          },
+          {
+            "name": "asOf",
+            "required": true,
+            "in": "query",
+            "description": "Today in Europe/London, from the caller: what counts and what has settled.",
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/SummaryGroupDto"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Totals by day, week or month for a date range (computed)",
+        "tags": ["Hours"]
+      }
+    },
+    "/api/v1/time-balances": {
+      "get": {
+        "operationId": "TimeBalancesController_get_v1",
+        "parameters": [
+          {
+            "name": "asOf",
+            "required": true,
+            "in": "query",
+            "description": "Today in Europe/London, from the caller.",
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/TimeBalancesDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Balances as of a date (computed)",
+        "tags": ["Hours"]
+      }
     }
   },
   "info": {
@@ -2920,6 +3037,205 @@
           }
         },
         "required": ["weekStart"]
+      },
+      "HoursWarningDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "BELOW_MINIMUM",
+              "OUTSIDE_BAND",
+              "MISSING_DAY",
+              "FLEXI_CREDIT_CAP",
+              "FLEXI_DEBIT_CAP",
+              "TOIL_UNUSED",
+              "TOIL_NOT_EARNED",
+              "LEAVE_OVER_ALLOWANCE",
+              "BREAK_RAISED",
+              "INVALID_SPAN",
+              "TIME_OFF_OVER_TARGET"
+            ]
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        "required": ["code", "date"]
+      },
+      "SummaryGroupDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "The date, the week’s Monday, or YYYY-MM."
+          },
+          "start": {
+            "type": "string",
+            "format": "date",
+            "description": "First day of the group."
+          },
+          "end": {
+            "type": "string",
+            "format": "date",
+            "description": "Day after the group (exclusive)."
+          },
+          "targetMinutes": {
+            "type": "number"
+          },
+          "creditedMinutes": {
+            "type": "number"
+          },
+          "workedMinutes": {
+            "type": "number"
+          },
+          "leaveMinutes": {
+            "type": "number"
+          },
+          "bankHolidayMinutes": {
+            "type": "number"
+          },
+          "rawFlexiMinutes": {
+            "type": "number"
+          },
+          "convertedMinutes": {
+            "type": "number"
+          },
+          "flexiMinutes": {
+            "type": "number",
+            "description": "Day flexi less month-end debits; adjustments are in the balance only."
+          },
+          "toilMinutes": {
+            "type": "number"
+          },
+          "toilTakenMinutes": {
+            "type": "number"
+          },
+          "toilUnusedMinutes": {
+            "type": "number"
+          },
+          "overtimePaidMinutes": {
+            "type": "number"
+          },
+          "overtimeUnpaidMinutes": {
+            "type": "number"
+          },
+          "flexiBalanceEndMinutes": {
+            "type": "number",
+            "description": "Flexi balance at the end of the group, adjustments included."
+          },
+          "conversion": {
+            "type": "string",
+            "enum": ["OFF", "PREVIEW", "APPLIED"],
+            "description": "Week groups only."
+          },
+          "settlementDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Week groups only: the last working day."
+          },
+          "excessMinutes": {
+            "type": "number",
+            "description": "Week groups only: E, the net positive flexi."
+          },
+          "conversionToilMinutes": {
+            "type": "number",
+            "description": "Week groups only: TOIL from the conversion (preview or applied)."
+          },
+          "conversionOvertimePaidMinutes": {
+            "type": "number",
+            "description": "Week groups only: paid overtime from the conversion."
+          },
+          "conversionOvertimeUnpaidMinutes": {
+            "type": "number",
+            "description": "Week groups only: unpaid overtime from the conversion."
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HoursWarningDto"
+            }
+          }
+        },
+        "required": [
+          "key",
+          "start",
+          "end",
+          "targetMinutes",
+          "creditedMinutes",
+          "workedMinutes",
+          "leaveMinutes",
+          "bankHolidayMinutes",
+          "rawFlexiMinutes",
+          "convertedMinutes",
+          "flexiMinutes",
+          "toilMinutes",
+          "toilTakenMinutes",
+          "toilUnusedMinutes",
+          "overtimePaidMinutes",
+          "overtimeUnpaidMinutes",
+          "flexiBalanceEndMinutes",
+          "warnings"
+        ]
+      },
+      "TimeBalancesDto": {
+        "type": "object",
+        "properties": {
+          "asOf": {
+            "type": "string",
+            "format": "date"
+          },
+          "trackingStart": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Null with no terms."
+          },
+          "flexiMinutes": {
+            "type": "number",
+            "description": "Flexi balance at the end of asOf."
+          },
+          "toilMonthMinutes": {
+            "type": "number",
+            "description": "TOIL converted in the month of asOf."
+          },
+          "toilTakenMonthMinutes": {
+            "type": "number"
+          },
+          "toilCapMinutes": {
+            "type": "number"
+          },
+          "leaveAllowanceMinutes": {
+            "type": "number"
+          },
+          "leaveUsedMinutes": {
+            "type": "number"
+          },
+          "leaveRemainingMinutes": {
+            "type": "number"
+          },
+          "overtimePaidYearMinutes": {
+            "type": "number"
+          },
+          "overtimeUnpaidYearMinutes": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "asOf",
+          "trackingStart",
+          "flexiMinutes",
+          "toilMonthMinutes",
+          "toilTakenMonthMinutes",
+          "toilCapMinutes",
+          "leaveAllowanceMinutes",
+          "leaveUsedMinutes",
+          "leaveRemainingMinutes",
+          "overtimePaidYearMinutes",
+          "overtimeUnpaidYearMinutes"
+        ]
       }
     }
   }

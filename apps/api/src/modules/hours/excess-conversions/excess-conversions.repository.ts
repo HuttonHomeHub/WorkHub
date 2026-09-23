@@ -33,6 +33,23 @@ export class ExcessConversionsRepository {
     return db.excessConversion.create({ data });
   }
 
+  /**
+   * Every active row matching `where`, unpaginated — for the hours
+   * calculation, whose callers bound `where` by owner and date range.
+   */
+  async findAllActive(
+    params: {
+      where: Prisma.ExcessConversionWhereInput;
+      orderBy: Prisma.ExcessConversionOrderByWithRelationInput[];
+    },
+    db: Prisma.TransactionClient = this.prisma,
+  ): Promise<ExcessConversion[]> {
+    return db.excessConversion.findMany({
+      where: this.active(params.where),
+      orderBy: params.orderBy,
+    });
+  }
+
   async findActiveById(
     id: string,
     db: Prisma.TransactionClient = this.prisma,

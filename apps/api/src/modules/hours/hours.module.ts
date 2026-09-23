@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { ExcessConversionsModule } from './excess-conversions/excess-conversions.module';
 import { LeaveYearsModule } from './leave-years/leave-years.module';
 import { TimeAdjustmentsModule } from './time-adjustments/time-adjustments.module';
+import { TimeSummariesModule } from './time-summaries/time-summaries.module';
 import { WorkDaysModule } from './work-days/work-days.module';
 import { WorkTermsModule } from './work-terms/work-terms.module';
 
@@ -18,6 +19,7 @@ import { WorkTermsModule } from './work-terms/work-terms.module';
     TimeAdjustmentsModule,
     WorkDaysModule,
     ExcessConversionsModule,
+    TimeSummariesModule,
   ],
 })
 export class HoursModule {}

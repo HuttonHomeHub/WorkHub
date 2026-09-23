@@ -59,6 +59,20 @@ export class WorkTermsRepository {
     });
   }
 
+  /**
+   * Every active row matching `where`, unpaginated — for the hours
+   * calculation, whose callers bound `where` by owner and date range.
+   */
+  async findAllActive(
+    params: {
+      where: Prisma.WorkTermWhereInput;
+      orderBy: Prisma.WorkTermOrderByWithRelationInput[];
+    },
+    db: Prisma.TransactionClient = this.prisma,
+  ): Promise<WorkTerm[]> {
+    return db.workTerm.findMany({ where: this.active(params.where), orderBy: params.orderBy });
+  }
+
   async findActiveById(
     id: string,
     db: Prisma.TransactionClient = this.prisma,

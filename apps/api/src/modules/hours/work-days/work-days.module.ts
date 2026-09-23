@@ -18,5 +18,7 @@ import { WorkDaysService } from './work-days.service';
   imports: [WorkTermsModule, CoreModule],
   controllers: [WorkDaysController],
   providers: [WorkDaysService, WorkDaysRepository],
+  // Read by the hours calculation (time-summaries, same tool).
+  exports: [WorkDaysService],
 })
 export class WorkDaysModule {}

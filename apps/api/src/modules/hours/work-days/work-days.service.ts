@@ -95,6 +95,17 @@ export class WorkDaysService {
     return { items, meta: { nextCursor, hasMore } };
   }
 
+  /** The caller's days in `[from, to)`, for the hours calculation. */
+  async listForCalculation(principal: Principal, from: string, to: string): Promise<WorkDay[]> {
+    return this.repository.findAllActive({
+      where: {
+        ownerId: principal.userId,
+        date: { gte: toDbDate(from), lt: toDbDate(to) },
+      },
+      orderBy: [{ date: 'asc' }],
+    });
+  }
+
   async getById(principal: Principal, id: string): Promise<WorkDay> {
     return this.findOwnedOrThrow(principal, id);
   }

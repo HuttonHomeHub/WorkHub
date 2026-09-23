@@ -66,6 +66,14 @@ export class LeaveYearsService {
     return { items, meta: { nextCursor, hasMore } };
   }
 
+  /** The caller's leave years, for the hours calculation. */
+  async listForCalculation(principal: Principal): Promise<LeaveYear[]> {
+    return this.repository.findAllActive({
+      where: { ownerId: principal.userId },
+      orderBy: [{ year: 'asc' }],
+    });
+  }
+
   async getById(principal: Principal, id: string): Promise<LeaveYear> {
     return this.findOwnedOrThrow(principal, id);
   }

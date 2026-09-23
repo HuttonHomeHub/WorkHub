@@ -13,5 +13,7 @@ import { LeaveYearsService } from './leave-years.service';
 @Module({
   controllers: [LeaveYearsController],
   providers: [LeaveYearsService, LeaveYearsRepository],
+  // Read by the hours calculation (time-summaries, same tool).
+  exports: [LeaveYearsService],
 })
 export class LeaveYearsModule {}

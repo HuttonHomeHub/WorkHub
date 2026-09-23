@@ -125,6 +125,21 @@ export class PublicHolidaysService {
     return rows.length > 0;
   }
 
+  /** The caller's holidays in `[from, to)` (exported for tools, ADR-0020 §3). */
+  async listForCalculation(
+    principal: Principal,
+    from: string,
+    to: string,
+  ): Promise<PublicHoliday[]> {
+    return this.repository.findAllActive({
+      where: {
+        ownerId: principal.userId,
+        date: { gte: toDbDate(from), lt: toDbDate(to) },
+      },
+      orderBy: [{ date: 'asc' }],
+    });
+  }
+
   async getById(principal: Principal, id: string): Promise<PublicHoliday> {
     return this.findOwnedOrThrow(principal, id);
   }
