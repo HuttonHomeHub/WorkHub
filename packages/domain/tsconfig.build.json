@@ -1,0 +1,5 @@
+{
+  "extends": "./tsconfig.json",
+  // Tests stay out of dist/.
+  "exclude": ["node_modules", "dist", "src/**/*.test.ts", "src/**/test-helpers.ts"]
+}

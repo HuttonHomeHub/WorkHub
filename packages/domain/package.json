@@ -1,0 +1,36 @@
+{
+  "name": "@repo/domain",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Pure domain rules both apps run (ADR-0020 §5): the hours calculation engine and Europe/London time helpers on Temporal.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "source": "./src/index.ts",
+      "types": "./src/index.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "clean": "rimraf dist .turbo *.tsbuildinfo"
+  },
+  "dependencies": {
+    "temporal-polyfill": "^1.0.5"
+  },
+  "devDependencies": {
+    "@repo/config": "workspace:*",
+    "eslint": "^9.18.0",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}
