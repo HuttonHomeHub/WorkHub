@@ -32,8 +32,6 @@ finished item; move a scheduled one to PRODUCT.md.
 - `S` Drop the unsupported webkit project from `apps/web/playwright.config.ts`.
 - `S` A keyboard-only Playwright journey through sign-in, a tool and sign-out,
   and a 400%-zoom reflow check on every screen (the app shell has both).
-- `S` Restore endpoint in the reference template so undo toasts can reverse a
-  soft delete.
 - `S` Cross-tab sign-out and theme sync (`BroadcastChannel` or `storage` event).
 - `S` Report client errors (root and route boundaries) to the API log.
 - `S` Dependency licence check in CI.
@@ -41,8 +39,6 @@ finished item; move a scheduled one to PRODUCT.md.
   exception filter, replacing today's `string[]` (API.md).
 - `S` Pagination: optional `meta.total` and a maximum `limit` of 200 in
   `PaginationQueryDto` (today 100).
-- `S` Transaction-capable repositories in the reference template: an optional
-  `db: Prisma.TransactionClient` on each method (DATABASE.md → Transactions).
 - `S` A `Clock` provider and a fixed clock for tests (DATABASE.md → Time).
 - `S` Idempotent create with an optional client UUID v7 `id` in the reference
   template (API.md).

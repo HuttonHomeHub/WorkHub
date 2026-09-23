@@ -18,6 +18,14 @@ implemented everywhere; each is tracked in [BACKLOG.md](BACKLOG.md) or PRODUCT.m
 - Resources are plural nouns: `/api/v1/time-entries`, `/api/v1/time-entries/:id`.
   No verbs in paths; an action that is not CRUD is a sub-resource
   (`POST /api/v1/invoices/:id/send`).
+- **Restore** undoes a soft delete: `POST /api/v1/<resource>/:id/restore` →
+  **200** with the restored row and a new `version`. It is idempotent (an
+  active row is returned unchanged); a missing or another owner's row is 404,
+  and an active row holding the same unique key is 409.
+- **Names are app-wide.** Resources are named for what they hold, never for the
+  tool that owns them (`/api/v1/work-days`, not `/api/v1/hours/days`), so they
+  must be specific (`time-adjustments`, not `adjustments`). A tool is visible
+  through its OpenAPI tag (ADR-0020 §4).
 - `GET` reads (safe, no side effects), `POST` creates, `PATCH` partially
   updates, `DELETE` removes (soft delete — [DATABASE.md](DATABASE.md#soft-delete)).
   `PUT` is not used.
@@ -197,6 +205,16 @@ parameters:
 - Filters and sort fields are explicit DTO properties — never pass a client
   object straight into a Prisma `where` or `orderBy`.
 
+### Computed read-models
+
+A summary or balance that is computed, not stored (ADR-0020 §4), is a `GET`
+collection under its own plural noun (`/api/v1/time-summaries`):
+
+- bounded by a validated date range (`from` inclusive, `to` exclusive, at most
+  366 days; otherwise **422**) instead of a cursor;
+- the normal `{ data }` envelope with no `meta`;
+- never written — no `POST`, `PATCH` or `DELETE`.
+
 ## Idempotent create (planned)
 
 A create may accept an optional client-generated `id` (UUID v7) so a retried
@@ -269,6 +287,8 @@ The server never formats for display: the web renders instants in
 - [ ] Body and query DTOs bound every field; 400 vs 422 as above
 - [ ] Response DTO exposes no internal columns; instants, dates and pence as above
 - [ ] Lists: `limit`/`cursor`/`sort`/`order`, allow-listed sort, indexed, owner-scoped
+      (computed read-models: a bounded date range instead)
+- [ ] Soft-deleting resources have `POST /:id/restore`
 - [ ] Errors use the generic codes (or catalogue codes once they exist)
 - [ ] Envelope-aware OpenAPI decorators; `pnpm contract:generate` committed
 - [ ] API e2e tests for each status code the endpoint returns ([TESTING.md](TESTING.md))

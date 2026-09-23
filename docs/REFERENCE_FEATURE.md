@@ -2,7 +2,7 @@
 
 > **This is the canonical implementation standard for backend features**
 > (ADR-0015). New features are generated from the reference template with
-> `pnpm gen:feature <entity>` unless a documented architectural reason (an ADR)
+> `pnpm gen:feature <entity> --tool <tool>` (or `--core`) unless a documented architectural reason (an ADR)
 > says otherwise. The template demonstrates every engineering standard in one
 > small feature, with **no business logic**.
 >
@@ -20,7 +20,7 @@ rules — if a rule and this page ever disagree, the linked standard wins.
 ## When to use it
 
 - **Every new backend feature** (a resource with endpoints and/or persistence)
-  starts with `pnpm gen:feature`.
+  starts with `pnpm gen:feature`, in a tool or in the shared core (ADR-0020).
 - Use it for the **shape** — layers, naming, envelopes, authorisation, tests —
   not the content. `name`, `description`, and `status` are placeholders; replace
   them with your entity's fields.
@@ -31,15 +31,23 @@ rules — if a rule and this page ever disagree, the linked standard wins.
 
 1. **Run the delivery process first** ([`PROCESS.md`](PROCESS.md)): an approved
    feature doc in [`docs/features/`](features/README.md).
-2. **Generate it:** `pnpm gen:feature <entity>` — singular, kebab-case
-   (e.g. `time-entry`; pass `--plural` if the naive plural is wrong). It writes,
-   with every rename done consistently:
-   - `apps/api/src/modules/<plural>/` — module, controller, service,
-     repository, DTOs, unit tests
+2. **Generate it:** `pnpm gen:feature <entity> --tool <tool>` — the entity
+   singular and kebab-case (e.g. `work-day --tool hours`; pass `--plural` if
+   the naive plural is wrong). Use `--core` instead for a record more than one
+   tool needs ([ADR-0020](adr/0020-modular-tools-over-shared-core-data.md) §2);
+   without either flag the generator refuses. It writes, with every rename done
+   consistently:
+   - `apps/api/src/modules/<tool>/<plural>/` — module, controller, service,
+     repository, DTOs, unit tests; the controller's OpenAPI tag is the tool's
+     (`Hours`, or `Core`)
    - `apps/api/test/<plural>.e2e-spec.ts` — API e2e tests
-   - the model (with an `owner` → `User` relation) and the `User` back-relation
-     in `apps/api/prisma/schema.prisma`
-   - the module registration in `apps/api/src/app.module.ts`
+   - the model (with an `owner` → `User` relation) under the tool's
+     `// === Tool: <tool> ===` banner (or `// === Core ===`) in
+     `apps/api/prisma/schema.prisma`, and the `User` back-relation
+   - the entity module in the group module `modules/<tool>/<tool>.module.ts`
+     (`HoursModule`). The first feature in a tool creates the group and
+     registers it in `apps/api/src/app.module.ts`. `CoreModule` also exports
+     its entity modules, so a tool imports `CoreModule` to use a core service.
 3. **Replace the placeholder fields** with your entity's fields in the model,
    DTOs, service rules, and tests. Design the schema with the
    **database-architect** agent before writing the migration
@@ -64,17 +72,19 @@ rules — if a rule and this page ever disagree, the linked standard wins.
 ## Backend feature anatomy
 
 ```text
-apps/api/src/modules/<feature>/
-├── <feature>.module.ts          # DI wiring (controller, service, repository)
-├── <feature>.controller.ts      # HTTP surface (thin)
-├── <feature>.service.ts         # Business logic / use cases / authorisation
-├── <feature>.repository.ts      # Data access (the only Prisma consumer)
-├── <feature>.service.spec.ts    # Unit tests for service rules (ownership, conflict, cursor)
-└── dto/
-    ├── create-<entity>.dto.ts        # Request DTO — no owner field
-    ├── update-<entity>.dto.ts        # includes `version` (optimistic lock)
-    ├── list-<entities>-query.dto.ts  # pagination + filter + sort
-    └── <entity>-response.dto.ts      # safe response shape (no internal columns)
+apps/api/src/modules/<tool>/     # or modules/core/ (CoreModule)
+├── <tool>.module.ts             # The group: imports each entity module (created on first use)
+└── <feature>/                   # One per entity
+    ├── <feature>.module.ts          # DI wiring (controller, service, repository)
+    ├── <feature>.controller.ts      # HTTP surface (thin)
+    ├── <feature>.service.ts         # Business logic / use cases / authorisation
+    ├── <feature>.repository.ts      # Data access (the only Prisma consumer)
+    ├── <feature>.service.spec.ts    # Unit tests for service rules (ownership, conflict, cursor)
+    └── dto/
+        ├── create-<entity>.dto.ts        # Request DTO — no owner field
+        ├── update-<entity>.dto.ts        # includes `version` (optimistic lock)
+        ├── list-<entities>-query.dto.ts  # pagination + filter + sort
+        └── <entity>-response.dto.ts      # safe response shape (no internal columns)
 apps/api/test/<feature>.e2e-spec.ts   # API e2e (Supertest + real Postgres)
 ```
 
@@ -87,7 +97,8 @@ apps/api/test/<feature>.e2e-spec.ts   # API e2e (Supertest + real Postgres)
   transactions; throws typed domain errors (never HTTP exceptions); no Prisma
   queries.
 - **Repository** — the only Prisma consumer. Centralises the soft-delete filter
-  and the optimistic-locked update; swapping the ORM would touch only this file.
+  and the optimistic-locked update; every method takes an optional transaction
+  client. Swapping the ORM would touch only this file.
 
 ### Standard → canonical rule → where it is demonstrated
 
@@ -100,23 +111,23 @@ apps/api/test/<feature>.e2e-spec.ts   # API e2e (Supertest + real Postgres)
 | Owner-based access (anti-IDOR)                      | [`SECURITY_STANDARDS.md` → Authorisation](SECURITY_STANDARDS.md#authorisation--ownership-adr-0016)     | `ReferenceService.findOwnedOrThrow`                  |
 | Errors (domain errors → envelope)                   | [`BACKEND_ARCHITECTURE.md` → Errors](BACKEND_ARCHITECTURE.md#errors)                                   | `ReferenceService`, `common/errors/`                 |
 | Schema, soft delete, timestamps, optimistic locking | [`DATABASE.md`](DATABASE.md)                                                                           | `schema.reference.prisma`, `reference.repository.ts` |
+| Restore (undo a soft delete)                        | [`DATABASE.md` → Soft delete](DATABASE.md#soft-delete), [`API.md`](API.md#paths-and-verbs)             | `ReferenceService.restore`, `POST /:id/restore`      |
 | Structured, correlated logging                      | [`OBSERVABILITY.md`](OBSERVABILITY.md)                                                                 | `ReferenceService` (`PinoLogger`)                    |
 | Typed configuration (no `process.env`)              | [`BACKEND_ARCHITECTURE.md` → Configuration](BACKEND_ARCHITECTURE.md#configuration)                     | `AppConfigService` (live)                            |
 | API e2e + unit tests                                | [`TESTING.md`](TESTING.md)                                                                             | `reference.e2e-spec.ts`, `reference.service.spec.ts` |
-| Transactions, time                                  | [`DATABASE.md` → Transactions](DATABASE.md#transactions), [Time](DATABASE.md#time)                     | Not yet — see below                                  |
+| Transactions                                        | [`DATABASE.md` → Transactions](DATABASE.md#transactions)                                               | `reference.repository.ts` (the optional `db` client) |
+| Time                                                | [`DATABASE.md` → Time](DATABASE.md#time)                                                               | Not yet — see below                                  |
 | Security checklist                                  | [`SECURITY_STANDARDS.md` → Checklist](SECURITY_STANDARDS.md#checklist)                                 | —                                                    |
 | Performance                                         | [`PERFORMANCE.md`](PERFORMANCE.md)                                                                     | —                                                    |
 
 ### Transactions and time in new code
 
-The template has neither yet; follow the standard when a feature needs them:
-
-- **Transactions:** when a use case makes two or more writes that must succeed
-  together, the service opens `prisma.$transaction(async (tx) => …)` and passes
-  `tx` to repository methods that take an optional
-  `db: Prisma.TransactionClient = this.prisma` parameter
-  ([`DATABASE.md` → Transactions](DATABASE.md#transactions)). Adding that
-  parameter to the template is a backlog item.
+- **Transactions:** every template repository method takes an optional
+  `db: Prisma.TransactionClient = this.prisma`. When a use case makes two or
+  more writes that must succeed together, the service injects `PrismaService`,
+  opens `prisma.$transaction(async (tx) => …)` and passes `tx` to each call
+  ([`DATABASE.md` → Transactions](DATABASE.md#transactions)). The template's
+  own use cases are single writes, so its service opens none.
 - **Time:** store instants as `timestamptz` (UTC) and calendar dates as `date`;
   compute "today" in `Europe/London`. The template's `new Date()` for
   `deletedAt` is bookkeeping; rules that depend on "now" wait for the planned
@@ -182,10 +193,11 @@ requirement.
 
 ## Keeping the template healthy
 
-`scripts/verify-template.sh` generates a throwaway `sample-widget` feature
-through `pnpm gen:feature`, then type-checks, lints, and unit-tests it; with
-`--e2e` it also pushes the schema to `DATABASE_URL` and runs the generated API
-e2e test. CI runs both modes. It backs up and restores every file it touches.
+`scripts/verify-template.sh` generates two throwaway features through
+`pnpm gen:feature` — `sample-widget --tool sample-kit` (a new tool, so it also
+creates and registers the group module) and `sample-gadget --core` — then
+type-checks, lints, and unit-tests them; with `--e2e` it also pushes the schema
+to `DATABASE_URL` and runs the generated API e2e tests. CI runs both modes. It backs up and restores every file it touches.
 
 When you change a cross-cutting standard (an envelope, a guard, the auth model),
 **update the template in the same PR** and run the script. If you add a token

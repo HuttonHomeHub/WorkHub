@@ -1,6 +1,6 @@
 # Hours tracker
 
-- **Status:** Approved (2026-09-16). Building from slice 1 of 10
+- **Status:** Approved (2026-09-16). Building: slice 2 of 10 done
   ([build order](#slices)).
 - **Change class:** Feature, built on
   [ADR-0020](../adr/0020-modular-tools-over-shared-core-data.md) (Architectural,
@@ -798,3 +798,38 @@ None.
   `e2e/app-shell.spec.ts`. That spec covers 1280×800 and 1920×1080 (expanded,
   rail with tooltips, persistence including the pre-paint script alone, keyboard
   use, axe in light and dark) and reflow at 320×200.
+
+### Slice 2: template and generator groundwork
+
+- **Restore:** the template has `POST /:id/restore` → 200 with the row and a
+  new `version`. It is idempotent: an active row comes back unchanged, so a
+  double undo is harmless. A missing or another owner's row is the usual 404,
+  and an active row holding the same unique key is a 409 from the partial unique
+  index (`P2002`). A restore that loses a race to a concurrent one returns the
+  row too. The repository's `findById` is the one read that skips `active()`,
+  so every 404 case costs the same single read (security review).
+- **Transactions:** every template repository method takes an optional
+  `db: Prisma.TransactionClient = this.prisma`. The template's own use cases
+  are single writes, so its service opens no transaction.
+- **Generator:** `pnpm gen:feature <entity> --tool <tool>` or `--core`; with
+  neither it refuses, and `core` is reserved as a tool id. It writes
+  `modules/<group>/<plural>/` (shared imports get one more `../`), sets the
+  OpenAPI tag to the group's name (`Hours`, `Core`), places the model under
+  `// === Tool: <tool> ===` or `// === Core ===` (core before the first tool),
+  and adds the entity module to `<Group>Module`, creating the group and
+  registering it in `AppModule` on first use. `CoreModule` also exports its
+  entity modules. The e2e test stays flat in `apps/api/test/`.
+- **Found while building:** renaming can reorder imports alphabetically, so a
+  generated controller could fail `import/order` depending on the entity name
+  (`sample-widget` passed by luck; `work-day` did not). The generator now runs
+  `prisma generate` and then `eslint --fix` on what it wrote.
+- **verify-template** generates `sample-widget --tool sample-kit` (a new tool)
+  and `sample-gadget --core`, and restores any real `core.module.ts` it
+  touched, so it keeps working once core has real modules (slice 4).
+- **Docs:** REFERENCE_FEATURE, BACKEND_ARCHITECTURE (new _Tools and core_
+  section), FRONTEND_ARCHITECTURE (the `features/core` exception and undo via
+  restore), API.md (restore, app-wide names, computed read-models), DATABASE.md
+  and ARCHITECTURE.md; two BACKLOG items removed.
+- **For slice 6 (backend review):** the template has no unique key besides
+  `id`, so no test reaches restore's 409. `work_days`' restore e2e adds that
+  case, proving `P2002` → 409 fires from restore's `updateMany`.

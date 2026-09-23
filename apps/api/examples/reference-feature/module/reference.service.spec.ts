@@ -36,9 +36,11 @@ describe('ReferenceService', () => {
   let repository: {
     create: ReturnType<typeof vi.fn>;
     findActiveById: ReturnType<typeof vi.fn>;
+    findById: ReturnType<typeof vi.fn>;
     findManyActive: ReturnType<typeof vi.fn>;
     updateIfVersionMatches: ReturnType<typeof vi.fn>;
     softDelete: ReturnType<typeof vi.fn>;
+    restore: ReturnType<typeof vi.fn>;
   };
   let service: ReferenceService;
   let owner: Principal;
@@ -51,9 +53,11 @@ describe('ReferenceService', () => {
     repository = {
       create: vi.fn(),
       findActiveById: vi.fn(),
+      findById: vi.fn(),
       findManyActive: vi.fn(),
       updateIfVersionMatches: vi.fn(),
       softDelete: vi.fn(),
+      restore: vi.fn(),
     };
     service = new ReferenceService(repository as unknown as ReferenceRepository, logger as never);
     owner = new Principal(USER, 'owner@example.com', 'Owner');
@@ -145,6 +149,49 @@ describe('ReferenceService', () => {
       repository.findActiveById.mockResolvedValue(makeItem({ ownerId: USER }));
       await expect(service.remove(otherUser, ITEM_ID)).rejects.toBeInstanceOf(NotFoundError);
       expect(repository.softDelete).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('restore (undo a soft delete)', () => {
+    it('restores a deleted item the caller owns', async () => {
+      repository.findById.mockResolvedValue(makeItem({ deletedAt: new Date() }));
+      repository.restore.mockResolvedValue(1);
+      repository.findActiveById.mockResolvedValue(makeItem({ version: 2 }));
+
+      const result = await service.restore(owner, ITEM_ID);
+
+      expect(repository.restore).toHaveBeenCalledWith(ITEM_ID);
+      expect(result.version).toBe(2);
+    });
+
+    it('returns an item that is already active unchanged (idempotent)', async () => {
+      repository.findById.mockResolvedValue(makeItem());
+
+      const result = await service.restore(owner, ITEM_ID);
+
+      expect(result.id).toBe(ITEM_ID);
+      expect(repository.restore).not.toHaveBeenCalled();
+    });
+
+    it('throws NotFound when the item does not exist', async () => {
+      repository.findById.mockResolvedValue(null);
+      await expect(service.restore(owner, ITEM_ID)).rejects.toBeInstanceOf(NotFoundError);
+    });
+
+    it("refuses to restore another user's item", async () => {
+      repository.findById.mockResolvedValue(makeItem({ ownerId: USER, deletedAt: new Date() }));
+      await expect(service.restore(otherUser, ITEM_ID)).rejects.toBeInstanceOf(NotFoundError);
+      expect(repository.restore).not.toHaveBeenCalled();
+    });
+
+    it('returns the row when a concurrent request restored it first', async () => {
+      repository.findById.mockResolvedValue(makeItem({ deletedAt: new Date() }));
+      repository.restore.mockResolvedValue(0);
+      repository.findActiveById.mockResolvedValue(makeItem({ version: 2 }));
+
+      const result = await service.restore(owner, ITEM_ID);
+
+      expect(result.version).toBe(2);
     });
   });
 

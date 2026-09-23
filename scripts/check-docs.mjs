@@ -173,6 +173,14 @@ const STALE_TERMS = [
     /max-w-5xl|hidden sm:inline|header-only shell|no sidebar component|today the shell is header \+ content/i,
     'the shell has the tools sidebar, a skip link and content up to --width-page (docs/UX_STANDARDS.md)',
   ],
+  [
+    /does not generate one yet|restore endpoint is in BACKLOG|takes? no transaction client/i,
+    'the reference template now has restore and transaction-ready repositories',
+  ],
+  [
+    /modules\/<feature>\/ +# generated|gen:feature <entity>`(?! --)/,
+    'features are generated into a tool or core: pnpm gen:feature <entity> --tool <tool> | --core (ADR-0020)',
+  ],
 ];
 
 // Agents and skills must be discoverable under the name their file implies.

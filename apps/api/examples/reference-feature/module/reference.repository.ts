@@ -10,8 +10,13 @@ import { PrismaService } from '../../prisma/prisma.service';
  *
  * It also centralises the **soft-delete filter**: every read goes through
  * {@link active}, so no caller can forget `deletedAt: null` (docs/DATABASE.md).
+ * The one exception is {@link findById}, which restore needs.
  * (A Prisma client extension could enforce this globally across all models;
  * the per-repository form keeps each feature self-contained.)
+ *
+ * Every method takes an optional `db` client, defaulting to the shared one, so
+ * a service can run several calls in one `prisma.$transaction(async (tx) => …)`
+ * by passing `tx` (docs/DATABASE.md → Transactions).
  */
 @Injectable()
 export class ReferenceRepository {
@@ -22,21 +27,38 @@ export class ReferenceRepository {
     return { ...where, deletedAt: null };
   }
 
-  async create(data: Prisma.ReferenceItemUncheckedCreateInput): Promise<ReferenceItem> {
-    return this.prisma.referenceItem.create({ data });
+  async create(
+    data: Prisma.ReferenceItemUncheckedCreateInput,
+    db: Prisma.TransactionClient = this.prisma,
+  ): Promise<ReferenceItem> {
+    return db.referenceItem.create({ data });
   }
 
-  async findActiveById(id: string): Promise<ReferenceItem | null> {
-    return this.prisma.referenceItem.findFirst({ where: this.active({ id }) });
+  async findActiveById(
+    id: string,
+    db: Prisma.TransactionClient = this.prisma,
+  ): Promise<ReferenceItem | null> {
+    return db.referenceItem.findFirst({ where: this.active({ id }) });
   }
 
-  async findManyActive(params: {
-    where: Prisma.ReferenceItemWhereInput;
-    orderBy: Prisma.ReferenceItemOrderByWithRelationInput[];
-    take: number;
-    cursor?: string;
-  }): Promise<ReferenceItem[]> {
-    return this.prisma.referenceItem.findMany({
+  /** A row by id, deleted or not — only restore may read deleted rows. */
+  async findById(
+    id: string,
+    db: Prisma.TransactionClient = this.prisma,
+  ): Promise<ReferenceItem | null> {
+    return db.referenceItem.findUnique({ where: { id } });
+  }
+
+  async findManyActive(
+    params: {
+      where: Prisma.ReferenceItemWhereInput;
+      orderBy: Prisma.ReferenceItemOrderByWithRelationInput[];
+      take: number;
+      cursor?: string;
+    },
+    db: Prisma.TransactionClient = this.prisma,
+  ): Promise<ReferenceItem[]> {
+    return db.referenceItem.findMany({
       where: this.active(params.where),
       orderBy: params.orderBy,
       take: params.take,
@@ -53,18 +75,32 @@ export class ReferenceRepository {
     id: string,
     expectedVersion: number,
     data: Prisma.ReferenceItemUpdateManyMutationInput,
+    db: Prisma.TransactionClient = this.prisma,
   ): Promise<number> {
-    const result = await this.prisma.referenceItem.updateMany({
+    const result = await db.referenceItem.updateMany({
       where: this.active({ id, version: expectedVersion }),
       data,
     });
     return result.count;
   }
 
-  async softDelete(id: string): Promise<void> {
-    await this.prisma.referenceItem.update({
+  async softDelete(id: string, db: Prisma.TransactionClient = this.prisma): Promise<void> {
+    await db.referenceItem.update({
       where: { id },
       data: { deletedAt: new Date() },
     });
+  }
+
+  /**
+   * Clear `deletedAt` and bump the version, so a client holding the old
+   * version cannot overwrite the restored row. Returns the rows changed — `0`
+   * means it was restored (or purged) in the meantime.
+   */
+  async restore(id: string, db: Prisma.TransactionClient = this.prisma): Promise<number> {
+    const result = await db.referenceItem.updateMany({
+      where: { id, deletedAt: { not: null } },
+      data: { deletedAt: null, version: { increment: 1 } },
+    });
+    return result.count;
   }
 }

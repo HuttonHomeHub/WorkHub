@@ -138,19 +138,19 @@ run `pnpm contract:generate` and commit the result — CI fails on drift
 
 ## Everyday commands
 
-| Command                             | Description                             |
-| ----------------------------------- | --------------------------------------- |
-| `pnpm lint` / `pnpm lint:fix`       | Lint (and auto-fix) the workspace       |
-| `pnpm format` / `pnpm format:check` | Format / check formatting               |
-| `pnpm typecheck`                    | Type-check all packages                 |
-| `pnpm test` / `pnpm test:e2e`       | Run tests                               |
-| `pnpm build`                        | Build everything                        |
-| `pnpm commit`                       | Guided Conventional Commit              |
-| `pnpm changeset`                    | Record a running-app change for release |
-| `pnpm gen:feature <entity>`         | Generate a backend feature (template)   |
-| `pnpm contract:generate`            | Regenerate the API contract + types     |
-| `pnpm docs:check`                   | Check docs for broken links/stale terms |
-| `pnpm clean`                        | Remove build output and caches          |
+| Command                                | Description                             |
+| -------------------------------------- | --------------------------------------- |
+| `pnpm lint` / `pnpm lint:fix`          | Lint (and auto-fix) the workspace       |
+| `pnpm format` / `pnpm format:check`    | Format / check formatting               |
+| `pnpm typecheck`                       | Type-check all packages                 |
+| `pnpm test` / `pnpm test:e2e`          | Run tests                               |
+| `pnpm build`                           | Build everything                        |
+| `pnpm commit`                          | Guided Conventional Commit              |
+| `pnpm changeset`                       | Record a running-app change for release |
+| `pnpm gen:feature <entity> --tool <t>` | Generate a backend feature (template)   |
+| `pnpm contract:generate`               | Regenerate the API contract + types     |
+| `pnpm docs:check`                      | Check docs for broken links/stale terms |
+| `pnpm clean`                           | Remove build output and caches          |
 
 Versioning and releases: [RELEASING.md](RELEASING.md).
 

@@ -84,6 +84,17 @@ export class ReferenceController {
     return ReferenceItemResponseDto.from(await this.service.update(user, id, dto));
   }
 
+  @Post(':id/restore')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Restore a soft-deleted reference item (undo a delete)' })
+  @ApiDataResponse(ReferenceItemResponseDto)
+  async restore(
+    @CurrentUser() user: Principal,
+    @Param('id', ParseUuidPipe) id: string,
+  ): Promise<ReferenceItemResponseDto> {
+    return ReferenceItemResponseDto.from(await this.service.restore(user, id));
+  }
+
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Soft-delete a reference item' })

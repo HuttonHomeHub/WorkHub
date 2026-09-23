@@ -57,7 +57,7 @@ breaking OpenAPI change; a change to a CI or security gate.
   the same 404 as a missing row (ADR-0016, `docs/SECURITY_STANDARDS.md`).
 - **Validation:** DTOs validate every input; rules both apps enforce live in
   `@repo/types` (ADR-0017).
-- **Features come from the template:** `pnpm gen:feature <entity>`, then adapt
+- **Features come from the template:** `pnpm gen:feature <entity> --tool <tool>` (or `--core`), then adapt
   (`docs/REFERENCE_FEATURE.md`). Do not diverge from its cross-cutting patterns
   without an ADR (ADR-0015). Change the template when a cross-cutting standard
   changes.

@@ -54,6 +54,14 @@ flowchart LR
   checked for ownership in the service (ADR-0016,
   [SECURITY_STANDARDS.md](SECURITY_STANDARDS.md)).
 
+- **Tools and core (ADR-0020).** WorkHub is one app made of tools, such as
+  Hours. A tool is a compile-time grouping — an API module group, a web feature
+  folder, a sidebar entry and routes under `/<tool>` — with no plugin runtime.
+  Records more than one tool needs live in a shared **core**. Tools may use
+  core; core never uses a tool, and tools never use each other
+  ([BACKEND_ARCHITECTURE.md](BACKEND_ARCHITECTURE.md#tools-and-core-adr-0020),
+  [FRONTEND_ARCHITECTURE.md](FRONTEND_ARCHITECTURE.md#tools-and-the-sidebar-adr-0020)).
+
 The request lifecycle inside the API — guards, pipes, interceptors, the
 exception filter — is in
 [BACKEND_ARCHITECTURE.md](BACKEND_ARCHITECTURE.md#request-lifecycle).

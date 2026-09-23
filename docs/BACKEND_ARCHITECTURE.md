@@ -14,7 +14,8 @@
 A **NestJS 11 modular monolith** on Express 5, run as **one instance** in Docker
 Compose next to PostgreSQL (ADR-0019). There is no worker, cache or object store.
 Features are generated from the reference template (`pnpm gen:feature`,
-[REFERENCE_FEATURE.md](REFERENCE_FEATURE.md)); none exist yet.
+[REFERENCE_FEATURE.md](REFERENCE_FEATURE.md)) into a tool or the shared core
+(ADR-0020, below).
 
 ```text
 apps/api/src/
@@ -38,8 +39,27 @@ apps/api/src/
 ├── public-config/          # GET /api/v1/config
 ├── cli/                    # user create / reset-password, db seed (no HTTP server)
 ├── generate-openapi.ts     # writes openapi.json for pnpm contract:generate
-└── modules/<feature>/      # generated features (none yet)
+└── modules/
+    ├── core/               # CoreModule: shared records more than one tool needs
+    └── <tool>/             # <Tool>Module (e.g. HoursModule) grouping the tool's entity modules
+        └── <entity-plural>/ # one generated feature per entity
 ```
+
+## Tools and core (ADR-0020)
+
+- **A tool's API** is a group module, `modules/<tool>/<tool>.module.ts`, that
+  imports one generated module per entity; `AppModule` imports the group once.
+  Every controller in the tool carries the tool's OpenAPI tag (`Hours`).
+- **Core** (`modules/core/`, `CoreModule`) holds records more than one tool
+  needs. `CoreModule` imports and exports its entity modules, so a tool that
+  imports `CoreModule` injects a core module's **exported service**; the
+  service's read methods take the principal and apply the ownership rule.
+- **References:** tool → core only. Core never imports a tool, and a tool never
+  imports another tool — promote the entity to core first (ADR-0020 §3).
+  database-architect and backend-reviewer check this; there is no lint rule
+  yet.
+- `pnpm gen:feature <entity> --tool <tool>` (or `--core`) generates into this
+  layout ([REFERENCE_FEATURE.md](REFERENCE_FEATURE.md#creating-a-new-feature)).
 
 ## Layers
 
@@ -152,8 +172,9 @@ it ([TECH_DEBT.md](TECH_DEBT.md), DECISIONS.md 2026-09-16).
 ## Transactions and time
 
 - **Transactions:** the service opens `prisma.$transaction` and passes the
-  transaction client to repository methods that accept one — the standard for new
-  code, defined in [DATABASE.md](DATABASE.md#transactions).
+  transaction client to repository methods, which all accept one (the
+  template's optional `db` parameter), as defined in
+  [DATABASE.md](DATABASE.md#transactions).
 - **Time:** instants in UTC, calendar dates as `date`, local-day rules in
   `Europe/London`, and a planned `Clock` seam — [DATABASE.md](DATABASE.md#time).
 
