@@ -11,6 +11,7 @@ import { useForm } from 'react-hook-form';
 
 import type { LeaveYear } from '../api/keys';
 import { useCreateLeaveYear, useLeaveYears, useUpdateLeaveYear } from '../api/leave-years';
+import { useTimeBalances } from '../api/time-balances';
 import {
   leaveAllowanceFormSchema,
   leaveYearFormSchema,
@@ -246,9 +247,38 @@ function AddLeaveYearForm({ defaultYear }: { defaultYear: number }) {
 }
 
 /**
- * Settings → Leave: a row per year with its allowance, the bought-leave toggle
- * and the year's total. Used and remaining hours need the balances API (slice
- * 9), so they show "—" and say so.
+ * A year's used and remaining leave, from the balances as of its last day
+ * (rule 12 counts booked leave, so the whole year is in). Before any terms
+ * exist nothing is tracked, so it shows "—".
+ */
+function LeaveUsage({ year }: { year: number }) {
+  const balances = useTimeBalances(`${year}-12-31`);
+  const cell = (value: string) => <span className="inline-flex h-9 items-center">{value}</span>;
+  if (balances.isPending) {
+    return (
+      <>
+        <td className="py-2 pr-4 text-right">{cell('…')}</td>
+        <td className="py-2 text-right">{cell('…')}</td>
+      </>
+    );
+  }
+  const data = balances.data;
+  const tracked = data !== undefined && data.trackingStart !== null;
+  return (
+    <>
+      <td className="py-2 pr-4 text-right tabular-nums">
+        {cell(tracked ? formatDuration(data.leaveUsedMinutes) : '—')}
+      </td>
+      <td className="py-2 text-right tabular-nums">
+        {cell(tracked ? formatDuration(data.leaveRemainingMinutes) : '—')}
+      </td>
+    </>
+  );
+}
+
+/**
+ * Settings → Leave: a row per year with its allowance, the bought-leave toggle,
+ * the year's total, and used and remaining hours from the balances API.
  */
 export function LeaveTab() {
   const years = useLeaveYears();
@@ -326,20 +356,15 @@ export function LeaveTab() {
                           )}
                         </span>
                       </td>
-                      <td className="py-2 pr-4 text-right">
-                        <span className="inline-flex h-9 items-center">—</span>
-                      </td>
-                      <td className="py-2 text-right">
-                        <span className="inline-flex h-9 items-center">—</span>
-                      </td>
+                      <LeaveUsage year={row.year} />
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
             <p id={notesId} className="text-muted-foreground max-w-(--width-prose) text-sm">
-              Used and remaining hours are not worked out yet. They will appear here once the hours
-              summaries are built.
+              Used counts leave you have booked for the year, bank holidays and leave adjustments.
+              Remaining can go below zero.
             </p>
           </>
         )}

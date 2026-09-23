@@ -30,7 +30,11 @@ export function useCreateTimeAdjustment() {
   return useMutation({
     mutationFn: async (body: TimeAdjustmentInput) =>
       unwrap(await apiClient.POST('/api/v1/time-adjustments', { body })),
-    onSettled: () => queryClient.invalidateQueries({ queryKey: hoursKeys.timeAdjustments() }),
+    onSettled: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: hoursKeys.timeAdjustments() }),
+        queryClient.invalidateQueries({ queryKey: hoursKeys.computed() }),
+      ]),
   });
 }
 
@@ -43,7 +47,11 @@ export function useDeleteTimeAdjustment() {
     },
     onMutate: (id) => removeFromLists(queryClient, hoursKeys.timeAdjustments(), id),
     onError: (_error, _id, snapshot) => restoreLists(queryClient, snapshot),
-    onSettled: () => queryClient.invalidateQueries({ queryKey: hoursKeys.timeAdjustments() }),
+    onSettled: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: hoursKeys.timeAdjustments() }),
+        queryClient.invalidateQueries({ queryKey: hoursKeys.computed() }),
+      ]),
   });
 }
 
@@ -57,6 +65,10 @@ export function useRestoreTimeAdjustment() {
           params: { path: { id } },
         }),
       ),
-    onSettled: () => queryClient.invalidateQueries({ queryKey: hoursKeys.timeAdjustments() }),
+    onSettled: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: hoursKeys.timeAdjustments() }),
+        queryClient.invalidateQueries({ queryKey: hoursKeys.computed() }),
+      ]),
   });
 }

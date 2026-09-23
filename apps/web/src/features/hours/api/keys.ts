@@ -6,6 +6,9 @@ export const hoursKeys = {
   workTerms: () => [...hoursKeys.all, 'work-terms'] as const,
   leaveYears: () => [...hoursKeys.all, 'leave-years'] as const,
   timeAdjustments: () => [...hoursKeys.all, 'time-adjustments'] as const,
+  /** Computed read-models: every hours or holiday change can move them. */
+  computed: () => [...hoursKeys.all, 'computed'] as const,
+  balances: (asOf: string) => [...hoursKeys.computed(), 'balances', asOf] as const,
 };
 
 export type WorkTerm = components['schemas']['WorkTermResponseDto'];
@@ -15,3 +18,4 @@ export type LeaveYear = components['schemas']['LeaveYearResponseDto'];
 export type LeaveYearInput = components['schemas']['CreateLeaveYearDto'];
 export type TimeAdjustment = components['schemas']['TimeAdjustmentResponseDto'];
 export type TimeAdjustmentInput = components['schemas']['CreateTimeAdjustmentDto'];
+export type TimeBalances = components['schemas']['TimeBalancesDto'];

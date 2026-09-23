@@ -29,17 +29,57 @@ afterEach(() => {
 });
 
 describe('LeaveTab', () => {
-  it('lists each year with its allowance and total, and says used and remaining are to come', async () => {
-    stubApi(on('GET', '/api/v1/leave-years', () => page([leaveYear({ boughtLeave: true })])));
+  const balances = (overrides: Record<string, unknown> = {}) =>
+    on('GET', '/api/v1/time-balances', (call) => ({
+      status: 200,
+      body: {
+        data: {
+          asOf: call.search.get('asOf'),
+          trackingStart: '2026-01-05',
+          flexiMinutes: 0,
+          toilMonthMinutes: 0,
+          toilTakenMonthMinutes: 0,
+          toilCapMinutes: 450,
+          leaveAllowanceMinutes: 17_100,
+          leaveUsedMinutes: 3_600,
+          leaveRemainingMinutes: 13_500,
+          overtimePaidYearMinutes: 0,
+          overtimeUnpaidYearMinutes: 0,
+          ...overrides,
+        },
+      },
+    }));
+
+  it('lists each year with its allowance, total, and used and remaining from the balances', async () => {
+    const { calls } = stubApi(
+      on('GET', '/api/v1/leave-years', () => page([leaveYear({ boughtLeave: true })])),
+      balances(),
+    );
     renderWithApi(<LeaveTab />);
 
     expect(await screen.findByLabelText('Allowance for 2026')).toHaveValue('247:30');
     const row = screen.getByRole('row', { name: /2026/ });
     expect(within(row).getByText('285:00')).toBeInTheDocument();
-    expect(within(row).getAllByText('—')).toHaveLength(2);
-    expect(screen.getByRole('table')).toHaveAccessibleDescription(
-      /Used and remaining hours are not worked out yet/,
+    expect(await within(row).findByText('60:00')).toBeInTheDocument();
+    expect(within(row).getByText('225:00')).toBeInTheDocument();
+    // The whole year counts: balances as of its last day.
+    expect(calls.find((c) => c.path === '/api/v1/time-balances')?.search.get('asOf')).toBe(
+      '2026-12-31',
     );
+    expect(screen.getByRole('table')).toHaveAccessibleDescription(
+      /Used counts leave you have booked/,
+    );
+  });
+
+  it('shows — for used and remaining before any terms exist', async () => {
+    stubApi(
+      on('GET', '/api/v1/leave-years', () => page([leaveYear()])),
+      balances({ trackingStart: null }),
+    );
+    renderWithApi(<LeaveTab />);
+
+    const row = await screen.findByRole('row', { name: /2026/ });
+    expect(await within(row).findAllByText('—')).toHaveLength(2);
   });
 
   it('saves bought leave as soon as it is switched, with a quiet "Saved"', async () => {

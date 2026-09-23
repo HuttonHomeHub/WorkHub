@@ -31,7 +31,11 @@ export function useCreateWorkTerm() {
   return useMutation({
     mutationFn: async (body: WorkTermInput) =>
       unwrap(await apiClient.POST('/api/v1/work-terms', { body })),
-    onSettled: () => queryClient.invalidateQueries({ queryKey: hoursKeys.workTerms() }),
+    onSettled: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: hoursKeys.workTerms() }),
+        queryClient.invalidateQueries({ queryKey: hoursKeys.computed() }),
+      ]),
   });
 }
 
@@ -41,7 +45,11 @@ export function useUpdateWorkTerm() {
   return useMutation({
     mutationFn: async ({ id, body }: { id: string; body: WorkTermUpdate }) =>
       unwrap(await apiClient.PATCH('/api/v1/work-terms/{id}', { params: { path: { id } }, body })),
-    onSettled: () => queryClient.invalidateQueries({ queryKey: hoursKeys.workTerms() }),
+    onSettled: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: hoursKeys.workTerms() }),
+        queryClient.invalidateQueries({ queryKey: hoursKeys.computed() }),
+      ]),
   });
 }
 
@@ -57,7 +65,11 @@ export function useDeleteWorkTerm() {
     },
     onMutate: (id) => removeFromLists(queryClient, hoursKeys.workTerms(), id),
     onError: (_error, _id, snapshot) => restoreLists(queryClient, snapshot),
-    onSettled: () => queryClient.invalidateQueries({ queryKey: hoursKeys.workTerms() }),
+    onSettled: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: hoursKeys.workTerms() }),
+        queryClient.invalidateQueries({ queryKey: hoursKeys.computed() }),
+      ]),
   });
 }
 
@@ -67,6 +79,10 @@ export function useRestoreWorkTerm() {
   return useMutation({
     mutationFn: async (id: string) =>
       unwrap(await apiClient.POST('/api/v1/work-terms/{id}/restore', { params: { path: { id } } })),
-    onSettled: () => queryClient.invalidateQueries({ queryKey: hoursKeys.workTerms() }),
+    onSettled: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: hoursKeys.workTerms() }),
+        queryClient.invalidateQueries({ queryKey: hoursKeys.computed() }),
+      ]),
   });
 }

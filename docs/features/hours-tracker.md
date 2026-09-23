@@ -986,9 +986,9 @@ to, groupBy)` and `balancesAt(result, asOf)` shape them for `time-summaries`
   them.
 - **Lists** are short and bounded, so each list hook follows the cursor to the
   end (`lib/api/pages.ts`, at most 50 pages) and caches an array. The contract
-  types `limit` as an empty object (the pagination DTO's `@ApiPropertyOptional`
-  has no `type`), so the web sends no `limit` and pages at the default 20; a
-  one-line API fix, left for an API slice.
+  typed `limit` as an empty object (the pagination DTO's `@ApiPropertyOptional`
+  had no `type`); fixed in this PR (`type: 'integer'`), and the web still pages
+  at the default 20.
 - **The hours inputs are hours-specific** (they parse with `@repo/domain` and
   carry hours copy), so `TimeInput` and `DurationInput` live in
   `features/hours/components/`, not `components/ui/`. Both keep the typed text
@@ -1008,10 +1008,13 @@ to, groupBy)` and `balancesAt(result, asOf)` shape them for `time-summaries`
 - **Leave tab:** a row per year: the allowance edits in its row with its own
   Save (explicit), bought leave is a switch that saves at once with a quiet
   "Saved" (a `role="status"` beside it), and the total is worked out in the
-  browser. **Used and remaining show "—"** with the plain note "Used and
-  remaining hours are not worked out yet. They will appear here once the hours
-  summaries are built." (slice 9 provides them). A 409 on a row's save is a
-  persistent error toast with Reload.
+  browser. **Used and remaining** come from `GET /time-balances` as of the
+  year's last day (rule 12 counts booked leave), shown as "—" before any terms
+  exist; wired when this slice was rebased onto slice 9. Computed read-models
+  (`hoursKeys.computed()`) have `staleTime: 0`, and every hours mutation
+  invalidates them; core's holiday mutations cannot name an hours key, so a
+  remount refetches. A 409 on a row's save is a persistent error toast with
+  Reload.
 - **Balances tab:** add an opening balance, confirmed forfeit or correction
   (date, balance, reason, signed amount; dated on the tracking start by
   default), and delete with undo. There is no edit: delete and add again.

@@ -28,7 +28,11 @@ export function useCreateLeaveYear() {
   return useMutation({
     mutationFn: async (body: LeaveYearInput) =>
       unwrap(await apiClient.POST('/api/v1/leave-years', { body })),
-    onSettled: () => queryClient.invalidateQueries({ queryKey: hoursKeys.leaveYears() }),
+    onSettled: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: hoursKeys.leaveYears() }),
+        queryClient.invalidateQueries({ queryKey: hoursKeys.computed() }),
+      ]),
   });
 }
 
@@ -63,6 +67,10 @@ export function useUpdateLeaveYear() {
         rows?.map((row) => (row.id === saved.id ? saved : row)),
       );
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: hoursKeys.leaveYears() }),
+    onSettled: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: hoursKeys.leaveYears() }),
+        queryClient.invalidateQueries({ queryKey: hoursKeys.computed() }),
+      ]),
   });
 }

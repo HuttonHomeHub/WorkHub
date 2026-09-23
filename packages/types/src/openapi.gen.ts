@@ -524,7 +524,6 @@ export interface components {
       nextCursor: string | null;
       hasMore: boolean;
     };
-    Object: Record<string, never>;
     UpdateWorkTermDto: {
       /** @description Flexi target per weekday; null makes the day non-working. */
       targetMinutes?: components['schemas']['WeekdayTargetsDto'];
@@ -1185,7 +1184,7 @@ export interface operations {
     parameters: {
       query?: {
         /** @description Page size. */
-        limit?: components['schemas']['Object'];
+        limit?: number;
         /** @description Opaque cursor from a previous response. */
         cursor?: string;
         /** @description Sort direction. */
@@ -1332,7 +1331,7 @@ export interface operations {
     parameters: {
       query?: {
         /** @description Page size. */
-        limit?: components['schemas']['Object'];
+        limit?: number;
         /** @description Opaque cursor from a previous response. */
         cursor?: string;
         /** @description Sort direction. */
@@ -1437,7 +1436,7 @@ export interface operations {
     parameters: {
       query?: {
         /** @description Page size. */
-        limit?: components['schemas']['Object'];
+        limit?: number;
         /** @description Opaque cursor from a previous response. */
         cursor?: string;
         /** @description Sort direction. */
@@ -1590,7 +1589,7 @@ export interface operations {
     parameters: {
       query?: {
         /** @description Page size. */
-        limit?: components['schemas']['Object'];
+        limit?: number;
         /** @description Opaque cursor from a previous response. */
         cursor?: string;
         /** @description Sort direction. */
@@ -1741,7 +1740,7 @@ export interface operations {
     parameters: {
       query?: {
         /** @description Page size. */
-        limit?: components['schemas']['Object'];
+        limit?: number;
         /** @description Opaque cursor from a previous response. */
         cursor?: string;
         /** @description Sort direction. */
@@ -1927,7 +1926,7 @@ export interface operations {
     parameters: {
       query?: {
         /** @description Page size. */
-        limit?: components['schemas']['Object'];
+        limit?: number;
         /** @description Opaque cursor from a previous response. */
         cursor?: string;
         /** @description Sort direction. */

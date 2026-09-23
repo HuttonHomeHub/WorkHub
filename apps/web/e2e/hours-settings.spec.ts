@@ -214,7 +214,7 @@ test('switches bought leave on a year; it saves at once and survives a reload', 
   await expect(row.getByRole('status')).toHaveText('Saved');
   await expect(toggle).toHaveAttribute('aria-checked', String(!wasOn));
   await expect(row).toContainText(wasOn ? '247:30' : '285:00');
-  await expect(page.getByText(/Used and remaining hours are not worked out yet/)).toBeVisible();
+  await expect(page.getByText(/Used counts leave you have booked/)).toBeVisible();
 
   await page.reload();
   await expect(
