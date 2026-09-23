@@ -25,6 +25,13 @@ Pinning the distribution makes the build reproducible.
 set the feature's `"moby": false` (Docker CE), then confirm a fresh Codespace
 runs `scripts/setup.sh` cleanly.
 
+The bookworm image already ships pnpm on the `PATH`, so `postCreateCommand`
+runs `scripts/setup.sh` directly. A leading `corepack enable` fails with
+`EACCES` writing `/usr/local/bin` and stopped setup from running at all.
+`setup.sh` loads the root `.env` before calling the Prisma CLI, which otherwise
+reads only `apps/api/.env`. The `github-cli` feature provides `gh` for `/ship`
+and `/review`.
+
 ---
 
 ### 2026-09-16 — Operations documentation defaults
