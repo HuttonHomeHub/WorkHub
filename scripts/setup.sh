@@ -50,6 +50,13 @@ fi
 info "Building shared packages (@repo/types, ADR-0017)"
 pnpm --filter @repo/types build
 
+# The Prisma CLI runs from apps/api and only reads apps/api/.env, so load the
+# root .env here. Variables already set in the environment win.
+while IFS='=' read -r key value; do
+  case "$key" in '' | \#*) continue ;; esac
+  if [ -z "${!key+x}" ]; then export "$key=$value"; fi
+done < .env
+
 info "Generating the Prisma client and applying migrations"
 pnpm --filter @repo/api prisma:generate
 if pnpm --filter @repo/api prisma:deploy; then
