@@ -105,8 +105,15 @@ const g = {
   banner: core ? '// === Core ===' : `// === Tool: ${group} ===`,
 };
 
+// "a" or "an" before the entity's words ("an excess conversion").
+const article = /^[aeiou]/.test(n.words) ? 'an' : 'a';
+
 // Template token → generated name. Order matters: longer tokens first.
 const replacements = [
+  [
+    /\b([Aa]) reference item\b/g,
+    (_, a) => `${a === 'A' ? 'A' : 'a'}${article.slice(1)} ${n.words}`,
+  ],
   [/ReferenceItemStatus/g, `${n.Pascal}Status`],
   [/ReferenceItems/g, n.PascalPlural],
   [/ReferenceItem/g, n.Pascal],

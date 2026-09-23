@@ -5,6 +5,7 @@ import {
   datesInRange,
   dayOfWeek,
   isIsoDate,
+  isIsoInstant,
   lastDayOfMonth,
   localDateOf,
   localMinutesOf,
@@ -58,6 +59,23 @@ describe('Europe/London time helpers', () => {
     expect(minutesBetween(spring.startsAt, spring.endsAt)).toBe(7 * 60);
     const autumn = shiftInstants('2026-10-24', 22 * 60, 6 * 60);
     expect(minutesBetween(autumn.startsAt, autumn.endsAt)).toBe(9 * 60);
+  });
+
+  it('accepts only real UTC instants', () => {
+    for (const ok of ['2026-10-05T07:00Z', '2026-10-05T07:00:30Z', '2026-10-05T07:00:00.123Z']) {
+      expect(isIsoInstant(ok)).toBe(true);
+    }
+    for (const bad of [
+      '2026-10-05T24:00Z',
+      '2026-02-30T07:00Z',
+      '2026-09-31T07:00Z',
+      '2026-10-05T07:60Z',
+      '2026-10-05T07:00:60Z',
+      '2026-10-05T07:00:00',
+      '2026-10-05T07:00:00+01:00',
+    ]) {
+      expect(isIsoInstant(bad)).toBe(false);
+    }
   });
 
   it('rejects out-of-range times of day', () => {

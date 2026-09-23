@@ -1850,7 +1850,7 @@
             "cookie": []
           }
         ],
-        "summary": "Create a excess conversion (owned by the caller)",
+        "summary": "Switch a week's excess conversion on",
         "tags": ["Hours"]
       },
       "get": {
@@ -1980,7 +1980,7 @@
             "cookie": []
           }
         ],
-        "summary": "Soft-delete a excess conversion",
+        "summary": "Switch a week's excess conversion off",
         "tags": ["Hours"]
       }
     }

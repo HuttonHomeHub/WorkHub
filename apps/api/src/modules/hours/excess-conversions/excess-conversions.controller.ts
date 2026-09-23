@@ -38,7 +38,7 @@ export class ExcessConversionsController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Create a excess conversion (owned by the caller)' })
+  @ApiOperation({ summary: "Switch a week's excess conversion on" })
   @ApiDataResponse(ExcessConversionResponseDto, HttpStatus.CREATED)
   async create(
     @CurrentUser() user: Principal,
@@ -63,7 +63,7 @@ export class ExcessConversionsController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Soft-delete a excess conversion' })
+  @ApiOperation({ summary: "Switch a week's excess conversion off" })
   @ApiNoContentResponse()
   async remove(
     @CurrentUser() user: Principal,

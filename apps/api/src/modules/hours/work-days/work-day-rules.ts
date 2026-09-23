@@ -57,10 +57,18 @@ export function workDayProblems(
     }
     // A night shift counts wholly to its row, so it must end before the next
     // day's start, and start after the previous day's end.
-    if (neighbours.nextStartsAt !== null && endsAt > neighbours.nextStartsAt) {
+    // Compare as moments: the input may omit seconds where stored values have
+    // milliseconds, so string order is not time order.
+    if (
+      neighbours.nextStartsAt !== null &&
+      Date.parse(endsAt) > Date.parse(neighbours.nextStartsAt)
+    ) {
       problems.push("endsAt must not run into the next day's start");
     }
-    if (neighbours.previousEndsAt !== null && startsAt < neighbours.previousEndsAt) {
+    if (
+      neighbours.previousEndsAt !== null &&
+      Date.parse(startsAt) < Date.parse(neighbours.previousEndsAt)
+    ) {
       problems.push("startsAt must not be before the previous day's end");
     }
   }

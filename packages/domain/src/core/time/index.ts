@@ -27,11 +27,18 @@ export function plainDate(date: IsoDate): Temporal.PlainDate {
 }
 
 /** An instant in the API's form: `YYYY-MM-DDTHH:MM[:SS[.fff]]Z`, UTC only. */
-const ISO_INSTANT = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d{1,9})?)?Z$/;
+const ISO_INSTANT = /^(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.\d{1,9})?)?Z$/;
 
-/** True for a well-formed UTC instant string that is a real moment. */
+/**
+ * True for a well-formed UTC instant that is a real moment. `Date.parse` rolls
+ * impossible values over (`24:00`, `02-30`) where Temporal rejects them, so
+ * the date and each time field are checked here (security review, slice 6).
+ */
 export function isIsoInstant(value: string): boolean {
-  return ISO_INSTANT.test(value) && Number.isFinite(Date.parse(value));
+  const match = ISO_INSTANT.exec(value);
+  if (!match) return false;
+  const [, date = '', hours, minutes, seconds = '0'] = match;
+  return isIsoDate(date) && Number(hours) < 24 && Number(minutes) < 60 && Number(seconds) < 60;
 }
 
 // The hot helpers below (weekday, adding days) run for every date on every

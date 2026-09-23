@@ -160,7 +160,6 @@ export class WorkDaysService {
     return this.findOwnedOrThrow(principal, id);
   }
 
-  /** Load an active row and verify ownership (see {@link assertOwned}). */
   /**
    * The rules a day must meet (work-day-rules.ts): terms in force, times,
    * rule 4's limits and night-shift collisions with the neighbouring days.
@@ -185,6 +184,7 @@ export class WorkDaysService {
     if (problems.length > 0) throw new ValidationError('The work day is not valid.', problems);
   }
 
+  /** Load an active row and verify ownership (see {@link assertOwned}). */
   private async findOwnedOrThrow(principal: Principal, id: string): Promise<WorkDay> {
     const item = await this.repository.findActiveById(id);
     this.assertOwned(principal, item, id);

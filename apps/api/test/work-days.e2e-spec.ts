@@ -247,4 +247,15 @@ describe.skipIf(!hasDatabase)('Work days API (e2e)', () => {
     await shift('2026-10-06', '2026-10-06T04:00:00.000Z', '2026-10-06T12:00:00.000Z').expect(201);
     await request(server()).post(`${base}/${id}/restore`).expect(422);
   });
+
+  it('rejects impossible instants with 422, never a 500 (security review)', async () => {
+    for (const startsAt of ['2026-10-05T24:00Z', '2026-09-31T07:00Z', '2026-02-30T07:00Z']) {
+      await shift('2026-10-05', startsAt, '2026-10-05T15:30:00.000Z').expect(422);
+    }
+    const id = (await monday().expect(201)).body.data.id as string;
+    await request(server())
+      .patch(`${base}/${id}`)
+      .send({ version: 1, endsAt: '2026-10-05T24:00Z' })
+      .expect(422);
+  });
 });

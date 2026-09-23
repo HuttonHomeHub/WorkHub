@@ -349,7 +349,7 @@ export interface paths {
     /** List the weeks whose conversion is on (cursor-paginated) */
     get: operations['ExcessConversionsController_list_v1'];
     put?: never;
-    /** Create a excess conversion (owned by the caller) */
+    /** Switch a week's excess conversion on */
     post: operations['ExcessConversionsController_create_v1'];
     delete?: never;
     options?: never;
@@ -367,7 +367,7 @@ export interface paths {
     get?: never;
     put?: never;
     post?: never;
-    /** Soft-delete a excess conversion */
+    /** Switch a week's excess conversion off */
     delete: operations['ExcessConversionsController_remove_v1'];
     options?: never;
     head?: never;

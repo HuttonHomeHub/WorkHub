@@ -94,6 +94,26 @@ describe('workDayProblems', () => {
     ).toContain("startsAt must not be before the previous day's end");
   });
 
+  it('compares neighbour instants as moments, not strings', () => {
+    // Previous day ended 30 seconds after this start: an overlap, though
+    // '…05:30Z' sorts after '…05:30:30.000Z' as a string.
+    const start = day({ startsAt: '2026-10-05T05:30Z', endsAt: '2026-10-05T13:00Z' });
+    expect(
+      workDayProblems(start, terms, false, {
+        previousEndsAt: '2026-10-05T05:30:30.000Z',
+        nextStartsAt: null,
+      }),
+    ).toContain("startsAt must not be before the previous day's end");
+    // Ending exactly when the next day starts is fine.
+    const night = day({ startsAt: '2026-10-05T21:00Z', endsAt: '2026-10-06T05:00Z' });
+    expect(
+      workDayProblems(night, terms, false, {
+        previousEndsAt: null,
+        nextStartsAt: '2026-10-06T05:00:00.000Z',
+      }),
+    ).toEqual([]);
+  });
+
   it("applies rule 4's limits", () => {
     const problems = (v: Partial<WorkDayValues>, holiday = false) =>
       workDayProblems(
