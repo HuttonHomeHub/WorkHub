@@ -16,8 +16,8 @@ import { ReferenceRepository } from './reference.repository';
  * use case: authorise, apply rules, delegate persistence to the repository, and
  * log. It contains NO HTTP concerns (that's the controller) and NO raw Prisma
  * queries (that's the repository). Demonstrates owner-scoped authorisation
- * (anti-IDOR, ADR-0016), optimistic locking, soft delete, and cursor pagination.
- * See docs/REFERENCE_FEATURE.md.
+ * (anti-IDOR, ADR-0016), optimistic locking, soft delete with restore (undo),
+ * and cursor pagination. See docs/REFERENCE_FEATURE.md.
  */
 @Injectable()
 export class ReferenceService {
@@ -114,12 +114,45 @@ export class ReferenceService {
   }
 
   /**
-   * Load a row and verify ownership — the authoritative authorisation check
+   * Undo a soft delete. Idempotent: restoring a row that is already active —
+   * or that a concurrent request restored first — returns it, so a repeated
+   * undo is harmless. A missing row, or one owned by someone else, is the same
+   * 404 as everywhere else, after the same single read. If an active row now
+   * holds the deleted row's unique key, the feature's partial unique index
+   * answers 409 (`P2002`).
+   */
+  async restore(principal: Principal, id: string): Promise<ReferenceItem> {
+    const item = await this.repository.findById(id);
+    this.assertOwned(principal, item, id);
+    if (item.deletedAt === null) return item;
+
+    if ((await this.repository.restore(id)) > 0) {
+      this.logger.info(
+        { referenceItemId: id, userId: principal.userId },
+        'reference item restored',
+      );
+    }
+    // Restored now or by a concurrent request; a 404 only if it was purged.
+    return this.findOwnedOrThrow(principal, id);
+  }
+
+  /** Load an active row and verify ownership (see {@link assertOwned}). */
+  private async findOwnedOrThrow(principal: Principal, id: string): Promise<ReferenceItem> {
+    const item = await this.repository.findActiveById(id);
+    this.assertOwned(principal, item, id);
+    return item;
+  }
+
+  /**
+   * Verify ownership of a loaded row — the authoritative authorisation check
    * (anti-IDOR). A row owned by someone else yields the SAME 404 as a missing
    * row, so an attacker cannot probe which ids exist (ADR-0016).
    */
-  private async findOwnedOrThrow(principal: Principal, id: string): Promise<ReferenceItem> {
-    const item = await this.repository.findActiveById(id);
+  private assertOwned(
+    principal: Principal,
+    item: ReferenceItem | null,
+    id: string,
+  ): asserts item is ReferenceItem {
     if (!item) {
       throw new NotFoundError('Reference item not found.');
     }
@@ -130,6 +163,5 @@ export class ReferenceService {
       );
       throw new NotFoundError('Reference item not found.');
     }
-    return item;
   }
 }

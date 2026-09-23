@@ -3,7 +3,7 @@
 The **canonical feature template** for the WorkHub API. `ReferenceItem` is not a
 business entity — it demonstrates every backend standard in one small,
 fully-tested feature. Generate a real feature from it with
-`pnpm gen:feature <entity>`; see
+`pnpm gen:feature <entity> --tool <tool>` (or `--core`); see
 [`docs/REFERENCE_FEATURE.md`](../../../../../docs/REFERENCE_FEATURE.md).
 (This README is not copied by the generator.)
 
@@ -29,13 +29,14 @@ in `apps/api/test/`. See the [parent README](../README.md).
 
 ## Endpoints (`/api/v1/reference-items`)
 
-| Method | Path   | Notes                                       |
-| ------ | ------ | ------------------------------------------- |
-| POST   | `/`    | 201; created item is owned by the caller    |
-| GET    | `/`    | Cursor-paginated list of the caller's items |
-| GET    | `/:id` | 404 if missing, soft-deleted, or not yours  |
-| PATCH  | `/:id` | Optimistic lock (409 on stale version)      |
-| DELETE | `/:id` | 204; soft delete                            |
+| Method | Path           | Notes                                       |
+| ------ | -------------- | ------------------------------------------- |
+| POST   | `/`            | 201; created item is owned by the caller    |
+| GET    | `/`            | Cursor-paginated list of the caller's items |
+| GET    | `/:id`         | 404 if missing, soft-deleted, or not yours  |
+| PATCH  | `/:id`         | Optimistic lock (409 on stale version)      |
+| DELETE | `/:id`         | 204; soft delete                            |
+| POST   | `/:id/restore` | 200; undo a delete (idempotent)             |
 
 All routes require an authenticated session (deny by default). Ownership is
 checked in the service on the loaded row (ADR-0016): another user's item yields

@@ -10,7 +10,7 @@ authentication via **Better Auth**, and an **OpenAPI** contract generated with
 > off by default; accounts via `pnpm user:create`, ADR-0018), session
 > validation in the deny-by-default guard, and the protected `GET /api/v1/me`.
 > The schema holds only the authentication tables — **no domain features exist
-> yet**. Build features with `pnpm gen:feature <entity>` from the non-shipping
+> yet**. Build features with `pnpm gen:feature <entity> --tool <tool>` from the non-shipping
 > [reference template](examples/reference-feature/) — see
 > [`docs/REFERENCE_FEATURE.md`](../../docs/REFERENCE_FEATURE.md).
 

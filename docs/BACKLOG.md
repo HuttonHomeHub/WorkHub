@@ -32,8 +32,6 @@ finished item; move a scheduled one to PRODUCT.md.
 - `S` Drop the unsupported webkit project from `apps/web/playwright.config.ts`.
 - `S` A keyboard-only Playwright journey through sign-in, a tool and sign-out,
   and a 400%-zoom reflow check on every screen (the app shell has both).
-- `S` Restore endpoint in the reference template so undo toasts can reverse a
-  soft delete.
 - `S` Cross-tab sign-out and theme sync (`BroadcastChannel` or `storage` event).
 - `S` Report client errors (root and route boundaries) to the API log.
 - `S` Dependency licence check in CI.
@@ -41,8 +39,6 @@ finished item; move a scheduled one to PRODUCT.md.
   exception filter, replacing today's `string[]` (API.md).
 - `S` Pagination: optional `meta.total` and a maximum `limit` of 200 in
   `PaginationQueryDto` (today 100).
-- `S` Transaction-capable repositories in the reference template: an optional
-  `db: Prisma.TransactionClient` on each method (DATABASE.md → Transactions).
 - `S` A `Clock` provider and a fixed clock for tests (DATABASE.md → Time).
 - `S` Idempotent create with an optional client UUID v7 `id` in the reference
   template (API.md).
@@ -50,8 +46,6 @@ finished item; move a scheduled one to PRODUCT.md.
   `apps/api/test/helpers/`.
 - `S` Fail the CI e2e job when `DATABASE_URL` is missing instead of skipping
   every suite.
-- `S` Scope the template e2e cleanup to its test users instead of
-  `deleteMany()` on the whole table.
 - `S` A runtime database role with data-only privileges for `api`, separate from
   the `migrate` role (TECH_DEBT.md).
 - `S` Check the Nest throttler default (100 requests/60 s per IP) against a busy

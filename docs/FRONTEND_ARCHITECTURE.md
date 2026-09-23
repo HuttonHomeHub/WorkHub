@@ -79,7 +79,8 @@ env access and client error reporting will get a home when they are first needed
 
 **Dependency direction:** features → shared (`components`, `hooks`, `lib`), never
 the reverse, and never feature → feature — share through a shared layer or
-`@repo/types`.
+`@repo/types`. The one exception is **`features/core/<entity>`** (ADR-0020 §3):
+any tool may import it, and it imports no tool.
 
 ## Tools and the sidebar (ADR-0020)
 
@@ -211,8 +212,8 @@ With TanStack Query:
 1. `onMutate`: cancel the list query, snapshot it, remove the row from the cache,
    and show the undo toast.
 2. The **mutation is the soft delete** (`DELETE` → `deletedAt` set). **Undo** calls
-   a restore endpoint (the reference template does not generate one yet — see
-   BACKLOG.md) and invalidates the list; it does not rely on delaying the
+   the entity's `POST /:id/restore` (generated from the reference template) and
+   invalidates the list; it does not rely on delaying the
    request, so closing the tab never loses a delete the owner saw happen.
 3. `onError`: restore the snapshot and raise an error toast.
 4. `onSettled`: invalidate the affected list and detail keys.
@@ -341,7 +342,8 @@ read it through one typed, validated module rather than scattered
 
 ## Import rules
 
-- `features → shared` only; no feature → feature imports.
+- `features → shared` only; no feature → feature imports, except that any tool
+  may import `features/core/<entity>`.
 - `@/` for intra-app imports, `@repo/types` for shared contracts; import order is
   enforced by ESLint.
 - App code imports primitives from `components/ui`, never Radix, cmdk, TanStack

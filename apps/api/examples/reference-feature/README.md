@@ -1,7 +1,7 @@
 # Reference feature — the canonical template
 
 > **This is the canonical implementation standard for new features.** It is the
-> input to the feature generator (`pnpm gen:feature <entity>`), not part of the
+> input to the feature generator (`pnpm gen:feature <entity> --tool <tool>`), not part of the
 > running application: it is excluded from the build, the app module, linting,
 > and database migrations (**ADR-0014**), and it **is CI-verified** so it can't
 > rot (**ADR-0015**). Full guidance:
@@ -11,8 +11,8 @@
 
 - **Not shipped.** Nothing here runs in the API; the live schema contains only
   the authentication tables until you generate a feature.
-- **CI-verified.** `scripts/verify-template.sh` generates a throwaway feature from
-  this template with `scripts/gen-feature.mjs`, then **type-checks, lints, and
+- **CI-verified.** `scripts/verify-template.sh` generates throwaway features (one
+  in a tool, one in core) from this template with `scripts/gen-feature.mjs`, then **type-checks, lints, and
   unit-tests it** — and, with `--e2e`, runs its API e2e test against Postgres.
   Run it locally with `bash scripts/verify-template.sh [--e2e]`.
 
@@ -44,7 +44,7 @@ deliberate — see the replacement table in `scripts/gen-feature.mjs`.
 Layered controller → service → **repository**; validated DTOs; standard
 `{ data, meta }` / `{ error }` envelopes documented in OpenAPI; cursor
 pagination + filtering + sorting; **owner-scoped** authorisation (anti-IDOR,
-ADR-0016) with a real `owner` foreign key; soft delete; timestamps; optimistic
-locking; structured logging with correlation IDs; and API (Supertest) + unit
+ADR-0016) with a real `owner` foreign key; soft delete with restore (undo);
+transaction-ready repository methods; timestamps; optimistic locking; structured logging with correlation IDs; and API (Supertest) + unit
 tests. The standard-by-standard map is in
 [`docs/REFERENCE_FEATURE.md`](../../../../docs/REFERENCE_FEATURE.md).

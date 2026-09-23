@@ -115,12 +115,15 @@ their rows. Check Better Auth's upgrade notes before renaming anything in them.
 ## Soft delete
 
 - **User-facing domain entities soft-delete:** `DELETE` sets `deleted_at`. The
-  web offers undo, and restore clears `deleted_at` (the template's restore
-  endpoint is in BACKLOG.md). Join rows, Better Auth rows and other internal
+  web offers undo through `POST /:id/restore`, which clears `deleted_at` and
+  bumps `version` (the template's `restore`). Restore is idempotent, and an
+  active row holding the same unique key makes it a 409. Join rows, Better Auth rows and other internal
   bookkeeping hard-delete.
 - **Reads exclude deleted rows in the repository.** The template routes every
   query through a private `active(where)` helper that adds `deletedAt: null`,
-  including the optimistic-locked update. A new query that skips it is a bug. A
+  including the optimistic-locked update. A new query that skips it is a bug;
+  the one deliberate exception is the repository's `findById`, which
+  restore needs. A
   Prisma client extension that enforces this across all models is a backlog
   item for when a second model exists.
 - **Purging is manual.** Deleted rows stay until the owner empties the trash —
@@ -172,9 +175,9 @@ with one owner, two browser tabs are enough to lose an update.
   Use `Serializable` only for an invariant that spans rows, and retry on
   serialisation failure (Prisma `P2034`).
 
-**Today** the template's repository injects `PrismaService` and its methods take
-no transaction client — adding the optional `db` parameter to the template is a
-backlog item. Follow the pattern above as soon as a feature needs a transaction.
+The template's repository methods all take the optional `db` client, so
+generated features are transaction-ready; its own use cases are single writes,
+so its service opens no transaction.
 
 ## Migrations
 

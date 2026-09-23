@@ -10,7 +10,7 @@ Repository automation and developer-convenience scripts. Keep scripts:
 | Script               | Run it with                               | Purpose                                                                                                           |
 | -------------------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
 | `setup.sh`           | `./scripts/setup.sh`                      | Bootstrap local development (deps, `.env`, Postgres, shared-package build, migrations). Run by the dev container. |
-| `gen-feature.mjs`    | `pnpm gen:feature <entity>`               | Generate a backend feature from the reference template (ADR-0015, `docs/REFERENCE_FEATURE.md`).                   |
+| `gen-feature.mjs`    | `pnpm gen:feature <entity> --tool <tool>` | Generate a backend feature from the reference template (ADR-0015, `docs/REFERENCE_FEATURE.md`).                   |
 | `verify-template.sh` | `bash scripts/verify-template.sh [--e2e]` | Generate a throwaway feature and type-check, lint, unit-test (and optionally API-test) it; restores files.        |
 | `check-docs.mjs`     | `pnpm docs:check`                         | Fail on broken relative links and stale terms in Markdown (single-source docs guard).                             |
 

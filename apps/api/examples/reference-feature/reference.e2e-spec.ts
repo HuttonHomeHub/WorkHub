@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+
 import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
@@ -20,8 +22,11 @@ import type { PrismaService } from '../src/prisma/prisma.service';
  */
 const hasDatabase = Boolean(process.env.DATABASE_URL);
 
-const USER = '018f4e8a-9a1b-7c2d-8e3f-4a5b6c7d8e9f';
-const OTHER_USER = '018f4e8a-7b2c-7c3d-8e4f-1a2b3c4d5e6f';
+// Fresh users per suite: e2e files run in parallel against one database, and
+// each suite's cleanup deletes its users (cascading to their rows), so shared
+// ids would let one suite delete another's data mid-test.
+const USER = randomUUID();
+const OTHER_USER = randomUUID();
 
 describe.skipIf(!hasDatabase)('Reference items API (e2e)', () => {
   let app: INestApplication;
@@ -65,7 +70,7 @@ describe.skipIf(!hasDatabase)('Reference items API (e2e)', () => {
 
   beforeEach(async () => {
     principal = new Principal(USER, 'owner@example.com', 'Test User');
-    await prisma.referenceItem.deleteMany();
+    await prisma.referenceItem.deleteMany({ where: { ownerId: { in: [USER, OTHER_USER] } } });
   });
 
   const create = (name = 'First item') => request(app.getHttpServer()).post(base).send({ name });
@@ -155,5 +160,35 @@ describe.skipIf(!hasDatabase)('Reference items API (e2e)', () => {
 
     const list = await request(app.getHttpServer()).get(base).expect(200);
     expect(list.body.data).toHaveLength(0);
+  });
+
+  it('restores a soft-deleted item (200) with a new version, and restore is idempotent', async () => {
+    const created = await create('Undo me').expect(201);
+    const id = created.body.data.id as string;
+    await request(app.getHttpServer()).delete(`${base}/${id}`).expect(204);
+
+    const restored = await request(app.getHttpServer()).post(`${base}/${id}/restore`).expect(200);
+    expect(restored.body.data).toMatchObject({ id, name: 'Undo me', version: 2 });
+    await request(app.getHttpServer()).get(`${base}/${id}`).expect(200);
+
+    const again = await request(app.getHttpServer()).post(`${base}/${id}/restore`).expect(200);
+    expect(again.body.data.version).toBe(2);
+  });
+
+  it("404s when restoring a missing item or another user's deleted item", async () => {
+    await request(app.getHttpServer())
+      .post(`${base}/018f0000-0000-7000-8000-000000000000/restore`)
+      .expect(404);
+
+    const created = await create('Not yours').expect(201);
+    const id = created.body.data.id as string;
+    await request(app.getHttpServer()).delete(`${base}/${id}`).expect(204);
+
+    principal = new Principal(OTHER_USER, 'other@example.com', 'Other User');
+    await request(app.getHttpServer()).post(`${base}/${id}/restore`).expect(404);
+  });
+
+  it('rejects a malformed id on restore with 400', async () => {
+    await request(app.getHttpServer()).post(`${base}/not-a-uuid/restore`).expect(400);
   });
 });
