@@ -45,7 +45,7 @@ production — and talks to it through Supertest.
 - **Prerequisites** (as CI does):
 
   ```bash
-  pnpm --filter @repo/types build
+  pnpm --filter "@repo/api^..." build   # @repo/types and @repo/domain
   export DATABASE_URL='postgresql://app:app@localhost:5432/app_test?schema=public'
   pnpm --filter @repo/api prisma:deploy
   pnpm --filter @repo/api test:e2e

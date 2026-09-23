@@ -47,8 +47,8 @@ else
 fi
 
 # 6. Database schema ----------------------------------------------------------
-info "Building shared packages (@repo/types, ADR-0017)"
-pnpm --filter @repo/types build
+info "Building the shared packages the API uses (@repo/types, @repo/domain)"
+pnpm --filter "@repo/api^..." build
 
 # The Prisma CLI runs from apps/api and only reads apps/api/.env, so load the
 # root .env here. Variables already set in the environment win.

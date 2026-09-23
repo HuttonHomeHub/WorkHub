@@ -106,7 +106,7 @@ node scripts/gen-feature.mjs sample-gadget --core
 
 info 'Generating the Prisma client and building shared packages'
 pnpm --filter @repo/api exec prisma generate >/dev/null
-pnpm --filter @repo/types build >/dev/null
+pnpm --filter "@repo/api^..." build >/dev/null
 
 info 'Type-checking (generated modules + e2e specs against the live codebase)'
 pnpm --filter @repo/api exec tsc --noEmit

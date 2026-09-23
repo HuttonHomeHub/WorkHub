@@ -51,7 +51,7 @@ examples/
 | `pnpm prisma:studio`  | Open Prisma Studio                                               |
 
 The API loads `@repo/types` at runtime, so build it first when running scripts
-directly (`pnpm --filter @repo/types build`); Turborepo tasks and `setup.sh` do
+directly (`pnpm --filter "@repo/api^..." build`); Turborepo tasks and `setup.sh` do
 this for you.
 
 ## Environment
