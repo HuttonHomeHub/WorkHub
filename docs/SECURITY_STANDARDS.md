@@ -246,7 +246,8 @@ memory limits, an unprivileged nginx image) is a backlog item.
   encrypted (planned, PRODUCT.md → Data safety).
 - Logs never contain passwords, tokens, cookies or authorisation headers
   (redacted in `app.module.ts`), and never whole request bodies.
-- The owner's own data export is planned ([DATABASE.md](DATABASE.md#data-export-planned)).
+- The owner's own data export, `pnpm data:export`, writes a file readable by its
+  owner only ([DATABASE.md](DATABASE.md#data-export)).
 
 ## Checklist
 

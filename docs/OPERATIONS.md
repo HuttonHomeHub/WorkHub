@@ -413,7 +413,14 @@ The agreed design, to be built as the backups item in PRODUCT.md's Next list:
 - **Pre-migration dump** as part of the upgrade path, not only by hand
   (BACKLOG.md).
 - A data export for the owner's own use sits alongside
-  ([DATABASE.md](DATABASE.md#data-export-planned)).
+  ([DATABASE.md](DATABASE.md#data-export)). It is personal data, so keep the
+  copy private (mode 0600) and don't leave it on the server:
+
+  ```bash
+  wh exec api node dist/cli/data-export.js --email <owner email> --out /tmp/export.json
+  wh cp api:/tmp/export.json ./workhub-export.json && chmod 600 ./workhub-export.json
+  wh exec api rm /tmp/export.json
+  ```
 
 ### Restore drill
 

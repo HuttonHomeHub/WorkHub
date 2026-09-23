@@ -249,11 +249,32 @@ The query rules that decide backend performance; budgets are in
   `PrismaService` locally (do not commit it) — Prisma is not wired to the Pino
   logger.
 
-## Data export (planned)
+## Data export
 
-The owner can take their data elsewhere: a server CLI command that writes every
-domain table the owner owns to JSON, alongside the backups planned in
-PRODUCT.md. Scheduled with the backups in PRODUCT.md's Next list.
+The owner can take their data elsewhere with a server CLI command (ADR-0018's
+`cli/` pattern):
+
+```bash
+pnpm data:export --email <owner email> [--out <file>] [--force]
+```
+
+- It writes every domain table the owner owns to one JSON file:
+  `{ format: "workhub-export", version, exportedAt, owner, tables }`, each row
+  in the API's wire shape (`YYYY-MM-DD` dates, `…Z` instants, `HH:MM` times,
+  integer minutes) plus `deletedAt`. Soft-deleted rows are included, so it is
+  a faithful copy, not only what the app shows.
+- The reads share one `REPEATABLE READ` transaction, so the file is a
+  consistent snapshot. It is always a fresh file readable by its owner only
+  (mode 0600): created exclusively, so an existing file or a symlink is
+  refused, or with `--force` written to a temporary file and renamed over the
+  target (`cli/export-file.ts`). The default name is
+  `workhub-export-<date>.json`, which `.gitignore` covers.
+- `EXPORTED_TABLES` in `apps/api/src/cli/export.ts` lists the tables. A unit
+  test fails if a Prisma model with an `ownerId` is missing from it, so a new
+  table cannot be left out.
+- In production, run it inside the `api` container
+  ([OPERATIONS.md](OPERATIONS.md#backups-and-restore)). It is not a backup: the
+  automated backups remain in PRODUCT.md's Next list.
 
 ## Checklist
 
