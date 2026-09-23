@@ -1184,3 +1184,127 @@ to, groupBy)` and `balancesAt(result, asOf)` shape them for `time-summaries`
   week, month and balances; widening a partial range; the TOIL cap with paid
   overtime switched on from a later Monday; and another owner's rows never
   counted.
+
+### Slice 10 (part 1): summary view and aside components
+
+- **Route:** `/hours/summary?from=YYYY-MM-DD&to=YYYY-MM-DD&groupBy=week|month`
+  (`routes/_authed/hours/summary.tsx`). **Decided while building:** `from`
+  and `to` are both **inclusive** (the owner reads "1 to 31 October"); the web
+  sends the API `to + 1 day`. With either date missing the page shows **this
+  month, by week** (the default), so a bare bookmark always opens on the
+  current month; a malformed value falls back rather than failing. The group
+  names are listed in the route file, checked against the feature's type with
+  `satisfies`, as the settings route does.
+- **Page:** a page header (`<h1>` "Hours summary", the range and grouping as a
+  line under it, and "Download CSV" as the primary action), then two
+  `NativeSelect`s, **Dates** (This month, Last month, This year, Custom) and
+  **Group by** (Week, Month). **Decided while building:** presets are a native
+  select rather than toggle buttons, so no new primitive was needed and the
+  keyboard and screen-reader behaviour is the browser's. Picking a preset
+  writes both dates to the URL (a history entry, so Back undoes it); Custom,
+  or a range no preset matches, shows a two-date form (RHF + Zod,
+  `schemas/summary.ts`) that applies on "Show these dates".
+- **Range limit:** a custom range over 366 days, or ending before it starts,
+  is a field error before anything is sent; a URL with such a range shows the
+  same message in place of the table and sends nothing; the API's 422 (say, a
+  hand-edited URL the web did not catch) shows its message and details in an
+  alert.
+- **Table** (`summary-table.tsx`): a real `<table>` with a caption, a row
+  header per period ("Week of 5 Oct 2026", "October 2026"), the thirteen
+  figures in `h:mm`, right-aligned with tabular numerals (flexi and the flexi
+  balance with a sign and a word, `+0:40 over`), and a `<tfoot>` totals row
+  (sums; the flexi balance is the last period's). The table and the CSV share
+  one column list (`summary-columns.ts`). **Decided while building:** a
+  period's warnings are a row of their own under its figures ("Warnings for
+  Week of 11 Oct 2088: …", badges with a ⚠ icon and text, a count when
+  repeated, `BREAK_RAISED` as a quieter note), because a fourteenth column of
+  badges made every row several lines tall. The engine's codes map to copy in
+  `warnings.ts` (`WARNING_LABELS`), which the week view can reuse. The API
+  widens the range to whole weeks or months, so a note linked to the table
+  says what it covers when that differs from the dates chosen.
+- **Width:** at 1280×800 with the sidebar expanded, the week table is about
+  1,120px in a 990px content column, so it scrolls sideways **inside its own
+  region** (UX_STANDARDS.md allows it for tables; the region is focusable so
+  the keyboard can scroll it, WCAG 2.1.1). With the rail, or at 1920, it fits.
+- **States:** skeleton rows after 300ms on first load; a new range keeps the
+  shown rows (`aria-busy`) while it loads, **but a new grouping does not**:
+  weeks relabelled as months would be wrong, not just stale (found in the
+  journey, fixed, and covered by a regression test). Empty: "No time
+  recorded between these dates." when no period has any worked or credited
+  time (**decided**: missing-day debits alone do not count as recorded time).
+  Error: an alert with Retry. "Download CSV" is disabled while there is
+  nothing to download.
+- **Leave strip:** the leave year of the range's last day, from
+  `time-balances` as of 31 December (the leave tab's query, so they share a
+  cache entry): allowance, used and remaining ("over allowance" when
+  negative).
+- **CSV:** `summaryCsvRows` → `toCsv` from `@repo/domain`, built in the
+  browser from the rows shown and saved by `lib/download.ts` as
+  `hours-summary-<from>-<to>.csv` (the inclusive dates). Columns: period,
+  from, to (inclusive), every figure in `h:mm` and decimal hours, the week's
+  conversion (Off, Preview, Applied), and the warnings as text; then a totals
+  row.
+- **API hooks:** `api/time-summaries.ts` (`hoursKeys.summaries(query)` under
+  `computed()`, `staleTime: 0`) and `api/excess-conversions.ts`
+  (`hoursKeys.excessConversionList({ from, to })`; `useSwitchConversion`
+  POSTs to switch on and DELETEs the week's row to switch off, then
+  invalidates the conversions and `computed()`). **Decided while building:**
+  reaching the state asked for is success: a 409 on switching on means another
+  tab already did, and a 404 on switching off means it is already off.
+- **Aside components** (for the week view to mount; not mounted by this part):
+  - `ThisWeekPanel({ weekStart, asOf, live?, recalculationNotice? })`: loads
+    the week's `time-summaries` group (`groupBy=week`, which carries the
+    conversion detail) and its switch row. It shows credited against target,
+    the week flexi, "After conversion" once the switch is on and there is
+    excess, the switch (saves at once with a quiet "Saved" in a
+    `role="status"`; not disabled while saving, so focus stays on it; a failed
+    save is a persistent error toast and the switch shows the saved state),
+    then TOIL, overtime ("2:00 unpaid", "1:00 paid, 1:00 unpaid") and "Preview
+    until Fri 9 Oct" or "Applied Fri 9 Oct"; or "Nothing to convert" for a
+    week that is net zero or negative. `live` takes
+    `thisWeekFigures(result, weekStart)` from the week view's own engine run,
+    so the panel follows unsaved typing (the saved summary is then not
+    fetched). `recalculationNotice` fills a polite live region at the foot of
+    the panel.
+  - `BalancesPanel({ asOf })`: flexi (with its word), TOIL this month against
+    its cap and TOIL taken, overtime this year (paid and unpaid, both always
+    shown), and leave left; "No balances yet" before any terms.
+  - `useRecalculationNotice(weekStart)` → `{ notice, notify(before, after,
+editedWeekStart) }`: `recalculationMessage` runs `recalculation()` and
+    writes "Week of 28 Sep recalculated: TOIL 3:00 → 2:00, overtime 0:00 →
+    0:00. September totals changed."; `notify` raises a 4s info toast and
+    keeps the message for the panel's live region. An edit that moves neither
+    the week's conversion nor an ended month says nothing.
+- **Shared additions:** the **Badge** primitive (`components/ui/badge.tsx`,
+  DESIGN_SYSTEM.md → Badge); `formatDate` styles `weekdayDayMonth` ("Fri 9
+  Oct"), `dayMonth` ("28 Sep"), `monthYear` and `month`. **Decided while
+  building:** recent ICU data abbreviates September as "Sept" in en-GB;
+  `formatDate` keeps every short month to three letters ("Sep"), as this
+  document writes them.
+- **Bundle** (`pnpm --filter @repo/web build`, gzipped): initial JS 90.2 kB
+  (unchanged). The `/hours/summary` route chunk is 0.3 kB and loads the
+  shared `hours` feature chunk, 37.5 kB (with `temporal-polyfill`), which
+  the settings route now shares (it was 33.3 kB): about 38 kB for the route
+  against FRONTEND_QUALITY.md's advisory 150 kB.
+- **Tests:** component tests for the summary (by week and month, headers and
+  figures, warnings rows, totals, the whole-weeks note, presets and custom
+  dates to the URL, the 366-day limit in the form and from the URL, the API's
+  422, empty, Retry, the leave strip, the CSV download and the grouping
+  regression), the range and column helpers and CSV rows, the warning copy,
+  `ThisWeekPanel` (switch on and off by mouse and keyboard, applied and
+  preview, nothing to convert, a failed save, 409 as success, live figures,
+  the live region, Retry), `BalancesPanel`, the recalculation message and
+  hook (the worked example, the cross-month example with "September totals
+  changed", no change), Badge, and the new date styles.
+  `e2e/hours-summary.spec.ts` reads October 2088 by week and by month (the
+  worked example applied, missing days, month-end TOIL to unpaid overtime),
+  Back and reload, the presets from a browser clock set to 15 Nov 2088
+  (`page.clock`), the custom range limit, the CSV download, axe in light and
+  dark at 1280×800, and reflow at 320 CSS px with the table scrolling in its
+  region. The journeys use their own terms from 27 Sep 2088, before every
+  other journey's, so they never become the latest terms the settings
+  journeys edit (they do become the journey account's tracking start, unless
+  another journey's terms are earlier).
+- **Left for the lead (part 2):** mounting the aside in the week view, the
+  switch and edit-after-settlement journeys, the browser-equals-API check for
+  the seeded week, and links to the summary from the week view.
