@@ -8,14 +8,29 @@ import {
   Outlet,
   RouterProvider,
 } from '@tanstack/react-router';
-import { act, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type * as React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { WorkTerm } from '../api/keys';
 import type { WorkDay } from '../api/work-days';
 
+import type * as TimeInputModule from './time-input';
 import { WeekView } from './week-view';
+
+/** How often each time field has rendered, by its id (for the memoised rows). */
+const timeInputRenders = new Map<string, number>();
+
+vi.mock('./time-input', async (importOriginal) => {
+  const actual = await importOriginal<typeof TimeInputModule>();
+  return {
+    TimeInput: (props: React.ComponentProps<typeof TimeInputModule.TimeInput>) => {
+      if (props.id) timeInputRenders.set(props.id, (timeInputRenders.get(props.id) ?? 0) + 1);
+      return actual.TimeInput(props);
+    },
+  };
+});
 
 import { dismissToast } from '@/components/ui/toast';
 import { on, page, renderWithApi, stubApi, type ApiCall } from '@/test/api-stub';
@@ -205,6 +220,50 @@ describe('WeekView', () => {
     expect(field('Break', 'Mon 5 Oct')).toHaveValue('0:30');
   });
 
+  it('re-renders only the row being typed in', async () => {
+    const user = userEvent.setup();
+    stubWeek({
+      days: [
+        workDay('2026-10-06', {
+          startsAt: '2026-10-06T07:00:00.000Z',
+          endsAt: '2026-10-06T15:30:00.000Z',
+        }),
+      ],
+    });
+    await renderWeek();
+    const start = await screen.findByRole('textbox', { name: 'Start, Mon 5 Oct' });
+    const before = new Map(timeInputRenders);
+    await user.type(start, '0800');
+    await user.type(field('End', 'Mon 5 Oct'), '1730');
+    // The typed row renders on each key; the others (and their live figures) stay put.
+    expect(timeInputRenders.get('hours-start-2026-10-05')).toBeGreaterThan(
+      before.get('hours-start-2026-10-05') ?? 0,
+    );
+    for (const date of ['2026-10-06', '2026-10-07', '2026-10-11']) {
+      expect(timeInputRenders.get(`hours-start-${date}`)).toBe(before.get(`hours-start-${date}`));
+    }
+    expect(screen.getByRole('row', { name: /^Week/ })).toHaveTextContent('17:00 of 37:30 target');
+  });
+
+  it("keeps the browser's own menu on a row with no actions", async () => {
+    stubWeek({
+      days: [
+        workDay('2026-10-06', {
+          startsAt: '2026-10-06T07:00:00.000Z',
+          endsAt: '2026-10-06T15:30:00.000Z',
+        }),
+      ],
+    });
+    await renderWeek();
+    await screen.findByRole('textbox', { name: 'Start, Mon 5 Oct' });
+    // Nothing on Monday: the event is left alone (not cancelled), and no menu opens.
+    expect(fireEvent.contextMenu(row('Mon 5 Oct'))).toBe(true);
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    // Tuesday has a saved day, so its row opens the row menu instead.
+    expect(fireEvent.contextMenu(row('Tue 6 Oct'))).toBe(false);
+    expect(await screen.findByRole('menuitem', { name: 'Clear day' })).toBeInTheDocument();
+  });
+
   it('shows an end before the start as the next day, announced', async () => {
     const user = userEvent.setup();
     stubWeek({});
@@ -213,6 +272,9 @@ describe('WeekView', () => {
     await user.type(field('End', 'Wed 7 Oct'), '0600');
     const end = field('End', 'Wed 7 Oct');
     expect(end).toHaveAccessibleDescription(expect.stringContaining('+1 day'));
+    // Read with the field, never announced by itself: a partial time would
+    // make it come and go while typing.
+    expect(screen.getByText('+1 day').closest('[aria-live]')).toBeNull();
     expect(row('Wed 7 Oct')).toHaveTextContent('7:30');
     expect(row('Wed 7 Oct')).toHaveTextContent('After 19:00');
   });

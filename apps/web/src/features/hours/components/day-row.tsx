@@ -43,6 +43,39 @@ const FIELD_LABELS: Record<RowField, string> = {
   toil: 'TOIL taken',
 };
 
+/** What a row shows of the engine's day, and nothing else (not the running balance). */
+export type DayFigures = Pick<
+  DayResult,
+  | 'bankHoliday'
+  | 'bankHolidayMinutes'
+  | 'spanMinutes'
+  | 'workedMinutes'
+  | 'creditedMinutes'
+  | 'counted'
+  | 'dayFlexiMinutes'
+  | 'convertedMinutes'
+  | 'previewConvertedMinutes'
+>;
+
+/**
+ * A row's figures from the engine's day. The day's running flexi balance moves
+ * with every earlier day, so passing the whole day would re-render every later
+ * row on each keystroke.
+ */
+export function dayFigures(day: DayResult): DayFigures {
+  return {
+    bankHoliday: day.bankHoliday,
+    bankHolidayMinutes: day.bankHolidayMinutes,
+    spanMinutes: day.spanMinutes,
+    workedMinutes: day.workedMinutes,
+    creditedMinutes: day.creditedMinutes,
+    counted: day.counted,
+    dayFlexiMinutes: day.dayFlexiMinutes,
+    convertedMinutes: day.convertedMinutes,
+    previewConvertedMinutes: day.previewConvertedMinutes,
+  };
+}
+
 export interface DayRowProps {
   date: IsoDate;
   /** "Mon 5 Oct". */
@@ -53,7 +86,8 @@ export interface DayRowProps {
   dirty: boolean;
   /** The date has a saved row (so Clear day deletes it). */
   hasSaved: boolean;
-  day: DayResult;
+  /** The engine's figures for the day that the row shows (`dayFigures`). */
+  day: DayFigures;
   warnings: readonly RowWarning[];
   /** The week's conversion; the Converted column shows unless it is `OFF`. */
   conversion: ConversionState;
@@ -64,17 +98,37 @@ export interface DayRowProps {
   saving: boolean;
   /** The table's column count, for the error row's span. */
   columns: number;
-  onFieldChange: (field: RowField, value: string) => void;
-  onFieldBlur: (field: RowField) => void;
-  onSave: () => void;
-  onRevert: () => void;
-  onClear: () => void;
-  onToggleBankHolidayWorked: () => void;
+  /*
+   * The handlers take the row's date, so the table passes the same functions
+   * to every row and a keystroke re-renders only the row that changed.
+   */
+  onFieldChange: (date: IsoDate, field: RowField, value: string) => void;
+  onFieldBlur: (date: IsoDate, field: RowField) => void;
+  onSave: (date: IsoDate) => void;
+  onRevert: (date: IsoDate) => void;
+  onClear: (date: IsoDate) => void;
+  onToggleBankHolidayWorked: (date: IsoDate) => void;
   /**
    * Called as a menu closes after Clear day: return the element to focus
    * instead of the menu's trigger (focus moves to the next row).
    */
   focusAfterMenu: () => HTMLElement | null;
+}
+
+/** Props compared by value: the table rebuilds them on each render. */
+const VALUE_PROPS = new Set<string>(['text', 'day', 'warnings', 'fieldErrors', 'saveErrors']);
+
+/**
+ * `React.memo`'s comparison for a row: the handlers are stable and the rest
+ * are small, so a row re-renders only when something it shows has changed
+ * (the engine's result is a new object on every run, even for unchanged days).
+ */
+function sameRowProps(previous: DayRowProps, next: DayRowProps): boolean {
+  return (Object.keys(next) as (keyof DayRowProps)[]).every((key) =>
+    VALUE_PROPS.has(key)
+      ? JSON.stringify(previous[key]) === JSON.stringify(next[key])
+      : Object.is(previous[key], next[key]),
+  );
 }
 
 /** A dash for "nothing here", read as `none` by screen readers. */
@@ -101,10 +155,11 @@ interface RowMenuItem {
  * to what is saved (both only while focus is in the row's fields). The "⋯"
  * button opens the row menu (DropdownMenu); right-click on the row opens the
  * same menu (ContextMenu), except in a text field, which keeps the browser's
- * own menu for copy and paste. Validation shows when a field is left and on
- * save; nothing blocks typing.
+ * own menu for copy and paste; a row with no actions keeps the browser's own
+ * menu everywhere. Validation shows when a field is left and on save; nothing
+ * blocks typing.
  */
-export function DayRow({
+function DayRowComponent({
   date,
   label,
   isToday,
@@ -132,13 +187,13 @@ export function DayRow({
   const overnight = endsNextDay(text);
 
   const menuItems: RowMenuItem[] = [];
-  if (hasSaved || dirty) menuItems.push({ label: 'Clear day', onSelect: onClear });
+  if (hasSaved || dirty) menuItems.push({ label: 'Clear day', onSelect: () => onClear(date) });
   if (day.bankHoliday) {
     menuItems.push({
       label: text.bankHolidayWorked
         ? 'Mark bank holiday as not worked'
         : 'Mark bank holiday as worked',
-      onSelect: onToggleBankHolidayWorked,
+      onSelect: () => onToggleBankHolidayWorked(date),
     });
   }
 
@@ -154,10 +209,10 @@ export function DayRow({
     if (event.nativeEvent.isComposing) return;
     if (event.key === 'Enter') {
       event.preventDefault();
-      onSave();
+      onSave(date);
     } else if (event.key === 'Escape' && dirty) {
       event.preventDefault();
-      onRevert();
+      onRevert(date);
     }
   };
 
@@ -174,8 +229,8 @@ export function DayRow({
     const common = {
       id: fieldId(name, date),
       value: text[name],
-      onValueChange: (value: string) => onFieldChange(name, value),
-      onBlur: () => onFieldBlur(name),
+      onValueChange: (value: string) => onFieldChange(date, name, value),
+      onBlur: () => onFieldBlur(date, name),
       onKeyDown,
       // Keep the browser's own menu (copy, paste) in a text field.
       onContextMenu: (event: React.MouseEvent) => event.stopPropagation(),
@@ -193,7 +248,9 @@ export function DayRow({
           <DurationInput {...common} />
         )}
         {name === 'end' ? (
-          <span id={nextDayId} aria-live="polite" className="block text-xs font-medium">
+          // Not a live region: it would re-announce as a partial time is typed.
+          // The End field's description reads it.
+          <span id={nextDayId} className="block text-xs font-medium">
             {overnight ? '+1 day' : ''}
           </span>
         ) : null}
@@ -212,7 +269,9 @@ export function DayRow({
   return (
     <>
       <ContextMenu>
-        <ContextMenuTrigger asChild>
+        {/* Without actions the trigger is off, so right-click and Shift+F10 keep
+            the browser's own menu. */}
+        <ContextMenuTrigger asChild disabled={menuItems.length === 0}>
           <tr className={cn('border-b', saveErrors && 'border-b-0')} data-date={date}>
             <th
               scope="row"
@@ -290,7 +349,7 @@ export function DayRow({
             <td className="py-1 pl-2 align-top">
               <div className="flex min-h-9 items-center justify-end gap-2">
                 {dirty ? (
-                  <Button size="sm" onClick={onSave} disabled={saving}>
+                  <Button size="sm" onClick={() => onSave(date)} disabled={saving}>
                     {saving ? 'Saving…' : 'Save'}
                     <span className="sr-only"> {label}</span>
                   </Button>
@@ -345,3 +404,6 @@ export function DayRow({
     </>
   );
 }
+
+/** One day of the week view, memoised by value (`sameRowProps`). */
+export const DayRow = React.memo(DayRowComponent, sameRowProps);

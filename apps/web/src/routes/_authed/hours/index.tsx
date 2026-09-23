@@ -15,7 +15,8 @@ import { todayInLondon } from '@/features/hours/week/week-dates';
  * `temporal-polyfill` (slice 5's measurement: a value import cost 45 kB).
  */
 const searchSchema = z.object({
-  week: z.string().optional().catch(undefined),
+  // A date is 10 characters; anything longer is never parsed.
+  week: z.string().max(10).optional().catch(undefined),
 });
 
 export const Route = createFileRoute('/_authed/hours/')({

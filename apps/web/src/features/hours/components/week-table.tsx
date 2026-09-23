@@ -31,7 +31,7 @@ import {
 } from '../week/week-calculation';
 import { weekDates } from '../week/week-dates';
 
-import { DayRow, fieldId } from './day-row';
+import { DayRow, dayFigures, fieldId } from './day-row';
 import { actionErrorMessage, toastSaveError } from './request-states';
 
 import {
@@ -66,6 +66,21 @@ export function toEngineDay(day: WorkDay): WorkDayRow {
     toilTakenMinutes: day.toilTakenMinutes,
     bankHolidayWorked: day.bankHolidayWorked,
   };
+}
+
+/**
+ * A function that keeps its identity across renders but always runs the
+ * latest `handler` (it is refreshed after each render), for handlers passed
+ * to memoised rows. Call it from events only, never while rendering.
+ */
+function useStableHandler<Args extends unknown[]>(
+  handler: (...args: Args) => void,
+): (...args: Args) => void {
+  const latest = React.useRef(handler);
+  React.useLayoutEffect(() => {
+    latest.current = handler;
+  });
+  return React.useCallback((...args: Args) => latest.current(...args), []);
 }
 
 /** The reasons in a 422, or its message when it has none. */
@@ -241,20 +256,26 @@ export function WeekTable({
     onFocusDone();
   }, [focusDate, calculation, onFocusDone]);
 
-  const setDraft = (date: IsoDate, change: (draft: Draft) => Draft) =>
-    setDrafts((current) => {
-      const base: Draft = current[date] ?? {
-        text: textFromSaved(savedByDate.get(date)),
-        touched: new Set(),
-      };
-      return { ...current, [date]: change(base) };
-    });
+  const setDraft = React.useCallback(
+    (date: IsoDate, change: (draft: Draft) => Draft) =>
+      setDrafts((current) => {
+        const base: Draft = current[date] ?? {
+          text: textFromSaved(savedByDate.get(date)),
+          touched: new Set(),
+        };
+        return { ...current, [date]: change(base) };
+      }),
+    [savedByDate],
+  );
 
-  const dropDraft = (date: IsoDate) =>
-    setDrafts((current) => {
-      const { [date]: _dropped, ...rest } = current;
-      return rest;
-    });
+  const dropDraft = React.useCallback(
+    (date: IsoDate) =>
+      setDrafts((current) => {
+        const { [date]: _dropped, ...rest } = current;
+        return rest;
+      }),
+    [],
+  );
 
   const setSavingFor = (date: IsoDate, on: boolean) =>
     setSaving((current) => {
@@ -349,11 +370,41 @@ export function WeekTable({
     });
   };
 
-  const takeFocusAfterMenu = (): HTMLElement | null => {
+  const takeFocusAfterMenu = React.useCallback((): HTMLElement | null => {
     const date = focusAfterMenu.current;
     focusAfterMenu.current = null;
     return date ? document.getElementById(fieldId('start', date)) : null;
-  };
+  }, []);
+
+  // The rows' handlers: the same functions on every render, so a keystroke
+  // re-renders only its own row (`DayRow` is memoised).
+  const onFieldChange = React.useCallback(
+    (date: IsoDate, field: RowField, value: string) =>
+      setDraft(date, (current) => ({ ...current, text: { ...current.text, [field]: value } })),
+    [setDraft],
+  );
+  const onFieldBlur = React.useCallback(
+    (date: IsoDate, field: RowField) =>
+      // Only a changed row validates: passing through an untouched row's
+      // fields with Tab flags nothing.
+      setDrafts((current) => {
+        const draft = current[date];
+        if (!draft || draft.touched.has(field)) return current;
+        if (sameRow(draft.text, textFromSaved(savedByDate.get(date)))) return current;
+        return { ...current, [date]: { ...draft, touched: new Set([...draft.touched, field]) } };
+      }),
+    [savedByDate],
+  );
+  const onToggleBankHolidayWorked = React.useCallback(
+    (date: IsoDate) =>
+      setDraft(date, (current) => ({
+        ...current,
+        text: { ...current.text, bankHolidayWorked: !current.text.bankHolidayWorked },
+      })),
+    [setDraft],
+  );
+  const onSave = useStableHandler(save);
+  const onClear = useStableHandler(clear);
 
   if (!calculation) return null;
   const { days, week, terms: weekTerms } = calculation;
@@ -397,38 +448,19 @@ export function WeekTable({
                   text={text}
                   dirty={dirty}
                   hasSaved={savedByDate.has(date)}
-                  day={day}
+                  day={dayFigures(day)}
                   warnings={rowWarnings(day, weekTerms, engineRow)}
                   conversion={week.conversion}
                   fieldErrors={fieldErrors}
                   saveErrors={dirty ? draft?.saveErrors : undefined}
                   saving={saving.has(date)}
                   columns={columns}
-                  onFieldChange={(field, value) =>
-                    setDraft(date, (current) => ({
-                      ...current,
-                      text: { ...current.text, [field]: value },
-                    }))
-                  }
-                  onFieldBlur={(field) =>
-                    // Only a changed row validates: passing through an untouched row's
-                    // fields with Tab flags nothing.
-                    dirty &&
-                    setDraft(date, (current) =>
-                      current.touched.has(field)
-                        ? current
-                        : { ...current, touched: new Set([...current.touched, field]) },
-                    )
-                  }
-                  onSave={() => save(date)}
-                  onRevert={() => dropDraft(date)}
-                  onClear={() => clear(date)}
-                  onToggleBankHolidayWorked={() =>
-                    setDraft(date, (current) => ({
-                      ...current,
-                      text: { ...current.text, bankHolidayWorked: !current.text.bankHolidayWorked },
-                    }))
-                  }
+                  onFieldChange={onFieldChange}
+                  onFieldBlur={onFieldBlur}
+                  onSave={onSave}
+                  onRevert={dropDraft}
+                  onClear={onClear}
+                  onToggleBankHolidayWorked={onToggleBankHolidayWorked}
                   focusAfterMenu={takeFocusAfterMenu}
                 />
               );

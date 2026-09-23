@@ -100,11 +100,19 @@ passes on a machine without a database. **(planned)** In CI a missing
 - Component tests use Testing Library with jsdom (`apps/web/src/test/setup.ts`),
   querying by accessible role and name.
 - Playwright journeys start the API and web dev servers (`playwright.config.ts`),
-  create their account in `e2e/global-setup.ts`, and call
+  create their accounts in `e2e/global-setup.ts`, and call
   `expectNoA11yViolations(page)` (`e2e/support.ts`) on every screen. A journey
   that tests layout sets its viewport with `test.use({ viewport })`, as
   `e2e/app-shell.spec.ts` does for 1280×800, 1920×1080 and the 320 CSS px
   reflow floor.
+- **Playwright runs only against a `*_test` database.** The journey accounts'
+  passwords are in the repository, so `e2e/global-setup.ts` refuses to start
+  unless `DATABASE_URL` (or the repo-root `.env`'s) names a database ending in
+  `_test`, or `CI=true`. Locally, export
+  `DATABASE_URL='postgresql://app:app@localhost:5432/app_test?schema=public'`
+  and stop any dev server on port 3000 first: an API already running (against
+  the dev database) is reused, and the guard cannot see which database it
+  uses.
 - Which browsers, viewports, keyboard-only and 400%-zoom journeys are required is
   in [FRONTEND_QUALITY.md](FRONTEND_QUALITY.md#test-matrix).
 

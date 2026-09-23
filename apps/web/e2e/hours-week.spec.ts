@@ -195,6 +195,25 @@ test('enters a week from the keyboard, clears a day and undoes it', async ({ pag
   await expect(row(page, 'Wed 4 Feb')).toContainText('+1 day');
 });
 
+test('opens the row menu from the keyboard with Shift+F10, and Esc returns focus', async ({
+  page,
+}) => {
+  await signIn(page, E2E_WEEK_USER);
+  await page.goto(`/hours?week=${WEEK}`);
+  // Monday was saved by the journey above, so its row has actions.
+  const actions = page.getByRole('button', { name: 'Actions for Mon 2 Feb' });
+  await expect(actions).toBeEnabled();
+  await actions.focus();
+  await page.keyboard.press('Shift+F10');
+  const menu = page.getByRole('menu', { name: 'Actions for Mon 2 Feb' });
+  await expect(menu.getByRole('menuitem', { name: 'Clear day' })).toBeVisible();
+  await expectNoA11yViolations(page);
+  await page.keyboard.press('Escape');
+  await expect(menu).toBeHidden();
+  await expect(actions).toBeFocused();
+  await expect(field(page, 'Start', 'Mon 2 Feb')).toHaveValue('08:00');
+});
+
 test('passes axe in the dark theme, with warnings and a row menu open', async ({ page }) => {
   await signIn(page, E2E_WEEK_USER);
   await page.emulateMedia({ colorScheme: 'dark', reducedMotion: 'reduce' });
