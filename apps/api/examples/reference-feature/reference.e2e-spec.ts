@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+
 import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
@@ -20,8 +22,11 @@ import type { PrismaService } from '../src/prisma/prisma.service';
  */
 const hasDatabase = Boolean(process.env.DATABASE_URL);
 
-const USER = '018f4e8a-9a1b-7c2d-8e3f-4a5b6c7d8e9f';
-const OTHER_USER = '018f4e8a-7b2c-7c3d-8e4f-1a2b3c4d5e6f';
+// Fresh users per suite: e2e files run in parallel against one database, and
+// each suite's cleanup deletes its users (cascading to their rows), so shared
+// ids would let one suite delete another's data mid-test.
+const USER = randomUUID();
+const OTHER_USER = randomUUID();
 
 describe.skipIf(!hasDatabase)('Reference items API (e2e)', () => {
   let app: INestApplication;
@@ -65,7 +70,7 @@ describe.skipIf(!hasDatabase)('Reference items API (e2e)', () => {
 
   beforeEach(async () => {
     principal = new Principal(USER, 'owner@example.com', 'Test User');
-    await prisma.referenceItem.deleteMany();
+    await prisma.referenceItem.deleteMany({ where: { ownerId: { in: [USER, OTHER_USER] } } });
   });
 
   const create = (name = 'First item') => request(app.getHttpServer()).post(base).send({ name });

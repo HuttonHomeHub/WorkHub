@@ -46,8 +46,6 @@ finished item; move a scheduled one to PRODUCT.md.
   `apps/api/test/helpers/`.
 - `S` Fail the CI e2e job when `DATABASE_URL` is missing instead of skipping
   every suite.
-- `S` Scope the template e2e cleanup to its test users instead of
-  `deleteMany()` on the whole table.
 - `S` A runtime database role with data-only privileges for `api`, separate from
   the `migrate` role (TECH_DEBT.md).
 - `S` Check the Nest throttler default (100 requests/60 s per IP) against a busy

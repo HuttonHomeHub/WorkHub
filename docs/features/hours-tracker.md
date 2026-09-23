@@ -823,6 +823,11 @@ None.
   generated controller could fail `import/order` depending on the entity name
   (`sample-widget` passed by luck; `work-day` did not). The generator now runs
   `prisma generate` and then `eslint --fix` on what it wrote.
+- **Found in CI:** every generated e2e suite used the same two hard-coded user
+  ids. Vitest runs e2e files in parallel, and one suite's cleanup deleted the
+  users (cascading) while another was creating rows, so a create failed its
+  foreign key. The template now uses `randomUUID()` users per suite and scopes
+  its table cleanup to them (a BACKLOG item, now done).
 - **verify-template** generates `sample-widget --tool sample-kit` (a new tool)
   and `sample-gadget --core`, and restores any real `core.module.ts` it
   touched, so it keeps working once core has real modules (slice 4).
