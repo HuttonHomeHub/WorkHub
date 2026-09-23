@@ -3,10 +3,10 @@ import { addDays, type ConversionState, type HoursResult } from '@repo/domain';
 import type { SummaryGroup } from './api/keys';
 
 /**
- * What the aside's "This week" panel shows. It comes from the week's
- * `time-summaries` group (saved data), or from the week view's own engine run
- * over saved and unsaved rows (`thisWeekFigures`), so the panel follows the
- * owner's typing before anything is saved.
+ * What the aside's "This week" panel shows: the week's `time-summaries` group
+ * (saved data), with the week-local figures overlaid from the week view's own
+ * engine run over saved and unsaved rows (`liveWeekFigures`), so the panel
+ * follows the owner's typing before anything is saved.
  */
 export interface ThisWeekFigures {
   targetMinutes: number;
@@ -40,11 +40,25 @@ export function figuresFromGroup(group: SummaryGroup): ThisWeekFigures {
 }
 
 /**
- * The week's figures from an engine result (`calculateHours` in the browser,
- * over saved data plus unsaved rows), for `ThisWeekPanel`'s `live` prop.
- * `null` when the result does not cover the week.
+ * The figures the week view's own engine run can give the panel: the ones
+ * that depend only on the week's days (feature doc → Slice 7, "Live totals").
+ * The week view computes one week with no history, so its TOIL and overtime
+ * split (which depends on the TOIL already converted earlier in the month),
+ * and anything after it, must come from `time-summaries`.
  */
-export function thisWeekFigures(result: HoursResult, weekStart: string): ThisWeekFigures | null {
+export type LiveWeekFigures = Pick<
+  ThisWeekFigures,
+  'targetMinutes' | 'creditedMinutes' | 'rawFlexiMinutes' | 'excessMinutes'
+>;
+
+/**
+ * The week's week-local figures from an engine result (`calculateWeek` in the
+ * week view, over saved data plus unsaved rows), for `ThisWeekPanel`'s `live`
+ * prop: credited against target, the week's raw flexi, and its excess E (so
+ * "After conversion" follows typing too). `null` when the result does not
+ * cover the week.
+ */
+export function liveWeekFigures(result: HoursResult, weekStart: string): LiveWeekFigures | null {
   const week = result.weeks.find((w) => w.weekStart === weekStart);
   if (!week) return null;
   const end = addDays(weekStart, 7);
@@ -61,11 +75,6 @@ export function thisWeekFigures(result: HoursResult, weekStart: string): ThisWee
     targetMinutes: target,
     creditedMinutes: credited,
     rawFlexiMinutes: rawFlexi,
-    conversion: week.conversion,
-    settlementDate: week.settlementDate,
     excessMinutes: week.excessMinutes,
-    toilMinutes: week.toilMinutes,
-    overtimePaidMinutes: week.overtimePaidMinutes,
-    overtimeUnpaidMinutes: week.overtimeUnpaidMinutes,
   };
 }

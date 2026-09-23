@@ -13,6 +13,13 @@ const DATE_FORMATS = {
     year: 'numeric',
     timeZone: 'UTC',
   }),
+  /** 5 Oct 2026: a date without its weekday ("Week of 5 Oct 2026") */
+  medium: new Intl.DateTimeFormat('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }),
   /** Monday 5 October 2026 */
   long: new Intl.DateTimeFormat('en-GB', {
     weekday: 'long',
@@ -21,7 +28,7 @@ const DATE_FORMATS = {
     year: 'numeric',
     timeZone: 'UTC',
   }),
-  /** Fri 9 Oct */
+  /** Fri 9 Oct: a day within a week or year that is already named */
   weekdayDayMonth: new Intl.DateTimeFormat('en-GB', {
     weekday: 'short',
     day: 'numeric',
@@ -36,7 +43,11 @@ const DATE_FORMATS = {
   month: new Intl.DateTimeFormat('en-GB', { month: 'long', timeZone: 'UTC' }),
 } as const;
 
-/** A `YYYY-MM-DD` calendar date for display: `Mon 5 Oct 2026` (or `long`). */
+/**
+ * A `YYYY-MM-DD` calendar date for display: `Mon 5 Oct 2026` by default, or
+ * any other style in `DATE_FORMATS` (`5 Oct 2026` is `medium`, `Mon 5 Oct`
+ * is `weekdayDayMonth`).
+ */
 export function formatDate(isoDate: string, style: keyof typeof DATE_FORMATS = 'short'): string {
   const date = new Date(`${isoDate}T00:00:00Z`);
   if (Number.isNaN(date.getTime())) return isoDate;

@@ -142,17 +142,17 @@ lives in each tool's feature doc; the hours tracker's rules are in
 
 What exists today:
 
-| Area        | Capability                                                                 |
-| ----------- | -------------------------------------------------------------------------- |
-| Auth        | Email/password sign-in and sign-out, sessions (Better Auth)                |
-| Accounts    | CLI create and reset-password; seeded `dev@example.com` locally            |
-| Web         | Protected shell with a theme toggle                                        |
-| API         | `GET /api/v1/me`, `GET /api/v1/config`, health endpoints, OpenAPI          |
-| Feature kit | `pnpm gen:feature` from the reference template (ADR-0015)                  |
-| Delivery    | CI (quality, template, e2e), Changesets, GHCR images                       |
-| Hours tool  | Hours tracker — **in progress** ([feature doc](features/hours-tracker.md)) |
+| Area        | Capability                                                                                                                                                                                                                  |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Auth        | Email/password sign-in and sign-out, sessions (Better Auth)                                                                                                                                                                 |
+| Accounts    | CLI create and reset-password; seeded `dev@example.com` locally                                                                                                                                                             |
+| Web         | Protected shell with the tools sidebar and a theme toggle                                                                                                                                                                   |
+| API         | `GET /api/v1/me`, `GET /api/v1/config`, health endpoints, OpenAPI                                                                                                                                                           |
+| Feature kit | `pnpm gen:feature` from the reference template (ADR-0015)                                                                                                                                                                   |
+| Delivery    | CI (quality, template, e2e), Changesets, GHCR images                                                                                                                                                                        |
+| Hours tool  | Hours tracker — **shipped** 2026-09-23: the week view at `/hours` with its aside, the summary at `/hours/summary`, the settings at `/hours/settings`, CSV and `pnpm data:export` ([feature doc](features/hours-tracker.md)) |
 
-Not built: domain features, passkeys, backups, the sidebar and command palette.
+Not built: passkeys, backups, the command palette.
 
 ## Roadmap
 
@@ -162,8 +162,9 @@ candidates are in [BACKLOG.md](BACKLOG.md).
 
 ### Now
 
-- `L` [Hours tracker](features/hours-tracker.md) (slices 1–6, 8 and 9 of 10 done — the settings screens at `/hours/settings`; next the week view) — the
-  first tool, on the modular-tools structure of ADR-0020.
+- Nothing in progress. The hours tracker (the first tool, on ADR-0020's
+  modular-tools structure) shipped on 2026-09-23 and is in the feature
+  inventory; the owner picks the next item from Next.
 
 ### Next
 

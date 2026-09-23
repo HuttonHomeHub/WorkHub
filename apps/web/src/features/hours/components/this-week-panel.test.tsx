@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { ExcessConversion, SummaryGroup } from '../api/keys';
-import type { ThisWeekFigures } from '../this-week-figures';
+import type { LiveWeekFigures } from '../this-week-figures';
 
 import { ThisWeekPanel } from './this-week-panel';
 
@@ -210,24 +210,25 @@ describe('ThisWeekPanel', () => {
     expect(screen.getByRole('switch')).toHaveAttribute('aria-checked', 'true');
   });
 
-  it('shows live figures from unsaved rows instead of the saved summary', async () => {
-    const { calls } = stubWeek({ switchedOn: false, group: applied });
-    const live: ThisWeekFigures = {
+  it('lays live figures from unsaved rows over the saved summary, keeping the saved split', async () => {
+    stubWeek({ switchedOn: true, group: applied });
+    const live: LiveWeekFigures = {
       targetMinutes: 2250,
       creditedMinutes: 2490,
       rawFlexiMinutes: 240,
-      conversion: 'OFF',
-      settlementDate: '2026-10-09',
       excessMinutes: 240,
-      toilMinutes: 0,
-      overtimePaidMinutes: 0,
-      overtimeUnpaidMinutes: 0,
     };
     renderWithApi(<ThisWeekPanel weekStart={WEEK} asOf="2026-10-12" live={live} />);
 
-    expect(await screen.findByText('41:30 of 37:30 target')).toBeInTheDocument();
-    expect(screen.getByText('+4:00 over')).toBeInTheDocument();
-    expect(calls.some((call) => call.path === '/api/v1/time-summaries')).toBe(false);
+    const panel = await screen.findByRole('region', { name: 'This week' });
+    expect(await within(panel).findByText('41:30 of 37:30 target')).toBeInTheDocument();
+    expect(within(panel).getByText('+4:00 over')).toBeInTheDocument();
+    // After conversion follows the live excess: 4:00 − 4:00.
+    expect(within(panel).getByText('0:00')).toBeInTheDocument();
+    // The split is the saved one until the save is re-read.
+    expect(within(panel).getByText('1:00')).toBeInTheDocument();
+    expect(within(panel).getByText('2:00 unpaid')).toBeInTheDocument();
+    expect(within(panel).getByText('Applied Fri 9 Oct')).toBeInTheDocument();
   });
 
   it('announces a recalculation in a polite live region', async () => {

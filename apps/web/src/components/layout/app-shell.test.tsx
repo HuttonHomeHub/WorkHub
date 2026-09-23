@@ -16,14 +16,14 @@ import { ThemeProvider } from '@/hooks/use-theme';
 import type { ToolManifest } from '@/lib/tool-manifest';
 
 // A second tool with sub-pages, so `aria-current` can be checked across routes.
-// Its routes exist only in this test's router, hence the cast.
+// `/hours/summary` exists only in this test's router.
 const TOOLS: readonly ToolManifest[] = [
   { id: 'home', label: 'Home', icon: House, path: '/', commands: [] },
   {
     id: 'hours',
     label: 'Hours',
     icon: Clock,
-    path: '/hours' as ToolManifest['path'],
+    path: '/hours',
     commands: [],
   },
 ];

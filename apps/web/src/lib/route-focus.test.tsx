@@ -26,7 +26,7 @@ function Shell({ children }: { children: React.ReactNode }) {
   return (
     <>
       <nav aria-label="Tools">
-        <Link to="/">Home</Link> <Link to={'/hours' as '/'}>Hours</Link>
+        <Link to="/">Home</Link> <Link to="/hours">Hours</Link>
       </nav>
       <main tabIndex={-1}>{children}</main>
     </>
