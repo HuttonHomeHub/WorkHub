@@ -1,0 +1,10 @@
+{
+  "extends": "@repo/config/tsconfig/base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    // Keep incremental build info inside dist/ (see packages/types/tsconfig.json).
+    "tsBuildInfoFile": "dist/.tsbuildinfo"
+  },
+  "include": ["src/**/*.ts"]
+}

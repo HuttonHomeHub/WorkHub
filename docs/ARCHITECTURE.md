@@ -34,13 +34,14 @@ flowchart LR
 
 ## Components
 
-| Part                | What it is                                                                                                                      | Canonical document                                   |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| `apps/web`          | React 19 SPA built by Vite; Tailwind CSS v4 and shadcn/ui; served by nginx in production                                        | [FRONTEND_ARCHITECTURE.md](FRONTEND_ARCHITECTURE.md) |
-| `apps/api`          | NestJS 11 modular monolith (ADR-0008): controllers → services → Prisma; Better Auth for sessions; a CLI for accounts (ADR-0018) | [BACKEND_ARCHITECTURE.md](BACKEND_ARCHITECTURE.md)   |
-| `packages/types`    | The shared contract (ADR-0017): envelopes, types generated from the committed OpenAPI document, rules both apps enforce         | [API.md](API.md)                                     |
-| `packages/config`   | Shared ESLint and tsconfig presets                                                                                              | [DEVELOPMENT.md](DEVELOPMENT.md)                     |
-| PostgreSQL + Prisma | One database; `apps/api/prisma/schema.prisma` is the source of truth; migrations are committed and forward-only                 | [DATABASE.md](DATABASE.md)                           |
+| Part                | What it is                                                                                                                              | Canonical document                                                       |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `apps/web`          | React 19 SPA built by Vite; Tailwind CSS v4 and shadcn/ui; served by nginx in production                                                | [FRONTEND_ARCHITECTURE.md](FRONTEND_ARCHITECTURE.md)                     |
+| `apps/api`          | NestJS 11 modular monolith (ADR-0008): controllers → services → Prisma; Better Auth for sessions; a CLI for accounts (ADR-0018)         | [BACKEND_ARCHITECTURE.md](BACKEND_ARCHITECTURE.md)                       |
+| `packages/types`    | The shared contract (ADR-0017): envelopes, types generated from the committed OpenAPI document, rules both apps enforce                 | [API.md](API.md)                                                         |
+| `packages/domain`   | Pure rules both apps run (ADR-0020 §5): the hours calculation engine and `Europe/London` time helpers on Temporal (`temporal-polyfill`) | [features/hours-tracker.md](features/hours-tracker.md#calculation-rules) |
+| `packages/config`   | Shared ESLint and tsconfig presets                                                                                                      | [DEVELOPMENT.md](DEVELOPMENT.md)                                         |
+| PostgreSQL + Prisma | One database; `apps/api/prisma/schema.prisma` is the source of truth; migrations are committed and forward-only                         | [DATABASE.md](DATABASE.md)                                               |
 
 ## Boundaries
 

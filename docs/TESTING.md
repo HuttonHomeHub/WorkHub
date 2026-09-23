@@ -16,12 +16,12 @@ WorkHub is a thin CRUD API over PostgreSQL for one owner, so most backend bugs
 live where the HTTP layer, validation, ownership and SQL meet. The tests are
 weighted to match:
 
-| Layer                         | Tool                                             | Tests                                                                                                                            | Location                            |
-| ----------------------------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
-| **API e2e — primary backend** | Vitest + Supertest, real Nest app, real Postgres | Every endpoint's status codes and envelopes, validation (400/422), ownership 404s, optimistic-lock 409s, pagination, auth wiring | `apps/api/test/**/*.e2e-spec.ts`    |
-| **Unit**                      | Vitest                                           | Real logic only: calculations, state machines, date and time rules, pure helpers, config validation                              | `apps/*/src/**/*.{spec,test}.ts(x)` |
-| **Component**                 | Vitest + Testing Library (jsdom)                 | Form behaviour and component states, queried by role and label                                                                   | `apps/web/src/**/*.test.tsx`        |
-| **Browser journeys**          | Playwright + axe                                 | The critical user flows end to end, with an accessibility scan on every screen                                                   | `apps/web/e2e/**`                   |
+| Layer                         | Tool                                             | Tests                                                                                                                            | Location                                                                |
+| ----------------------------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| **API e2e — primary backend** | Vitest + Supertest, real Nest app, real Postgres | Every endpoint's status codes and envelopes, validation (400/422), ownership 404s, optimistic-lock 409s, pagination, auth wiring | `apps/api/test/**/*.e2e-spec.ts`                                        |
+| **Unit**                      | Vitest                                           | Real logic only: calculations, state machines, date and time rules, pure helpers, config validation                              | `apps/*/src/**/*.{spec,test}.ts(x)`, `packages/domain/src/**/*.test.ts` |
+| **Component**                 | Vitest + Testing Library (jsdom)                 | Form behaviour and component states, queried by role and label                                                                   | `apps/web/src/**/*.test.tsx`                                            |
+| **Browser journeys**          | Playwright + axe                                 | The critical user flows end to end, with an accessibility scan on every screen                                                   | `apps/web/e2e/**`                                                       |
 
 - **Do not write mocked-repository service tests for pass-through CRUD.** A test
   that mocks Prisma and asserts the mock was called proves nothing the e2e test
@@ -114,6 +114,7 @@ passes on a machine without a database. **(planned)** In CI a missing
 pnpm test                               # all unit and component tests (Turborepo)
 pnpm test:e2e                           # API e2e + Playwright (needs DATABASE_URL, migrations, browsers)
 pnpm --filter @repo/api test            # API unit tests
+pnpm --filter @repo/domain test         # the hours engine and time helpers
 pnpm --filter @repo/api test:e2e        # API e2e only
 pnpm --filter @repo/web test:watch      # web tests in watch mode
 pnpm --filter @repo/web test:e2e        # Playwright only

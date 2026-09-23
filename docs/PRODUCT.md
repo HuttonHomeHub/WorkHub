@@ -162,7 +162,7 @@ candidates are in [BACKLOG.md](BACKLOG.md).
 
 ### Now
 
-- `L` [Hours tracker](features/hours-tracker.md) (slice 2 of 10 done — template restore and the generator's `--tool`/`--core`) — the
+- `L` [Hours tracker](features/hours-tracker.md) (slice 3 of 10 done — the calculation engine, `@repo/domain`) — the
   first tool, on the modular-tools structure of ADR-0020.
 
 ### Next

@@ -1,6 +1,6 @@
 # Hours tracker
 
-- **Status:** Approved (2026-09-16). Building: slice 2 of 10 done
+- **Status:** Approved (2026-09-16). Building: slice 3 of 10 done
   ([build order](#slices)).
 - **Change class:** Feature, built on
   [ADR-0020](../adr/0020-modular-tools-over-shared-core-data.md) (Architectural,
@@ -180,7 +180,8 @@ same outputs.
     Remaining = allowance (247:30) + 37:30 if bought leave is set + leave
     adjustments − used. It can go negative, with a warning.
 13. **Warnings** never change a number:
-    - a day's worked time below its minimum;
+    - a day's credited time below its minimum (credited, so a leave or bank
+      holiday day does not warn);
     - a start before or an end after the band (07:00–19:00);
     - a missing past working day;
     - flexi caps;
@@ -838,3 +839,70 @@ None.
 - **For slice 6 (backend review):** the template has no unique key besides
   `id`, so no test reaches restore's 409. `work_days`' restore e2e adds that
   case, proving `P2002` → 409 fires from restore's `updateMany`.
+
+### Slice 3: calculation engine
+
+- **Package:** `packages/domain` (`@repo/domain`), ESM like `@repo/types`: built
+  by `tsc`, linted with the base config, tested with Vitest, and picked up by
+  Turborepo's `build`, `lint`, `typecheck` and `test`. Neither app depends on it
+  yet; the web takes it in slice 7 and the API in slice 9 (each adds
+  `packages/domain/package.json` to its Dockerfile's `deps` stage then).
+- **Temporal:** `temporal-polyfill` 1.0.5 (MIT), imported only in
+  `core/time/temporal.ts`. Node 24.21 still has no native Temporal.
+- **API:** `calculateHours(input, { until })` returns per-day, per-week,
+  per-month and per-leave-year results from the tracking start, always covering
+  whole weeks, whole months and the whole leave year. `summarise(result, from,
+to, groupBy)` and `balancesAt(result, asOf)` shape them for `time-summaries`
+  and `time-balances`; `recalculation(before, after, weekStart)` is rule 11.
+  The parser and formatter are `parseTimeOfDay`, `parseDuration`,
+  `formatDuration`, `formatSignedDuration`, `formatFlexi` and `decimalHours`.
+  `shiftInstants(date, start, end)` turns typed times into instants (an end at
+  or before the start is the next day).
+- **Decided while building:**
+  - **Minimum warning** compares _credited_ time, not worked time, so leave,
+    TOIL and bank holiday days don't warn (rule 13 above updated).
+  - **Leave counts when booked:** future leave and future bank holidays in the
+    year are in "used". A `LEAVE` adjustment adds to what remains (negative for
+    leave used before tracking started).
+  - **Adjustments dated before the tracking start** take effect on it. `TOIL`
+    adjustments count towards the month's cap but never overflow into
+    overtime.
+  - **Preview split:** a preview walks the TOIL cap after the month's applied
+    minutes. A preview day in a month that ends before its week settles
+    previews as overtime (rule 8 will convert it at settlement).
+  - **A week with no working day** has no settlement date and never applies.
+  - **`INVALID_SPAN`:** a row whose times are incomplete, malformed (not a
+    `…Z` instant), not after the start, or over 24 hours counts no worked time
+    and warns. The API rejects such rows with a 422, so this is defensive.
+  - **Rows that later terms make invalid** (test and security reviews): a
+    terms change or deletion can leave saved leave or TOIL taken on a day that
+    is now non-working, or over its new target. Such a day warns
+    `TIME_OFF_OVER_TARGET`, and its time off credits at most the target
+    (nothing on a non-working day), so it can never create excess that
+    levelling would take from on-target days. The recorded leave still counts
+    against the allowance.
+  - **Input bounds** (security review): every date must be a real
+    `YYYY-MM-DD` in 2000–2100, or `calculateHours` throws `HoursInputError`
+    before doing any work. That bounds the range (a year-1000 tracking start
+    had taken 34 s), and the fast date helpers are only correct for
+    four-digit years. The leave-year pass is linear. Slice 9's DTOs must keep
+    the same bounds and never send `HoursInputError`'s message to a client.
+  - **Durations:** a bare number is hours (`7.5` → 7:30); `30m` is minutes.
+- **Performance:** a warm recalculation over three years with every week
+  converting takes about 13 ms (Node 24), input checks included. Three changes got it there from
+  131 ms: the hot date helpers use integer day numbers instead of Temporal
+  parsing; `minutesBetween` uses `Date.parse`; and the London conversion of
+  each instant is memoised (bounded at 10,000), because the web recalculates the
+  same saved rows on every keystroke. The first run costs about 80 ms, so slice 7
+  runs it when the week's data loads, never first on a keypress (the long-task
+  budget is 50 ms).
+- **Bundle:** the engine plus the polyfill is 24.3 kB gzipped (esbuild,
+  minified), within FRONTEND_QUALITY.md's advisory route-chunk budget. It loads
+  only in the `/hours` chunks from slice 7.
+- **Tests:** 104 in `packages/domain`: both worked examples, switch off and on,
+  the cross-month preview and settlement, rule 11's diff, clock changes in 2026
+  and 2027 (day flexi and week totals for all four), the TOIL cap at 7:30 and one minute over, month-end unused and
+  overdrawn TOIL, paid overtime switched on mid-month, leave, flexi caps and
+  forfeits and caps reached but not crossed, bank holiday credit capped below a
+  larger target, warnings at the band edges, the review regressions, and the
+  parser and formatter.
