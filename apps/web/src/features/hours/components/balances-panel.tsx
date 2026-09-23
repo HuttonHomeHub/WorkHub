@@ -3,6 +3,7 @@ import * as React from 'react';
 
 import { useTimeBalances } from '../api/time-balances';
 
+import { Figure } from './figure';
 import { LoadError, LoadingRows } from './request-states';
 
 import { formatDate } from '@/lib/format';
@@ -10,15 +11,6 @@ import { formatDate } from '@/lib/format';
 export interface BalancesPanelProps {
   /** Today in Europe/London (`londonDateAt(new Date())`); the balances are to the end of it. */
   asOf: string;
-}
-
-function Figure({ term, children }: { term: string; children: React.ReactNode }) {
-  return (
-    <div className="flex flex-wrap justify-between gap-x-4">
-      <dt className="text-muted-foreground">{term}</dt>
-      <dd className="text-right tabular-nums">{children}</dd>
-    </div>
-  );
 }
 
 /** "0:00 paid, 2:00 unpaid" — both, so the paid figure's absence is explicit. */

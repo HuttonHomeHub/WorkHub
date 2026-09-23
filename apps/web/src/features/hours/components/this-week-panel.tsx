@@ -10,6 +10,7 @@ import type { ExcessConversion } from '../api/keys';
 import { useTimeSummaries } from '../api/time-summaries';
 import { figuresFromGroup, type ThisWeekFigures } from '../this-week-figures';
 
+import { Figure } from './figure';
 import { LoadError, LoadingRows, toastSaveError } from './request-states';
 
 import { Label } from '@/components/ui/label';
@@ -41,15 +42,6 @@ function overtimeText(paid: number, unpaid: number): string {
     return `${formatDuration(paid)} paid, ${formatDuration(unpaid)} unpaid`;
   if (paid > 0) return `${formatDuration(paid)} paid`;
   return `${formatDuration(unpaid)} unpaid`;
-}
-
-function Figure({ term, children }: { term: string; children: React.ReactNode }) {
-  return (
-    <div className="flex flex-wrap justify-between gap-x-4">
-      <dt className="text-muted-foreground">{term}</dt>
-      <dd className="text-right tabular-nums">{children}</dd>
-    </div>
-  );
 }
 
 /**

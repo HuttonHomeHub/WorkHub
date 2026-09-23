@@ -31,6 +31,8 @@ finished item; move a scheduled one to PRODUCT.md.
 - `S` Drop the unsupported webkit project from `apps/web/playwright.config.ts`.
 - `S` A keyboard-only Playwright journey through sign-in, a tool and sign-out,
   and a 400%-zoom reflow check on every screen (the app shell has both).
+- `S` A document title per route ("Hours summary · WorkHub"): today every page is "WorkHub"
+  (WCAG 2.4.2, ACCESSIBILITY.md).
 - `S` Cross-tab sign-out and theme sync (`BroadcastChannel` or `storage` event).
 - `S` Report client errors (root and route boundaries) to the API log.
 - `S` Dependency licence check in CI.

@@ -62,11 +62,15 @@ export function SummaryTable({ groups, groupBy, caption, describedBy }: SummaryT
         <caption className="sr-only">{caption}</caption>
         <thead>
           <tr className="border-b align-bottom">
-            <th scope="col" className="py-2 pr-3 text-left font-medium">
+            <th scope="col" className="py-2 pr-3 text-left font-medium whitespace-nowrap">
               {groupBy === 'week' ? 'Week' : 'Month'}
             </th>
             {SUMMARY_COLUMNS.map((column) => (
-              <th key={column.field} scope="col" className="px-1.5 py-2 text-right font-medium">
+              <th
+                key={column.field}
+                scope="col"
+                className="px-1.5 py-2 text-right font-medium whitespace-nowrap"
+              >
                 {column.label}
               </th>
             ))}
