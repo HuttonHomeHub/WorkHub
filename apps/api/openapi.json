@@ -365,6 +365,1156 @@
         "summary": "Get public client configuration",
         "tags": ["config"]
       }
+    },
+    "/api/v1/work-terms": {
+      "post": {
+        "operationId": "WorkTermsController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWorkTermDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/WorkTermResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Create work terms, effective from a Monday",
+        "tags": ["Hours"]
+      },
+      "get": {
+        "operationId": "WorkTermsController_list_v1",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Page size.",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "description": "Opaque cursor from a previous response.",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "order",
+            "required": false,
+            "in": "query",
+            "description": "Sort direction.",
+            "schema": {
+              "default": "desc",
+              "type": "string",
+              "enum": ["asc", "desc"]
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "effectiveFrom",
+              "type": "string",
+              "enum": ["effectiveFrom", "createdAt"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data", "meta"],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/WorkTermResponseDto"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMetaDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "List the caller's work terms, latest first (cursor-paginated)",
+        "tags": ["Hours"]
+      }
+    },
+    "/api/v1/work-terms/{id}": {
+      "get": {
+        "operationId": "WorkTermsController_getById_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/WorkTermResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Get one of the caller’s work terms by id",
+        "tags": ["Hours"]
+      },
+      "patch": {
+        "operationId": "WorkTermsController_update_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWorkTermDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/WorkTermResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Update a work term (optimistic locking)",
+        "tags": ["Hours"]
+      },
+      "delete": {
+        "operationId": "WorkTermsController_remove_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Soft-delete work terms (422 for the last remaining terms)",
+        "tags": ["Hours"]
+      }
+    },
+    "/api/v1/work-terms/{id}/restore": {
+      "post": {
+        "operationId": "WorkTermsController_restore_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/WorkTermResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Restore a soft-deleted work term (undo a delete)",
+        "tags": ["Hours"]
+      }
+    },
+    "/api/v1/leave-years": {
+      "post": {
+        "operationId": "LeaveYearsController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateLeaveYearDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/LeaveYearResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Create the settings for a leave year (one per year)",
+        "tags": ["Hours"]
+      },
+      "get": {
+        "operationId": "LeaveYearsController_list_v1",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Page size.",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "description": "Opaque cursor from a previous response.",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "order",
+            "required": false,
+            "in": "query",
+            "description": "Sort direction.",
+            "schema": {
+              "default": "desc",
+              "type": "string",
+              "enum": ["asc", "desc"]
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "year",
+              "type": "string",
+              "enum": ["year", "createdAt"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data", "meta"],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/LeaveYearResponseDto"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMetaDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "List the caller's leave years (cursor-paginated)",
+        "tags": ["Hours"]
+      }
+    },
+    "/api/v1/leave-years/{id}": {
+      "get": {
+        "operationId": "LeaveYearsController_getById_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/LeaveYearResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Get one of the caller’s leave years by id",
+        "tags": ["Hours"]
+      },
+      "patch": {
+        "operationId": "LeaveYearsController_update_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateLeaveYearDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/LeaveYearResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Update a leave year (optimistic locking)",
+        "tags": ["Hours"]
+      }
+    },
+    "/api/v1/time-adjustments": {
+      "post": {
+        "operationId": "TimeAdjustmentsController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTimeAdjustmentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/TimeAdjustmentResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Create a time adjustment (owned by the caller)",
+        "tags": ["Hours"]
+      },
+      "get": {
+        "operationId": "TimeAdjustmentsController_list_v1",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Page size.",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "description": "Opaque cursor from a previous response.",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "order",
+            "required": false,
+            "in": "query",
+            "description": "Sort direction.",
+            "schema": {
+              "default": "desc",
+              "type": "string",
+              "enum": ["asc", "desc"]
+            }
+          },
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "description": "Effective on or after (inclusive).",
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "description": "Effective before (exclusive).",
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "name": "balance",
+            "required": false,
+            "in": "query",
+            "description": "Filter by balance.",
+            "schema": {
+              "type": "string",
+              "enum": ["FLEXI", "TOIL", "LEAVE"]
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "effectiveDate",
+              "type": "string",
+              "enum": ["effectiveDate", "createdAt"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data", "meta"],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/TimeAdjustmentResponseDto"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMetaDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "List the caller's time adjustments (cursor-paginated)",
+        "tags": ["Hours"]
+      }
+    },
+    "/api/v1/time-adjustments/{id}": {
+      "get": {
+        "operationId": "TimeAdjustmentsController_getById_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/TimeAdjustmentResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Get one of the caller’s time adjustments by id",
+        "tags": ["Hours"]
+      },
+      "patch": {
+        "operationId": "TimeAdjustmentsController_update_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTimeAdjustmentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/TimeAdjustmentResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Update a time adjustment (optimistic locking)",
+        "tags": ["Hours"]
+      },
+      "delete": {
+        "operationId": "TimeAdjustmentsController_remove_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Soft-delete a time adjustment",
+        "tags": ["Hours"]
+      }
+    },
+    "/api/v1/time-adjustments/{id}/restore": {
+      "post": {
+        "operationId": "TimeAdjustmentsController_restore_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/TimeAdjustmentResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Restore a soft-deleted time adjustment (undo a delete)",
+        "tags": ["Hours"]
+      }
+    },
+    "/api/v1/public-holidays": {
+      "post": {
+        "operationId": "PublicHolidaysController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePublicHolidayDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PublicHolidayResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Create a public holiday (owned by the caller)",
+        "tags": ["Core"]
+      },
+      "get": {
+        "operationId": "PublicHolidaysController_list_v1",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Page size.",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "description": "Opaque cursor from a previous response.",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "order",
+            "required": false,
+            "in": "query",
+            "description": "Sort direction.",
+            "schema": {
+              "default": "asc",
+              "type": "string",
+              "enum": ["asc", "desc"]
+            }
+          },
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "description": "On or after (inclusive).",
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "description": "Before (exclusive).",
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "date",
+              "type": "string",
+              "enum": ["date", "createdAt"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data", "meta"],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PublicHolidayResponseDto"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMetaDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "List the caller's public holidays (cursor-paginated)",
+        "tags": ["Core"]
+      }
+    },
+    "/api/v1/public-holidays/{id}": {
+      "get": {
+        "operationId": "PublicHolidaysController_getById_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PublicHolidayResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Get one of the caller’s public holidays by id",
+        "tags": ["Core"]
+      },
+      "patch": {
+        "operationId": "PublicHolidaysController_update_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePublicHolidayDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PublicHolidayResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Update a public holiday (optimistic locking)",
+        "tags": ["Core"]
+      },
+      "delete": {
+        "operationId": "PublicHolidaysController_remove_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Soft-delete a public holiday",
+        "tags": ["Core"]
+      }
+    },
+    "/api/v1/public-holidays/{id}/restore": {
+      "post": {
+        "operationId": "PublicHolidaysController_restore_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PublicHolidayResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Restore a soft-deleted public holiday (undo a delete)",
+        "tags": ["Core"]
+      }
+    },
+    "/api/v1/public-holiday-imports": {
+      "post": {
+        "operationId": "PublicHolidayImportsController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePublicHolidayImportDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PublicHolidayImportResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PublicHolidayImportResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Add a year's England and Wales bank holidays the caller does not already have",
+        "tags": ["Core"]
+      }
     }
   },
   "info": {
@@ -410,6 +1560,702 @@
           }
         },
         "required": ["signUpEnabled"]
+      },
+      "WeekdayMinutesResponseDto": {
+        "type": "object",
+        "properties": {
+          "mon": {
+            "type": "number",
+            "nullable": true
+          },
+          "tue": {
+            "type": "number",
+            "nullable": true
+          },
+          "wed": {
+            "type": "number",
+            "nullable": true
+          },
+          "thu": {
+            "type": "number",
+            "nullable": true
+          },
+          "fri": {
+            "type": "number",
+            "nullable": true
+          },
+          "sat": {
+            "type": "number",
+            "nullable": true
+          },
+          "sun": {
+            "type": "number",
+            "nullable": true
+          }
+        },
+        "required": ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
+      },
+      "WorkTermResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The owning user."
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date",
+            "description": "The Monday these terms apply from."
+          },
+          "targetMinutes": {
+            "$ref": "#/components/schemas/WeekdayMinutesResponseDto"
+          },
+          "minimumMinutes": {
+            "$ref": "#/components/schemas/WeekdayMinutesResponseDto"
+          },
+          "breakThresholdMinutes": {
+            "type": "number"
+          },
+          "breakMinimumMinutes": {
+            "type": "number"
+          },
+          "bandStart": {
+            "type": "string",
+            "example": "07:00"
+          },
+          "bandEnd": {
+            "type": "string",
+            "example": "19:00"
+          },
+          "paidOvertimeAllowed": {
+            "type": "boolean"
+          },
+          "toilMonthlyCapMinutes": {
+            "type": "number"
+          },
+          "leaveDayMaxMinutes": {
+            "type": "number"
+          },
+          "flexiCreditCapMinutes": {
+            "type": "number",
+            "nullable": true
+          },
+          "flexiDebitCapMinutes": {
+            "type": "number",
+            "nullable": true
+          },
+          "version": {
+            "type": "number",
+            "description": "Optimistic-locking version."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "ownerId",
+          "effectiveFrom",
+          "targetMinutes",
+          "minimumMinutes",
+          "breakThresholdMinutes",
+          "breakMinimumMinutes",
+          "bandStart",
+          "bandEnd",
+          "paidOvertimeAllowed",
+          "toilMonthlyCapMinutes",
+          "leaveDayMaxMinutes",
+          "flexiCreditCapMinutes",
+          "flexiDebitCapMinutes",
+          "version",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "WeekdayTargetsDto": {
+        "type": "object",
+        "properties": {
+          "mon": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 1,
+            "maximum": 1440
+          },
+          "tue": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 1,
+            "maximum": 1440
+          },
+          "wed": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 1,
+            "maximum": 1440
+          },
+          "thu": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 1,
+            "maximum": 1440
+          },
+          "fri": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 1,
+            "maximum": 1440
+          },
+          "sat": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 1,
+            "maximum": 1440
+          },
+          "sun": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 1,
+            "maximum": 1440
+          }
+        },
+        "required": ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
+      },
+      "WeekdayMinimumsDto": {
+        "type": "object",
+        "properties": {
+          "mon": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0,
+            "maximum": 1440
+          },
+          "tue": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0,
+            "maximum": 1440
+          },
+          "wed": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0,
+            "maximum": 1440
+          },
+          "thu": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0,
+            "maximum": 1440
+          },
+          "fri": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0,
+            "maximum": 1440
+          },
+          "sat": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0,
+            "maximum": 1440
+          },
+          "sun": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0,
+            "maximum": 1440
+          }
+        },
+        "required": ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
+      },
+      "CreateWorkTermDto": {
+        "type": "object",
+        "properties": {
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-10-05",
+            "description": "A Monday."
+          },
+          "targetMinutes": {
+            "description": "Flexi target per weekday; null makes the day non-working.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WeekdayTargetsDto"
+              }
+            ]
+          },
+          "minimumMinutes": {
+            "description": "Warning-only minimum per weekday; null where the target is null.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WeekdayMinimumsDto"
+              }
+            ]
+          },
+          "breakThresholdMinutes": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1440,
+            "default": 360
+          },
+          "breakMinimumMinutes": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1440,
+            "default": 30
+          },
+          "bandStart": {
+            "type": "string",
+            "example": "07:00",
+            "default": "07:00",
+            "description": "HH:MM"
+          },
+          "bandEnd": {
+            "type": "string",
+            "example": "19:00",
+            "default": "19:00",
+            "description": "HH:MM, after bandStart"
+          },
+          "paidOvertimeAllowed": {
+            "type": "boolean",
+            "default": false
+          },
+          "toilMonthlyCapMinutes": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 10080,
+            "default": 450
+          },
+          "leaveDayMaxMinutes": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1440,
+            "default": 450
+          },
+          "flexiCreditCapMinutes": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0,
+            "maximum": 10080
+          },
+          "flexiDebitCapMinutes": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0,
+            "maximum": 10080
+          }
+        },
+        "required": ["effectiveFrom"]
+      },
+      "PageMetaDto": {
+        "type": "object",
+        "properties": {
+          "nextCursor": {
+            "type": "string",
+            "nullable": true,
+            "description": "Cursor for the next page; null on the last page."
+          },
+          "hasMore": {
+            "type": "boolean"
+          }
+        },
+        "required": ["nextCursor", "hasMore"]
+      },
+      "Object": {
+        "type": "object",
+        "properties": {}
+      },
+      "UpdateWorkTermDto": {
+        "type": "object",
+        "properties": {
+          "targetMinutes": {
+            "description": "Flexi target per weekday; null makes the day non-working.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WeekdayTargetsDto"
+              }
+            ]
+          },
+          "minimumMinutes": {
+            "description": "Warning-only minimum per weekday; null where the target is null.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WeekdayMinimumsDto"
+              }
+            ]
+          },
+          "breakThresholdMinutes": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1440,
+            "default": 360
+          },
+          "breakMinimumMinutes": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1440,
+            "default": 30
+          },
+          "bandStart": {
+            "type": "string",
+            "example": "07:00",
+            "default": "07:00",
+            "description": "HH:MM"
+          },
+          "bandEnd": {
+            "type": "string",
+            "example": "19:00",
+            "default": "19:00",
+            "description": "HH:MM, after bandStart"
+          },
+          "paidOvertimeAllowed": {
+            "type": "boolean",
+            "default": false
+          },
+          "toilMonthlyCapMinutes": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 10080,
+            "default": 450
+          },
+          "leaveDayMaxMinutes": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1440,
+            "default": 450
+          },
+          "flexiCreditCapMinutes": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0,
+            "maximum": 10080
+          },
+          "flexiDebitCapMinutes": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0,
+            "maximum": 10080
+          },
+          "version": {
+            "type": "number",
+            "minimum": 1,
+            "description": "Expected current version (optimistic locking)."
+          }
+        },
+        "required": ["version"]
+      },
+      "LeaveYearResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The owning user."
+          },
+          "year": {
+            "type": "number"
+          },
+          "allowanceMinutes": {
+            "type": "number",
+            "description": "Allowance in minutes, before bought leave."
+          },
+          "boughtLeave": {
+            "type": "boolean"
+          },
+          "version": {
+            "type": "number",
+            "description": "Optimistic-locking version."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "ownerId",
+          "year",
+          "allowanceMinutes",
+          "boughtLeave",
+          "version",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreateLeaveYearDto": {
+        "type": "object",
+        "properties": {
+          "year": {
+            "type": "number",
+            "minimum": 2000,
+            "maximum": 2100,
+            "example": 2026
+          },
+          "allowanceMinutes": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100000,
+            "default": 14850,
+            "description": "The yearly allowance in minutes, bank holidays included (247:30)."
+          },
+          "boughtLeave": {
+            "type": "boolean",
+            "default": false,
+            "description": "Bought leave adds 37:30 for the year."
+          }
+        },
+        "required": ["year"]
+      },
+      "UpdateLeaveYearDto": {
+        "type": "object",
+        "properties": {
+          "allowanceMinutes": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100000,
+            "default": 14850,
+            "description": "The yearly allowance in minutes, bank holidays included (247:30)."
+          },
+          "boughtLeave": {
+            "type": "boolean",
+            "default": false,
+            "description": "Bought leave adds 37:30 for the year."
+          },
+          "version": {
+            "type": "number",
+            "minimum": 1,
+            "description": "Expected current version (optimistic locking)."
+          }
+        },
+        "required": ["version"]
+      },
+      "TimeAdjustmentResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The owning user."
+          },
+          "effectiveDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "balance": {
+            "type": "string",
+            "enum": ["FLEXI", "TOIL", "LEAVE"]
+          },
+          "minutes": {
+            "type": "number",
+            "description": "Signed minutes."
+          },
+          "reason": {
+            "type": "string",
+            "enum": ["OPENING_BALANCE", "FORFEIT", "CORRECTION"]
+          },
+          "version": {
+            "type": "number",
+            "description": "Optimistic-locking version."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "ownerId",
+          "effectiveDate",
+          "balance",
+          "minutes",
+          "reason",
+          "version",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreateTimeAdjustmentDto": {
+        "type": "object",
+        "properties": {
+          "effectiveDate": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-10-05"
+          },
+          "balance": {
+            "type": "string",
+            "enum": ["FLEXI", "TOIL", "LEAVE"]
+          },
+          "minutes": {
+            "type": "number",
+            "minimum": -100000,
+            "maximum": 100000,
+            "description": "Signed minutes, never 0. For LEAVE, a positive value adds to the leave remaining."
+          },
+          "reason": {
+            "type": "string",
+            "enum": ["OPENING_BALANCE", "FORFEIT", "CORRECTION"]
+          }
+        },
+        "required": ["effectiveDate", "balance", "minutes", "reason"]
+      },
+      "UpdateTimeAdjustmentDto": {
+        "type": "object",
+        "properties": {
+          "effectiveDate": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-10-05"
+          },
+          "balance": {
+            "type": "string",
+            "enum": ["FLEXI", "TOIL", "LEAVE"]
+          },
+          "minutes": {
+            "type": "number",
+            "minimum": -100000,
+            "maximum": 100000,
+            "description": "Signed minutes, never 0. For LEAVE, a positive value adds to the leave remaining."
+          },
+          "reason": {
+            "type": "string",
+            "enum": ["OPENING_BALANCE", "FORFEIT", "CORRECTION"]
+          },
+          "version": {
+            "type": "number",
+            "minimum": 1,
+            "description": "Expected current version (optimistic locking)."
+          }
+        },
+        "required": ["version"]
+      },
+      "PublicHolidayResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The owning user."
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "name": {
+            "type": "string"
+          },
+          "version": {
+            "type": "number",
+            "description": "Optimistic-locking version."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": ["id", "ownerId", "date", "name", "version", "createdAt", "updatedAt"]
+      },
+      "CreatePublicHolidayDto": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-12-25"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "example": "Christmas Day"
+          }
+        },
+        "required": ["date", "name"]
+      },
+      "UpdatePublicHolidayDto": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-12-25"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "example": "Christmas Day"
+          },
+          "version": {
+            "type": "number",
+            "minimum": 1,
+            "description": "Expected current version (optimistic locking)."
+          }
+        },
+        "required": ["version"]
+      },
+      "PublicHolidayImportResponseDto": {
+        "type": "object",
+        "properties": {
+          "year": {
+            "type": "number"
+          },
+          "added": {
+            "description": "The holidays added, in date order.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublicHolidayResponseDto"
+            }
+          }
+        },
+        "required": ["year", "added"]
+      },
+      "CreatePublicHolidayImportDto": {
+        "type": "object",
+        "properties": {
+          "year": {
+            "type": "number",
+            "minimum": 2019,
+            "maximum": 2040,
+            "example": 2026
+          }
+        },
+        "required": ["year"]
       }
     }
   }

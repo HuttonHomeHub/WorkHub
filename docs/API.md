@@ -155,6 +155,17 @@ Every body and query is a `class-validator` DTO checked by the global
 fields are rejected. Rules the web also enforces come from `@repo/types`
 (ADR-0017).
 
+- **Omitted, `null` and bounds.** An omitted optional field is left unchanged.
+  `null` is accepted only where it means something (clearing a nullable field
+  or cap); on any other field it is a 422. Use `IsOmittable()`
+  (`common/validation/optional.ts`), not `@IsOptional()`, which lets `null`
+  through to Prisma as a 500, and make update DTOs with
+  `PartialType(Create…Dto, { skipNullProperties: false })`. A nested object is
+  `@IsObject()` before `@ValidateNested()`, so an array is rejected. `version`
+  is capped at the INT4 maximum, and names reject control characters.
+- **A list cursor** must be one of the caller's own active rows; anything else
+  returns an empty page, the same as a missing id (ADR-0016).
+
 **Today** `details` is the array of `class-validator` messages:
 
 ```jsonc

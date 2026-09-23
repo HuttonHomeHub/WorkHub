@@ -1,6 +1,6 @@
 # Hours tracker
 
-- **Status:** Approved (2026-09-16). Building: slice 3 of 10 done
+- **Status:** Approved (2026-09-16). Building: slice 4 of 10 done
   ([build order](#slices)).
 - **Change class:** Feature, built on
   [ADR-0020](../adr/0020-modular-tools-over-shared-core-data.md) (Architectural,
@@ -328,7 +328,7 @@ service rejects (422) a night shift that runs into the next day's start.
 
 **Tool-owned** (`modules/hours/`):
 
-- **`work_terms`** (`WorkTerms`), effective-dated settings:
+- **`work_terms`** (`WorkTerm`), effective-dated settings:
   - `effective_from date`, `CHECK` that it is a Monday; unique active
     `(owner_id, effective_from)`;
   - `target_minutes_mon` … `target_minutes_sun int NULL`: the **flexi target**.
@@ -347,7 +347,8 @@ service rejects (422) a night shift that runs into the next day's start.
   - `leave_day_max_minutes int` (450);
   - `flexi_credit_cap_minutes int NULL`, `flexi_debit_cap_minutes int NULL`
     (null, so no cap);
-  - `CHECK`s that minutes are within 0–1440.
+  - `CHECK`s that per-day minutes are within 0–1440 and the three caps within
+    0–10080 (a week).
   - The earliest active `effective_from` is the **tracking start**.
 - **`work_days`** (`WorkDay`), one per date:
   - `date date`, unique active `(owner_id, date)`;
@@ -906,3 +907,59 @@ to, groupBy)` and `balancesAt(result, asOf)` shape them for `time-summaries`
   forfeits and caps reached but not crossed, bank holiday credit capped below a
   larger target, warnings at the band edges, the review regressions, and the
   parser and formatter.
+
+### Slice 4: settings API
+
+- **Endpoints:** `work-terms` (CRUD and restore), `leave-years` (create, list,
+  get and update only: a year is edited, never deleted), `time-adjustments`
+  (CRUD and restore, with `from`/`to` and `balance` filters), and core
+  `public-holidays` (CRUD and restore, `from`/`to`, earliest first) plus
+  `POST /public-holiday-imports`. All are tagged `Hours` or `Core`.
+- **Migration 1** (`add_hours_settings`, designed by database-architect):
+  four additive tables. Every `CHECK` and partial unique index is in the SQL and
+  listed in a comment on its model. Bounds: per-day minutes 0–1440; the TOIL
+  and flexi caps 0–10080; the leave allowance 0–100,000 and adjustments
+  ±100,000 (never 0); years 2000–2100; holiday names 1–100 characters. The
+  same bounds are in `@repo/types` (`hours.ts`) for the web forms.
+- **Work terms:**
+  - The body nests `targetMinutes` and `minimumMinutes` by weekday (`mon` …
+    `sun`, every key present, `null` for "not set"), matching the engine's
+    `Weekdays`. The band is `HH:MM`; `common/dates.ts` converts `date` and
+    `time(0)` columns in UTC, so BST never shifts them (an e2e test checks).
+  - Omitted fields take the owner's defaults. When targets are sent without
+    minimums, each minimum is cleared on a day that stops being a working day
+    and lowered to its target, so a targets-only change never fails.
+  - **Decided while building** (database-architect's open questions): a
+    minimum may not exceed its target, and a target must be at least 1 minute
+    (clear it to make a day non-working). Both are 422s in the service, not
+    `CHECK`s. A break minimum above the threshold is allowed.
+  - `effectiveFrom` cannot be changed by `PATCH`: add terms from the new Monday
+    instead.
+- **Holidays:** `england-and-wales.ts` bundles GOV.UK's published list for
+  2019–2028 verbatim (fetched 2026-09-23, one-off holidays included) and
+  computes 2029–2040 from the standing rules. A test proves the rules reproduce
+  every ordinary published year and 2022's Christmas substitutes. A yearly
+  refresh is in PROCESS.md → Maintenance. The import adds the year's dates the
+  owner has no active holiday on, in one `createManyAndReturn`: 201 with the
+  rows added, or 200 with none. A deleted holiday is re-added by the next
+  import. `PublicHolidaysModule` exports its service for slice 9.
+- **Security review fixes** (all reproduced over HTTP first):
+  - `null` on a non-nullable field, `targetMinutes: []` (which had passed
+    `ValidateNested` and wiped the stored minimums), `version` over INT4, and a
+    NUL byte in a holiday name each reached Prisma. All are 422s now, through
+    `IsOmittable()`, `PartialType(…, { skipNullProperties: false })`,
+    `@IsObject()`, `@Max` on `version`, and `NO_CONTROL_CHARACTERS_PATTERN` in
+    `@repo/types`. The reference template has the same fixes.
+  - A list cursor that is another owner's id returned rows where a missing id
+    returned none. Every repository (and the template) now checks that the
+    cursor is one of the caller's active rows first.
+  - Concurrent imports of a year now both succeed and add each date once
+    (`createManyAndReturn` with `skipDuplicates`).
+  - Deleting terms locks the owner's active terms (`SELECT … FOR UPDATE`) in a
+    transaction, so two racing deletes cannot remove the last one.
+- **Tests:** unit tests for the terms rules, leave years and the import;
+  e2e suites for all four resources and the import (43 tests): every status
+  code, the review's regressions (nulls, the array body, the version overflow,
+  control characters, the foreign cursor, and both races), ownership 404s on every route, duplicate and stale-version 409s,
+  restore into a taken key (409, the case slice 2 deferred to here), and the
+  422 rules.

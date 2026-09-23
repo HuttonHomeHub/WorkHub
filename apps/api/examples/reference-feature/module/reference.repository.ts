@@ -58,6 +58,16 @@ export class ReferenceRepository {
     },
     db: Prisma.TransactionClient = this.prisma,
   ): Promise<ReferenceItem[]> {
+    if (params.cursor) {
+      // The cursor must be one of the caller's own active rows (the where
+      // clause carries the owner). Anything else is an empty page, so another
+      // owner's id looks exactly like a missing one (ADR-0016).
+      const anchor = await db.referenceItem.findFirst({
+        where: this.active({ ...params.where, id: params.cursor }),
+        select: { id: true },
+      });
+      if (!anchor) return [];
+    }
     return db.referenceItem.findMany({
       where: this.active(params.where),
       orderBy: params.orderBy,

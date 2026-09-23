@@ -14,6 +14,8 @@ import { AppConfigService } from './config/app-config.service';
 import { AppConfigModule } from './config/config.module';
 import { HealthModule } from './health/health.module';
 import { MeModule } from './me/me.module';
+import { CoreModule } from './modules/core/core.module';
+import { HoursModule } from './modules/hours/hours.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { PublicConfigModule } from './public-config/public-config.module';
 
@@ -64,6 +66,8 @@ import { PublicConfigModule } from './public-config/public-config.module';
     HealthModule,
     MeModule,
     PublicConfigModule,
+    HoursModule,
+    CoreModule,
   ],
   providers: [
     // Global validation: reject unknown fields, coerce types, 422 on failure.

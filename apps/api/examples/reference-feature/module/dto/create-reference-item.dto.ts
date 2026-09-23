@@ -1,6 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ReferenceItemStatus } from '@prisma/client';
-import { IsEnum, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import { NO_CONTROL_CHARACTERS_PATTERN } from '@repo/types';
+import { IsEnum, IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator';
+
+import { IsOmittable } from '../../../common/validation/optional';
 
 /**
  * Request body for creating a reference item. Validated by the global pipe.
@@ -12,6 +15,7 @@ export class CreateReferenceItemDto {
   @IsString()
   @MinLength(1)
   @MaxLength(120)
+  @Matches(NO_CONTROL_CHARACTERS_PATTERN, { message: 'name must be a single line of text' })
   name!: string;
 
   @ApiPropertyOptional({ maxLength: 2000 })
@@ -21,7 +25,7 @@ export class CreateReferenceItemDto {
   description?: string;
 
   @ApiPropertyOptional({ enum: ReferenceItemStatus, default: ReferenceItemStatus.DRAFT })
-  @IsOptional()
+  @IsOmittable()
   @IsEnum(ReferenceItemStatus)
   status?: ReferenceItemStatus;
 }

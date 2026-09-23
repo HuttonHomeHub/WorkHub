@@ -160,6 +160,8 @@ repository, and the endpoints.
   owner from the request body.
 - Returning the raw entity (leaking `deletedAt`) instead of a response DTO.
 - Skipping the soft-delete filter, or bypassing the repository from the service.
+- `@IsOptional()` on a field whose column is `NOT NULL`: an explicit `null`
+  skips validation and becomes a 500. Use `IsOmittable()` ([API.md](API.md#validation-errors)).
 - Using floats for money; using `ParseUUIDPipe` (rejects UUID v7) instead of
   `ParseUuidPipe` from `common/validation/uuid`.
 - Swallowing errors, or leaking internal messages/stack traces to clients.

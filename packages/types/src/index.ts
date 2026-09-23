@@ -8,6 +8,8 @@
  */
 
 export * from './auth.js';
+export * from './hours.js';
+export * from './text.js';
 export type { components, paths } from './openapi.gen.js';
 
 /** Standard envelope for successful API responses. */
