@@ -13,5 +13,7 @@ import { WorkTermsService } from './work-terms.service';
 @Module({
   controllers: [WorkTermsController],
   providers: [WorkTermsService, WorkTermsRepository],
+  // Other hours modules read the terms in force (same tool, ADR-0020 §3).
+  exports: [WorkTermsService],
 })
 export class WorkTermsModule {}

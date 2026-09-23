@@ -21,7 +21,7 @@ Follow `docs/PROCESS.md` and `CLAUDE.md` §5–6.
    - After an API change: `pnpm contract:generate`, then `git status`; commit
      `apps/api/openapi.json` and `packages/types/src/openapi.gen.ts`.
    - When endpoints or data access changed: run API e2e
-     (`pnpm --filter @repo/types build`; `DATABASE_URL` at `app_test`;
+     (`pnpm --filter "@repo/api^..." build`; `DATABASE_URL` at `app_test`;
      `pnpm --filter @repo/api prisma:deploy`; `pnpm --filter @repo/api test:e2e`).
    - Fix failures; never weaken a gate. Report anything you could not run.
 4. **Changeset** (`pnpm changeset`) only if `apps/api`, `apps/web` or shared

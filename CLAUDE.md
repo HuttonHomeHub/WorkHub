@@ -84,7 +84,7 @@ pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm docs:check
   drift.
 - **API e2e** (`pnpm --filter @repo/api test:e2e`; suites skip when
   `DATABASE_URL` is unset):
-  1. `pnpm --filter @repo/types build`;
+  1. `pnpm --filter "@repo/api^..." build` (the shared packages the API uses);
   2. point `DATABASE_URL` at an `app_test` database (as CI does) and apply
      migrations with `pnpm --filter @repo/api prisma:deploy`;
   3. the API port variable is `API_PORT` (default 3000), not `PORT`.

@@ -32,6 +32,7 @@
     "@nestjs/terminus": "^11.0.0",
     "@nestjs/throttler": "^6.7.0",
     "@prisma/client": "^6.2.1",
+    "@repo/domain": "workspace:*",
     "@repo/types": "workspace:*",
     "better-auth": "^1.7.5",
     "class-transformer": "^0.5.1",

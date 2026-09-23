@@ -177,7 +177,7 @@ The single home for how a GitHub Codespace differs from a local machine.
 
 - **Git worktrees need a full `pnpm install`.** Filtered installs leave workspace
   packages unlinked, and the git hooks need `node_modules`. Then
-  `pnpm --filter @repo/api prisma:generate` and `pnpm --filter @repo/types build`.
+  `pnpm --filter @repo/api prisma:generate` and `pnpm --filter "@repo/api^..." build`.
 - **Restart dev servers by port, not by name.** Stop `pnpm dev` with Ctrl+C in its
   terminal. If it runs in the background, stop whatever listens on the dev ports
   and check they are free:
@@ -256,6 +256,7 @@ pre-wired. Any editor that respects [`.editorconfig`](../.editorconfig) works.
   [Codespace specifics](#codespace-specifics)); on 5432, check for an old
   `blank-app-db-1` container.
 - **Stale build issues:** `pnpm clean && pnpm install`.
-- **`Cannot find module '@repo/types/dist/…'`** when running an API script
-  directly: build the shared package first, `pnpm --filter @repo/types build`
-  (Turborepo tasks do this automatically).
+- **`Cannot find module '@repo/types/dist/…'`** (or `@repo/domain`) when running
+  an API script directly: build the shared packages the API uses first,
+  `pnpm --filter "@repo/api^..." build` (Turborepo tasks do this
+  automatically).

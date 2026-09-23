@@ -181,6 +181,10 @@ const STALE_TERMS = [
     /modules\/<feature>\/ +# generated|gen:feature <entity>`(?! --)/,
     'features are generated into a tool or core: pnpm gen:feature <entity> --tool <tool> | --core (ADR-0020)',
   ],
+  [
+    /filter @repo\/types build/,
+    'the API also needs @repo/domain built: use pnpm --filter "@repo/api^..." build',
+  ],
 ];
 
 // Agents and skills must be discoverable under the name their file implies.

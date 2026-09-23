@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma, type WorkTerm } from '@prisma/client';
+import { Prisma, type WorkDay } from '@prisma/client';
 
 import { PrismaService } from '../../../prisma/prisma.service';
 
 /**
- * Work terms repository — the **data-access layer** (ADR-0008). It is the
+ * Work days repository — the **data-access layer** (ADR-0008). It is the
  * ONLY place that talks to Prisma for this feature, so queries live in one
  * place and the service stays free of persistence detail.
  *
@@ -19,78 +19,62 @@ import { PrismaService } from '../../../prisma/prisma.service';
  * by passing `tx` (docs/DATABASE.md → Transactions).
  */
 @Injectable()
-export class WorkTermsRepository {
+export class WorkDaysRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   /** Merge a where clause with the base filter that excludes soft-deleted rows. */
-  private active(where: Prisma.WorkTermWhereInput = {}): Prisma.WorkTermWhereInput {
+  private active(where: Prisma.WorkDayWhereInput = {}): Prisma.WorkDayWhereInput {
     return { ...where, deletedAt: null };
   }
 
   async create(
-    data: Prisma.WorkTermUncheckedCreateInput,
+    data: Prisma.WorkDayUncheckedCreateInput,
     db: Prisma.TransactionClient = this.prisma,
-  ): Promise<WorkTerm> {
-    return db.workTerm.create({ data });
+  ): Promise<WorkDay> {
+    return db.workDay.create({ data });
   }
 
-  /**
-   * Lock the owner's active terms (`FOR UPDATE`) and return their ids. Call it
-   * inside a transaction: a concurrent delete waits, then sees the committed
-   * state, so the "never delete the last terms" check cannot race.
-   */
-  async lockActiveIdsForOwner(ownerId: string, db: Prisma.TransactionClient): Promise<string[]> {
-    const rows = await db.$queryRaw<{ id: string }[]>`
-      SELECT id FROM work_terms
-      WHERE owner_id = ${ownerId}::uuid AND deleted_at IS NULL
-      FOR UPDATE`;
-    return rows.map((row) => row.id);
-  }
-
-  /** The owner's active terms in force on a date: the latest `effectiveFrom` on or before it. */
-  async findInForce(
+  /** The owner's active row for a date, if any. */
+  async findActiveByDate(
     ownerId: string,
     date: Date,
     db: Prisma.TransactionClient = this.prisma,
-  ): Promise<WorkTerm | null> {
-    return db.workTerm.findFirst({
-      where: this.active({ ownerId, effectiveFrom: { lte: date } }),
-      orderBy: { effectiveFrom: 'desc' },
-    });
+  ): Promise<WorkDay | null> {
+    return db.workDay.findFirst({ where: this.active({ ownerId, date }) });
   }
 
   async findActiveById(
     id: string,
     db: Prisma.TransactionClient = this.prisma,
-  ): Promise<WorkTerm | null> {
-    return db.workTerm.findFirst({ where: this.active({ id }) });
+  ): Promise<WorkDay | null> {
+    return db.workDay.findFirst({ where: this.active({ id }) });
   }
 
   /** A row by id, deleted or not — only restore may read deleted rows. */
-  async findById(id: string, db: Prisma.TransactionClient = this.prisma): Promise<WorkTerm | null> {
-    return db.workTerm.findUnique({ where: { id } });
+  async findById(id: string, db: Prisma.TransactionClient = this.prisma): Promise<WorkDay | null> {
+    return db.workDay.findUnique({ where: { id } });
   }
 
   async findManyActive(
     params: {
-      where: Prisma.WorkTermWhereInput;
-      orderBy: Prisma.WorkTermOrderByWithRelationInput[];
+      where: Prisma.WorkDayWhereInput;
+      orderBy: Prisma.WorkDayOrderByWithRelationInput[];
       take: number;
       cursor?: string;
     },
     db: Prisma.TransactionClient = this.prisma,
-  ): Promise<WorkTerm[]> {
+  ): Promise<WorkDay[]> {
     if (params.cursor) {
       // The cursor must be one of the caller's own active rows (the where
       // clause carries the owner). Anything else is an empty page, so another
       // owner's id looks exactly like a missing one (ADR-0016).
-      const anchor = await db.workTerm.findFirst({
+      const anchor = await db.workDay.findFirst({
         where: this.active({ ...params.where, id: params.cursor }),
         select: { id: true },
       });
       if (!anchor) return [];
     }
-    return db.workTerm.findMany({
+    return db.workDay.findMany({
       where: this.active(params.where),
       orderBy: params.orderBy,
       take: params.take,
@@ -106,10 +90,10 @@ export class WorkTermsRepository {
   async updateIfVersionMatches(
     id: string,
     expectedVersion: number,
-    data: Prisma.WorkTermUpdateManyMutationInput,
+    data: Prisma.WorkDayUpdateManyMutationInput,
     db: Prisma.TransactionClient = this.prisma,
   ): Promise<number> {
-    const result = await db.workTerm.updateMany({
+    const result = await db.workDay.updateMany({
       where: this.active({ id, version: expectedVersion }),
       data,
     });
@@ -117,7 +101,7 @@ export class WorkTermsRepository {
   }
 
   async softDelete(id: string, db: Prisma.TransactionClient = this.prisma): Promise<void> {
-    await db.workTerm.update({
+    await db.workDay.update({
       where: { id },
       data: { deletedAt: new Date() },
     });
@@ -129,7 +113,7 @@ export class WorkTermsRepository {
    * means it was restored (or purged) in the meantime.
    */
   async restore(id: string, db: Prisma.TransactionClient = this.prisma): Promise<number> {
-    const result = await db.workTerm.updateMany({
+    const result = await db.workDay.updateMany({
       where: { id, deletedAt: { not: null } },
       data: { deletedAt: null, version: { increment: 1 } },
     });

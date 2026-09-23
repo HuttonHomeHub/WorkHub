@@ -44,7 +44,7 @@ rewrite"), `docs/TESTING.md`, `docs/FRONTEND_QUALITY.md`, and the template tests
 ## Commands (report exactly what you ran)
 
 - Unit: `pnpm test`, or `pnpm --filter @repo/api test` / `pnpm --filter @repo/web test`.
-- API e2e: `pnpm --filter @repo/types build`; `DATABASE_URL` pointing at an
+- API e2e: `pnpm --filter "@repo/api^..." build`; `DATABASE_URL` pointing at an
   `app_test` database; `pnpm --filter @repo/api prisma:deploy`; then
   `pnpm --filter @repo/api test:e2e`.
 - Playwright: `pnpm --filter @repo/web test:e2e` (needs the API, database and

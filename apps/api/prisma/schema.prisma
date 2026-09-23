@@ -39,12 +39,14 @@ model User {
   createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  sessions        Session[]
-  accounts        Account[]
-  workTerms       WorkTerm[]
-  leaveYears      LeaveYear[]
-  timeAdjustments TimeAdjustment[]
-  publicHolidays  PublicHoliday[]
+  sessions          Session[]
+  accounts          Account[]
+  workTerms         WorkTerm[]
+  leaveYears        LeaveYear[]
+  timeAdjustments   TimeAdjustment[]
+  publicHolidays    PublicHoliday[]
+  workDays          WorkDay[]
+  excessConversions ExcessConversion[]
 
   @@map("users")
 }
@@ -243,4 +245,62 @@ model TimeAdjustment {
 
   @@index([ownerId, effectiveDate])
   @@map("time_adjustments")
+}
+
+// Work days: one row per date. Times are instants (UTC); the service checks
+// that starts_at falls on `date` in Europe/London, that a night shift does not
+// run into the next day's start, and rule 4's leave/TOIL limits (they depend on
+// the terms). break_minutes against the span is also a service rule: a
+// recorded break may be raised to the minimum, so the engine owns that bound.
+//
+// Constraints in the migration SQL (Prisma cannot declare them):
+// - ck_work_days_date_range: 2000-01-01 to 2100-12-31 (the engine/DTO window);
+// - ck_work_days_times_paired: starts_at and ends_at both set or both NULL;
+// - ck_work_days_times_order: ends_at > starts_at;
+// - ck_work_days_span_max: ends_at - starts_at <= 24 hours;
+// - ck_work_days_break_minutes_range, ck_work_days_leave_minutes_range,
+//   ck_work_days_toil_taken_minutes_range: 0–1440;
+// - uq_work_days_owner_id_date_active: one active row per date (partial unique
+//   on deleted_at IS NULL); also the [from, to) range-list index.
+model WorkDay {
+  id                String    @id @default(uuid(7)) @db.Uuid
+  ownerId           String    @map("owner_id") @db.Uuid
+  date              DateTime  @db.Date
+  startsAt          DateTime? @map("starts_at") @db.Timestamptz(3)
+  endsAt            DateTime? @map("ends_at") @db.Timestamptz(3)
+  breakMinutes      Int       @default(0) @map("break_minutes")
+  leaveMinutes      Int       @default(0) @map("leave_minutes")
+  toilTakenMinutes  Int       @default(0) @map("toil_taken_minutes")
+  bankHolidayWorked Boolean   @default(false) @map("bank_holiday_worked")
+  version           Int       @default(1)
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt         DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@map("work_days")
+}
+
+// Excess conversions: the weekly switch. An active row means the switch is on
+// for that week; turning it off soft-deletes the row, and turning it on again
+// creates a new one.
+//
+// Constraints in the migration SQL (Prisma cannot declare them):
+// - ck_excess_conversions_week_start_monday: ISODOW = 1;
+// - ck_excess_conversions_week_start_range: 2000-01-01 to 2100-12-31;
+// - uq_excess_conversions_owner_id_week_start_active: one active row per week
+//   (partial unique on deleted_at IS NULL); also the range-list index.
+model ExcessConversion {
+  id        String    @id @default(uuid(7)) @db.Uuid
+  ownerId   String    @map("owner_id") @db.Uuid
+  weekStart DateTime  @map("week_start") @db.Date
+  version   Int       @default(1)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@map("excess_conversions")
 }

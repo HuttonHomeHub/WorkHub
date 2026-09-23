@@ -21,6 +21,7 @@ FROM base AS deps
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 COPY apps/api/package.json apps/api/
 COPY packages/config/package.json packages/config/
+COPY packages/domain/package.json packages/domain/
 COPY packages/types/package.json packages/types/
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
     pnpm install --frozen-lockfile --filter @repo/api...
