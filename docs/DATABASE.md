@@ -264,8 +264,11 @@ pnpm data:export --email <owner email> [--out <file>] [--force]
   integer minutes) plus `deletedAt`. Soft-deleted rows are included, so it is
   a faithful copy, not only what the app shows.
 - The reads share one `REPEATABLE READ` transaction, so the file is a
-  consistent snapshot. The file is created readable by its owner only (mode
-  0600), and an existing file is never overwritten without `--force`.
+  consistent snapshot. It is always a fresh file readable by its owner only
+  (mode 0600): created exclusively, so an existing file or a symlink is
+  refused, or with `--force` written to a temporary file and renamed over the
+  target (`cli/export-file.ts`). The default name is
+  `workhub-export-<date>.json`, which `.gitignore` covers.
 - `EXPORTED_TABLES` in `apps/api/src/cli/export.ts` lists the tables. A unit
   test fails if a Prisma model with an `ownerId` is missing from it, so a new
   table cannot be left out.

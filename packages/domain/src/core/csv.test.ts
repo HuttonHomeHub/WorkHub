@@ -9,7 +9,7 @@ describe('toCsv', () => {
         ['a', 'b'],
         [1, null],
       ]),
-    ).toBe('﻿a,b\r\n1,\r\n');
+    ).toBe('\uFEFFa,b\r\n1,\r\n');
     expect(toCsv([['a']], { bom: false })).toBe('a\r\n');
   });
 
@@ -26,5 +26,16 @@ describe('toCsv', () => {
 
   it('never prefixes numbers, and drops non-finite ones', () => {
     expect(toCsv([[-2.17, 7.5, Number.NaN]], { bom: false })).toBe('-2.17,7.5,\r\n');
+  });
+
+  it('guards a leading line feed and full-width formula characters', () => {
+    const row = ['\n=1', '\uFF1D1', '\uFF0B1', '\uFF0D1', '\uFF201'];
+    expect(toCsv([row], { bom: false })).toBe("\"'\n=1\",'\uFF1D1,'\uFF0B1,'\uFF0D1,'\uFF201\r\n");
+  });
+
+  it('quotes semicolons, and keeps a formula inside text or after a comma harmless', () => {
+    expect(toCsv([['a;=1', 'x "=1" y', ',=1']], { bom: false })).toBe(
+      '"a;=1","x ""=1"" y",",=1"\r\n',
+    );
   });
 });

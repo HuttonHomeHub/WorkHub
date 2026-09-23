@@ -79,3 +79,6 @@ Thumbs.db
 
 # Claude Code agent worktrees (separate checkouts)
 .claude/worktrees/
+
+# Owner data exports (pnpm data:export) are personal data
+workhub-export-*.json

@@ -1052,6 +1052,13 @@ to, groupBy)` and `balancesAt(result, asOf)` shape them for `time-summaries`
   - `daysCsvRows` (`hours/csv.ts`) builds one row per recorded or credited day
     in `[from, to)`: London `HH:MM` start and end, "Ends next day", and every
     duration in `h:mm` and decimal hours.
+- **Security review fixes:** `--force` over an existing world-readable file
+  kept its old mode, and a dangling symlink was followed. The file is now
+  created exclusively (`wx`, 0600), or written to a temporary file and
+  renamed when forced. The default name no longer carries the email, export
+  files are gitignored, and the production steps use `wh` and remove the
+  container copy. The CSV guard also covers a leading line feed and
+  full-width `＝＋－＠`, and quotes `;` for semicolon-separated readers.
 - **Decided while building:** the week view's "Download CSV" is wired in slice
   7 with the view itself; this slice ships the builder and the CLI.
 - **Tests:** `export.spec.ts` (the table registry); an e2e test against the

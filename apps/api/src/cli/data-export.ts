@@ -1,4 +1,4 @@
-import { existsSync, writeFileSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 
@@ -6,15 +6,19 @@ import { PrismaService } from '../prisma/prisma.service';
 
 import { runWithApp } from './bootstrap';
 import { ExportError, exportOwnerData } from './export';
+import { writeExportFile } from './export-file';
 
 const USAGE = `Export one owner's data to JSON (docs/DATABASE.md → Data export).
 
   pnpm data:export --email <email> [--out <file>] [--force]
 
 Options:
-  --out <file>   where to write (default: workhub-export-<email>-<date>.json
-                 in the directory you ran the command from)
-  --force        overwrite an existing file
+  --out <file>   where to write (default: workhub-export-<date>.json in the
+                 directory you ran the command from)
+  --force        replace an existing file
+
+The file is created readable by you only (mode 0600). It holds personal data:
+keep it private, and don't leave it on the server.
 `;
 
 async function main(): Promise<void> {
@@ -36,16 +40,16 @@ async function main(): Promise<void> {
   const today = new Date().toISOString().slice(0, 10);
   // pnpm runs the script in apps/api; INIT_CWD is where the owner typed it.
   const base = process.env.INIT_CWD ?? process.cwd();
-  const safeEmail = email.replace(/[^a-zA-Z0-9.@_-]/g, '_');
-  const out = resolve(base, values.out ?? `workhub-export-${safeEmail}-${today}.json`);
+  const out = resolve(base, values.out ?? `workhub-export-${today}.json`);
+  // A friendly early check; writeExportFile is what guarantees it.
   if (existsSync(out) && !values.force) {
     throw new ExportError(`${out} already exists. Pass --force to overwrite it.`);
   }
 
   await runWithApp(async (app) => {
     const data = await exportOwnerData(app.get(PrismaService), email);
-    // The export is the owner's personal data: readable by the owner only.
-    writeFileSync(out, `${JSON.stringify(data, null, 2)}\n`, { mode: 0o600 });
+    // The owner's personal data: a fresh file readable by the owner only.
+    writeExportFile(out, `${JSON.stringify(data, null, 2)}\n`, values.force);
     const counts = Object.entries(data.tables)
       .map(([table, rows]) => `${table} ${rows.length}`)
       .join(', ');
