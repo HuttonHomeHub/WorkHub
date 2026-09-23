@@ -63,6 +63,21 @@ export class ExcessConversionsService {
     return { items, meta: { nextCursor, hasMore } };
   }
 
+  /** Weeks switched on with `weekStart` in `[from, to)`, for the hours calculation. */
+  async listForCalculation(
+    principal: Principal,
+    from: string,
+    to: string,
+  ): Promise<ExcessConversion[]> {
+    return this.repository.findAllActive({
+      where: {
+        ownerId: principal.userId,
+        weekStart: { gte: toDbDate(from), lt: toDbDate(to) },
+      },
+      orderBy: [{ weekStart: 'asc' }],
+    });
+  }
+
   /** Switch off. */
   async remove(principal: Principal, id: string): Promise<void> {
     const item = await this.repository.findActiveById(id);

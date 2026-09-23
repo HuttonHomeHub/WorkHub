@@ -43,6 +43,17 @@ export class WorkDaysRepository {
     return db.workDay.findFirst({ where: this.active({ ownerId, date }) });
   }
 
+  /**
+   * Every active row matching `where`, unpaginated — for the hours
+   * calculation, whose callers bound `where` by owner and date range.
+   */
+  async findAllActive(
+    params: { where: Prisma.WorkDayWhereInput; orderBy: Prisma.WorkDayOrderByWithRelationInput[] },
+    db: Prisma.TransactionClient = this.prisma,
+  ): Promise<WorkDay[]> {
+    return db.workDay.findMany({ where: this.active(params.where), orderBy: params.orderBy });
+  }
+
   async findActiveById(
     id: string,
     db: Prisma.TransactionClient = this.prisma,

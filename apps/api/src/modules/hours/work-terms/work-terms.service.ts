@@ -111,6 +111,14 @@ export class WorkTermsService {
     return this.repository.findInForce(principal.userId, toDbDate(date));
   }
 
+  /** The caller's active terms, for the hours calculation. */
+  async listForCalculation(principal: Principal): Promise<WorkTerm[]> {
+    return this.repository.findAllActive({
+      where: { ownerId: principal.userId },
+      orderBy: [{ effectiveFrom: 'asc' }],
+    });
+  }
+
   async getById(principal: Principal, id: string): Promise<WorkTerm> {
     return this.findOwnedOrThrow(principal, id);
   }

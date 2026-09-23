@@ -13,5 +13,7 @@ import { TimeAdjustmentsService } from './time-adjustments.service';
 @Module({
   controllers: [TimeAdjustmentsController],
   providers: [TimeAdjustmentsService, TimeAdjustmentsRepository],
+  // Read by the hours calculation (time-summaries, same tool).
+  exports: [TimeAdjustmentsService],
 })
 export class TimeAdjustmentsModule {}

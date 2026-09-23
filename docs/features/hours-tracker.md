@@ -1,6 +1,6 @@
 # Hours tracker
 
-- **Status:** Approved (2026-09-16). Building: slices 1–4 and 6 of 10 done
+- **Status:** Approved (2026-09-16). Building: slices 1–4, 6 and 9 of 10 done
   ([build order](#slices)).
 - **Change class:** Feature, built on
   [ADR-0020](../adr/0020-modular-tools-over-shared-core-data.md) (Architectural,
@@ -997,3 +997,38 @@ to, groupBy)` and `balancesAt(result, asOf)` shape them for `time-summaries`
   duplicate switch 409s, the tracking-start, time, BST-night and night-shift
   collision 422s (both ways round, and on restore), rule 4's limits with an
   imported bank holiday, the non-Monday 422, and ownership on every route.
+
+### Slice 9: summaries and balances API
+
+- **Endpoints:** `GET /time-summaries?from&to&groupBy&asOf` and
+  `GET /time-balances?asOf`, in `modules/hours/time-summaries/`: no table and
+  no repository. `HoursCalculationService` loads the caller's rows from the
+  tracking start through each hours module's exported
+  `listForCalculation` (owner-scoped, date-bounded, unpaginated) and core's
+  `PublicHolidaysService`, maps them with `to-engine.ts`, and runs
+  `calculateHours`. The controllers stay thin.
+- **Decided while building:**
+  - **`asOf` is required** on both endpoints: the caller's today in
+    Europe/London. The API has no clock (ADR-0020 §4), and the web knows the
+    owner's today.
+  - **Ranges widen to whole groups** (a week from its Monday, a month from its
+    1st), and each group carries `start` and `end`. `groupBy` defaults to
+    `week`. The 366-day limit and `to` after `from` are checked before
+    widening.
+  - **Week groups also carry the conversion's detail** for slice 10's aside:
+    `settlementDate`, `excessMinutes`, and `conversionToilMinutes` and
+    `conversionOvertimePaid/UnpaidMinutes` (preview or applied).
+  - **Balances also return** `trackingStart`, `toilTakenMonthMinutes`,
+    `toilCapMinutes`, and the leave year's `leaveAllowanceMinutes` and
+    `leaveUsedMinutes` for the leave strip.
+  - A computed list is documented with the new `ApiDataListResponse`.
+- **Review fix** (security and backend reviews): widening the last partial
+  week of 2100 asked the engine for a date in 2101, and its guard threw a 500.
+  The horizon is now capped at the engine's last date, and any
+  `HoursInputError` becomes a fixed-message 422.
+- **Tests:** e2e (8): the range 422s and a missing `asOf`; the 2000 and 2100
+  window edges; no terms; the
+  cross-month example as a preview (asOf 1 Oct) and applied (asOf 2 Oct) by
+  week, month and balances; widening a partial range; the TOIL cap with paid
+  overtime switched on from a later Monday; and another owner's rows never
+  counted.

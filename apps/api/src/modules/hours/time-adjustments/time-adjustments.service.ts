@@ -81,6 +81,21 @@ export class TimeAdjustmentsService {
     return { items, meta: { nextCursor, hasMore } };
   }
 
+  /** The caller's adjustments in `[from, to)`, for the hours calculation. */
+  async listForCalculation(
+    principal: Principal,
+    from: string,
+    to: string,
+  ): Promise<TimeAdjustment[]> {
+    return this.repository.findAllActive({
+      where: {
+        ownerId: principal.userId,
+        effectiveDate: { gte: toDbDate(from), lt: toDbDate(to) },
+      },
+      orderBy: [{ effectiveDate: 'asc' }],
+    });
+  }
+
   async getById(principal: Principal, id: string): Promise<TimeAdjustment> {
     return this.findOwnedOrThrow(principal, id);
   }

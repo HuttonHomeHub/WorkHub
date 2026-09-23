@@ -162,7 +162,7 @@ candidates are in [BACKLOG.md](BACKLOG.md).
 
 ### Now
 
-- `L` [Hours tracker](features/hours-tracker.md) (slices 1–4 and 6 of 10 done — the work days API and migration 2) — the
+- `L` [Hours tracker](features/hours-tracker.md) (slices 1–4, 6 and 9 of 10 done — the summaries and balances API) — the
   first tool, on the modular-tools structure of ADR-0020.
 
 ### Next

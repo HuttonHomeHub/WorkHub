@@ -37,6 +37,25 @@ export function ApiDataResponse(
   );
 }
 
+/**
+ * Documents an unpaginated list — a computed read-model, bounded by a date
+ * range instead of a cursor (docs/API.md → Computed read-models): `{ data:
+ * Model[] }` with no `meta`.
+ */
+export function ApiDataListResponse(model: Type<unknown>) {
+  return applyDecorators(
+    ApiExtraModels(model),
+    ApiResponse({
+      status: HttpStatus.OK,
+      schema: {
+        type: 'object',
+        required: ['data'],
+        properties: { data: { type: 'array', items: { $ref: getSchemaPath(model) } } },
+      },
+    }),
+  );
+}
+
 /** Documents a cursor-paginated list: `{ data: Model[], meta: PageMeta }`. */
 export function ApiPaginatedResponse(model: Type<unknown>) {
   return applyDecorators(

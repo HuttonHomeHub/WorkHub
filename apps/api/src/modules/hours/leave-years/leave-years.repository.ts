@@ -33,6 +33,20 @@ export class LeaveYearsRepository {
     return db.leaveYear.create({ data });
   }
 
+  /**
+   * Every active row matching `where`, unpaginated — for the hours
+   * calculation, whose callers bound `where` by owner and date range.
+   */
+  async findAllActive(
+    params: {
+      where: Prisma.LeaveYearWhereInput;
+      orderBy: Prisma.LeaveYearOrderByWithRelationInput[];
+    },
+    db: Prisma.TransactionClient = this.prisma,
+  ): Promise<LeaveYear[]> {
+    return db.leaveYear.findMany({ where: this.active(params.where), orderBy: params.orderBy });
+  }
+
   async findActiveById(
     id: string,
     db: Prisma.TransactionClient = this.prisma,

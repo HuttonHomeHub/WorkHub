@@ -13,5 +13,7 @@ import { ExcessConversionsService } from './excess-conversions.service';
 @Module({
   controllers: [ExcessConversionsController],
   providers: [ExcessConversionsService, ExcessConversionsRepository],
+  // Read by the hours calculation (time-summaries, same tool).
+  exports: [ExcessConversionsService],
 })
 export class ExcessConversionsModule {}

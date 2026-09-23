@@ -47,6 +47,20 @@ export class PublicHolidaysRepository {
     return db.publicHoliday.createManyAndReturn({ data, skipDuplicates: true });
   }
 
+  /**
+   * Every active row matching `where`, unpaginated — for the hours
+   * calculation, whose callers bound `where` by owner and date range.
+   */
+  async findAllActive(
+    params: {
+      where: Prisma.PublicHolidayWhereInput;
+      orderBy: Prisma.PublicHolidayOrderByWithRelationInput[];
+    },
+    db: Prisma.TransactionClient = this.prisma,
+  ): Promise<PublicHoliday[]> {
+    return db.publicHoliday.findMany({ where: this.active(params.where), orderBy: params.orderBy });
+  }
+
   async findActiveById(
     id: string,
     db: Prisma.TransactionClient = this.prisma,

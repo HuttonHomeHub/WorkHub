@@ -34,6 +34,23 @@ export class TimeAdjustmentsRepository {
     return db.timeAdjustment.create({ data });
   }
 
+  /**
+   * Every active row matching `where`, unpaginated — for the hours
+   * calculation, whose callers bound `where` by owner and date range.
+   */
+  async findAllActive(
+    params: {
+      where: Prisma.TimeAdjustmentWhereInput;
+      orderBy: Prisma.TimeAdjustmentOrderByWithRelationInput[];
+    },
+    db: Prisma.TransactionClient = this.prisma,
+  ): Promise<TimeAdjustment[]> {
+    return db.timeAdjustment.findMany({
+      where: this.active(params.where),
+      orderBy: params.orderBy,
+    });
+  }
+
   async findActiveById(
     id: string,
     db: Prisma.TransactionClient = this.prisma,
