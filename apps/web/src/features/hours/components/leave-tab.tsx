@@ -23,6 +23,7 @@ import {
 
 import { DurationInput } from './duration-input';
 import { LoadError, LoadingRows, SaveErrorAlert, toastSaveError } from './request-states';
+import { SectionCard } from './section-card';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -36,6 +37,16 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableHeader,
+  TableRow,
+  TableRowHeader,
+} from '@/components/ui/table';
 import { toast } from '@/components/ui/toast';
 
 /** A year's allowance, edited in its row with its own Save (an explicit save). */
@@ -92,7 +103,7 @@ function AllowanceForm({ year, onReload }: { year: LeaveYear; onReload: () => vo
             </FormItem>
           )}
         />
-        <Button type="submit" variant="outline" disabled={update.isPending}>
+        <Button type="submit" variant="outline" isPending={update.isPending}>
           Save <span className="sr-only">allowance for {year.year}</span>
         </Button>
       </form>
@@ -131,7 +142,7 @@ function BoughtLeaveSwitch({ year, onReload }: { year: LeaveYear; onReload: () =
           );
         }}
       />
-      <span role="status" className="text-muted-foreground text-xs">
+      <span role="status" className="text-muted-foreground text-meta">
         {status}
       </span>
     </div>
@@ -172,9 +183,9 @@ function AddLeaveYearForm({ defaultYear }: { defaultYear: number }) {
         onSubmit={form.handleSubmit(submit)}
         noValidate
         aria-labelledby="add-leave-year-heading"
-        className="grid max-w-(--width-form) grid-cols-1 gap-4"
+        className="bg-card grid grid-cols-1 gap-4 rounded-xl border p-4 shadow-xs"
       >
-        <h3 id="add-leave-year-heading" className="font-semibold">
+        <h3 id="add-leave-year-heading" className="text-h3">
           Add a leave year
         </h3>
         {create.isError ? (
@@ -183,7 +194,7 @@ function AddLeaveYearForm({ defaultYear }: { defaultYear: number }) {
             conflictMessage="That year is already set up. Change it in the table above."
           />
         ) : null}
-        <div className="flex flex-wrap items-start gap-4">
+        <div className="flex flex-wrap items-start gap-x-6 gap-y-4">
           <FormField
             control={form.control}
             name="year"
@@ -191,7 +202,12 @@ function AddLeaveYearForm({ defaultYear }: { defaultYear: number }) {
               <FormItem className="content-start">
                 <FormLabel>Year</FormLabel>
                 <FormControl>
-                  <Input inputMode="numeric" autoComplete="off" className="w-24" {...field} />
+                  <Input
+                    inputMode="numeric"
+                    autoComplete="off"
+                    className="w-(--width-input-short)"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -237,8 +253,8 @@ function AddLeaveYearForm({ defaultYear }: { defaultYear: number }) {
           />
         </div>
         <div>
-          <Button type="submit" disabled={create.isPending}>
-            {create.isPending ? 'Adding…' : 'Add leave year'}
+          <Button type="submit" isPending={create.isPending}>
+            Add leave year
           </Button>
         </div>
       </form>
@@ -253,18 +269,17 @@ function AddLeaveYearForm({ defaultYear }: { defaultYear: number }) {
  */
 function LeaveUsage({ year }: { year: number }) {
   const balances = useTimeBalances(`${year}-12-31`);
-  const cell = (value: string) => <span className="inline-flex h-9 items-center">{value}</span>;
   if (balances.isPending) {
     const pending = (
-      <span className="inline-flex h-9 items-center" aria-busy="true">
+      <span aria-busy="true">
         <span aria-hidden>…</span>
         <span className="sr-only">Loading</span>
       </span>
     );
     return (
       <>
-        <td className="py-2 pr-4 text-right">{pending}</td>
-        <td className="py-2 text-right">{pending}</td>
+        <TableCell numeric>{pending}</TableCell>
+        <TableCell numeric>{pending}</TableCell>
       </>
     );
   }
@@ -272,12 +287,13 @@ function LeaveUsage({ year }: { year: number }) {
   const tracked = data !== undefined && data.trackingStart !== null;
   return (
     <>
-      <td className="py-2 pr-4 text-right tabular-nums">
-        {cell(tracked ? formatDuration(data.leaveUsedMinutes) : '—')}
-      </td>
-      <td className="py-2 text-right tabular-nums">
-        {cell(tracked ? formatDuration(data.leaveRemainingMinutes) : '—')}
-      </td>
+      <TableCell numeric>{tracked ? formatDuration(data.leaveUsedMinutes) : '—'}</TableCell>
+      <TableCell
+        numeric
+        className={tracked && data.leaveRemainingMinutes < 0 ? 'text-warning-text' : undefined}
+      >
+        {tracked ? formatDuration(data.leaveRemainingMinutes) : '—'}
+      </TableCell>
     </>
   );
 }
@@ -305,76 +321,59 @@ export function LeaveTab() {
   const notesId = 'leave-used-note';
 
   return (
-    <div className="grid grid-cols-1 gap-8">
-      <section aria-labelledby="leave-years-heading" className="grid grid-cols-1 gap-3">
-        <h2 id="leave-years-heading" className="text-lg font-semibold">
-          Leave years
-        </h2>
-        <p className="text-muted-foreground max-w-(--width-prose) text-sm">
-          Leave years run from 1 January to 31 December. The allowance includes bank holidays.
-        </p>
+    <div className="grid grid-cols-1 gap-6">
+      <SectionCard
+        headingId="leave-years-heading"
+        title="Leave years"
+        description="Leave years run from 1 January to 31 December. The allowance includes bank holidays."
+        flush={rows.length > 0}
+      >
         {rows.length === 0 ? (
-          <p className="text-sm">No leave years yet. Add this year to track your allowance.</p>
+          <p className="text-muted-foreground text-small">
+            No leave years yet. Add this year to track your allowance.
+          </p>
         ) : (
           <>
-            <div className="relative overflow-x-auto">
-              <table className="w-full max-w-(--width-form) text-sm" aria-describedby={notesId}>
-                <thead>
-                  <tr className="border-b text-left">
-                    <th scope="col" className="py-2 pr-4 font-medium">
-                      Year
-                    </th>
-                    <th scope="col" className="py-2 pr-4 font-medium">
-                      Allowance
-                    </th>
-                    <th scope="col" className="py-2 pr-4 font-medium">
-                      Bought leave
-                    </th>
-                    <th scope="col" className="py-2 pr-4 text-right font-medium">
-                      Total
-                    </th>
-                    <th scope="col" className="py-2 pr-4 text-right font-medium">
-                      Used
-                    </th>
-                    <th scope="col" className="py-2 text-right font-medium">
-                      Remaining
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
+            <TableContainer>
+              <Table aria-describedby={notesId}>
+                <TableHeader>
+                  <TableRow hover={false}>
+                    <TableHead>Year</TableHead>
+                    <TableHead>Allowance</TableHead>
+                    <TableHead>Bought leave</TableHead>
+                    <TableHead numeric>Total</TableHead>
+                    <TableHead numeric>Used</TableHead>
+                    <TableHead numeric>Remaining</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {rows.map((row) => (
-                    <tr key={row.id} className="border-b align-top">
-                      <th scope="row" className="py-2 pr-4 text-left font-normal">
-                        <span className="inline-flex h-9 items-center">{row.year}</span>
-                      </th>
-                      <td className="py-2 pr-4">
+                    <TableRow key={row.id} tone="zebra">
+                      <TableRowHeader className="tabular-nums">{row.year}</TableRowHeader>
+                      <TableCell>
                         <AllowanceForm key={row.version} year={row} onReload={reload} />
-                      </td>
-                      <td className="py-2 pr-4">
-                        <span className="inline-flex h-9 items-center">
-                          <BoughtLeaveSwitch year={row} onReload={reload} />
-                        </span>
-                      </td>
-                      <td className="py-2 pr-4 text-right tabular-nums">
-                        <span className="inline-flex h-9 items-center">
-                          {formatDuration(
-                            row.allowanceMinutes + (row.boughtLeave ? BOUGHT_LEAVE_MINUTES : 0),
-                          )}
-                        </span>
-                      </td>
+                      </TableCell>
+                      <TableCell>
+                        <BoughtLeaveSwitch year={row} onReload={reload} />
+                      </TableCell>
+                      <TableCell numeric>
+                        {formatDuration(
+                          row.allowanceMinutes + (row.boughtLeave ? BOUGHT_LEAVE_MINUTES : 0),
+                        )}
+                      </TableCell>
                       <LeaveUsage year={row.year} />
-                    </tr>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
-            </div>
-            <p id={notesId} className="text-muted-foreground max-w-(--width-prose) text-sm">
+                </TableBody>
+              </Table>
+            </TableContainer>
+            <p id={notesId} className="text-muted-foreground text-small border-t px-4 py-3">
               Used counts leave you have booked for the year, bank holidays and leave adjustments.
               Remaining can go below zero.
             </p>
           </>
         )}
-      </section>
+      </SectionCard>
       <AddLeaveYearForm key={rows.length} defaultYear={suggestedYear(rows, thisYear)} />
     </div>
   );

@@ -1,10 +1,4 @@
-import {
-  formatDuration,
-  formatFlexi,
-  type IsoDate,
-  type WorkDayRow,
-  type WorkTerms,
-} from '@repo/domain';
+import { formatDuration, type IsoDate, type WorkDayRow, type WorkTerms } from '@repo/domain';
 import { useBlocker } from '@tanstack/react-router';
 import * as React from 'react';
 
@@ -32,6 +26,7 @@ import {
 import { weekDates } from '../week/week-dates';
 
 import { DayRow, dayFigures, fieldId } from './day-row';
+import { FlexiValue } from './flexi-value';
 import { actionErrorMessage, toastSaveError } from './request-states';
 
 import {
@@ -43,10 +38,20 @@ import {
   AlertDialogFooter,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+  TableRowHeader,
+} from '@/components/ui/table';
 import { toast } from '@/components/ui/toast';
 import { ApiRequestError } from '@/lib/api/client';
 import { formatDate } from '@/lib/format';
-import { cn } from '@/lib/utils';
 
 /** A row the owner has typed in: its text, the fields they have left, and a refused save. */
 interface Draft {
@@ -91,10 +96,14 @@ function refusalReasons(error: ApiRequestError): string[] {
   return details.length > 0 ? details : [error.message];
 }
 
-/** The table's column headers, in order (the Converted column is optional). */
-function columnsFor(converting: boolean, preview: boolean) {
+/**
+ * The table's column headers, in order (the Converted column is optional).
+ * A day's warnings and notes sit in a row of their own under it
+ * (`DayRow`), not in a column, so the table fits beside the aside at 1280px.
+ */
+function columnsFor(converting: boolean) {
   return [
-    { key: 'day', label: 'Day', numeric: false, className: 'pr-3 pl-0' },
+    { key: 'day', label: 'Day', numeric: false },
     { key: 'start', label: 'Start', numeric: false },
     { key: 'end', label: 'End', numeric: false },
     { key: 'break', label: 'Break', numeric: false },
@@ -103,10 +112,7 @@ function columnsFor(converting: boolean, preview: boolean) {
     { key: 'worked', label: 'Worked', numeric: true },
     { key: 'credited', label: 'Credited', numeric: true },
     { key: 'flexi', label: 'Flexi', numeric: true },
-    ...(converting
-      ? [{ key: 'converted', label: preview ? 'Converted (preview)' : 'Converted', numeric: true }]
-      : []),
-    { key: 'warnings', label: 'Warnings', numeric: false, className: 'min-w-36' },
+    ...(converting ? [{ key: 'converted', label: 'Converted', numeric: true }] : []),
   ];
 }
 
@@ -119,32 +125,35 @@ export function WeekTableHead({
   preview?: boolean;
 }) {
   return (
-    <thead>
-      <tr className="border-b text-left">
-        {columnsFor(converting, preview).map((column) => (
-          <th
+    <TableHeader>
+      <TableRow hover={false}>
+        {columnsFor(converting).map((column) => (
+          <TableHead
             key={column.key}
-            scope="col"
-            className={cn(
-              'py-2 font-medium whitespace-nowrap',
-              column.numeric ? 'px-2 text-right' : 'px-1',
-              'className' in column && column.className,
-            )}
+            numeric={column.numeric}
+            // Field headers wrap ("TOIL taken") to the fields' width.
+            className={column.numeric ? 'px-1' : 'px-0.5 whitespace-normal first:pr-1 first:pl-3'}
           >
             {column.label}
-          </th>
+            {column.key === 'converted' && preview ? (
+              <>
+                {' '}
+                <span className="text-meta block font-normal">(preview)</span>
+              </>
+            ) : null}
+          </TableHead>
         ))}
-        <th scope="col" className="py-2 pl-2">
+        <TableHead className="pl-1 last:pr-2">
           <span className="sr-only">Actions</span>
-        </th>
-      </tr>
-    </thead>
+        </TableHead>
+      </TableRow>
+    </TableHeader>
   );
 }
 
 /** How many columns the table has (for a cell spanning it). */
 export function columnCount(converting: boolean): number {
-  return columnsFor(converting, false).length + 1;
+  return columnsFor(converting).length + 1;
 }
 
 export interface WeekTableProps {
@@ -430,11 +439,10 @@ export function WeekTable({
 
   return (
     <>
-      {savedDays.length === 0 ? <p className="text-sm">No time recorded this week.</p> : null}
-      <div className="relative overflow-x-auto">
-        <table aria-labelledby={labelledBy} className="w-full text-sm">
+      <TableContainer>
+        <Table aria-labelledby={labelledBy} className="text-small">
           <WeekTableHead converting={showConverted} preview={week.conversion === 'PREVIEW'} />
-          <tbody>
+          <TableBody>
             {dates.map((date, index) => {
               const day = days[index]!;
               const draft = drafts[date];
@@ -459,6 +467,7 @@ export function WeekTable({
                   date={date}
                   label={labelOf(date)}
                   isToday={date === today}
+                  striped={index % 2 === 1}
                   text={text}
                   dirty={dirty}
                   hasSaved={savedByDate.has(date)}
@@ -479,35 +488,36 @@ export function WeekTable({
                 />
               );
             })}
-          </tbody>
-          <tfoot>
-            <tr className="font-medium">
-              <th scope="row" className="py-2 pr-3 text-left align-top">
-                Week
-              </th>
-              <td colSpan={5} />
-              <td className="px-2 py-2 text-right align-top tabular-nums">
+          </TableBody>
+          <TableFooter>
+            <TableRow hover={false}>
+              <TableRowHeader className="pr-1 align-top first:pl-3">Week</TableRowHeader>
+              <TableCell colSpan={5} />
+              <TableCell numeric className="px-1 align-top">
                 {formatDuration(days.reduce((sum, day) => sum + day.workedMinutes, 0))}
-              </td>
-              <td className="px-2 py-2 text-right align-top tabular-nums">
+              </TableCell>
+              <TableCell numeric className="px-1 align-top">
                 {formatDuration(totals.creditedMinutes)}
-                <span className="text-muted-foreground block text-xs font-normal">
-                  <span className="sr-only"> </span>of {formatDuration(totals.targetMinutes)} target
+                {/* "of 37:30" on its own short line; "target" is read, not shown, so the
+                    column stays narrow (the aside shows the target in words). */}
+                <span className="text-muted-foreground text-meta block font-normal">
+                  <span className="sr-only"> </span>of {formatDuration(totals.targetMinutes)}
+                  <span className="sr-only"> target</span>
                 </span>
-              </td>
-              <td className="px-2 py-2 text-right align-top whitespace-nowrap tabular-nums">
-                {formatFlexi(totals.flexiMinutes)}
-              </td>
+              </TableCell>
+              <TableCell numeric className="px-1 align-top">
+                <FlexiValue minutes={totals.flexiMinutes} />
+              </TableCell>
               {showConverted ? (
-                <td className="px-2 py-2 text-right align-top tabular-nums">
+                <TableCell numeric className="px-1 align-top">
                   {formatDuration(convertedTotal)}
-                </td>
+                </TableCell>
               ) : null}
-              <td colSpan={2} />
-            </tr>
-          </tfoot>
-        </table>
-      </div>
+              <TableCell />
+            </TableRow>
+          </TableFooter>
+        </Table>
+      </TableContainer>
       <AlertDialog
         open={blocker.status === 'blocked'}
         onOpenChange={(open) => {

@@ -53,6 +53,11 @@ function row(page: Page, day: string) {
   return page.getByRole('row', { name: new RegExp(`^${day}`) });
 }
 
+/** A day's warnings and notes, in a row of their own under the day's row. */
+function notes(page: Page, day: string) {
+  return page.getByRole('row', { name: new RegExp(`^(Warnings|Notes) for ${day}:`) });
+}
+
 /** Types into the focused field, replacing what is there. */
 async function typeInto(page: Page, text: string): Promise<void> {
   await page.keyboard.press('ControlOrMeta+A');
@@ -124,7 +129,7 @@ test('enters a week from the keyboard, clears a day and undoes it', async ({ pag
   await page.keyboard.press('Enter');
   await expect(toast(page, 'Tue 3 Feb saved')).toBeVisible();
   await expect(row(page, 'Tue 3 Feb')).toContainText('8:00');
-  await expect(row(page, 'Tue 3 Feb')).toContainText('Break raised to 0:30');
+  await expect(notes(page, 'Tue 3 Feb')).toContainText('Note: Break raised to 0:30');
 
   // Wednesday: a night shift, shown as ending the next day.
   await tabTo(page, field(page, 'Start', 'Wed 4 Feb'));
@@ -136,7 +141,7 @@ test('enters a week from the keyboard, clears a day and undoes it', async ({ pag
   await page.keyboard.press('Enter');
   await expect(toast(page, 'Wed 4 Feb saved')).toBeVisible();
   await expect(row(page, 'Wed 4 Feb')).toContainText('7:30');
-  await expect(row(page, 'Wed 4 Feb')).toContainText('After 19:00');
+  await expect(notes(page, 'Wed 4 Feb')).toContainText('Warning: After 19:00');
 
   // Thursday: a day of leave.
   await tabTo(page, field(page, 'Leave', 'Thu 5 Feb'));
@@ -146,7 +151,7 @@ test('enters a week from the keyboard, clears a day and undoes it', async ({ pag
   await expect(field(page, 'Leave', 'Thu 5 Feb')).toHaveValue('7:30');
 
   // Friday has nothing: it warns, and the week's totals say so.
-  await expect(row(page, 'Fri 6 Feb')).toContainText('Nothing recorded');
+  await expect(notes(page, 'Fri 6 Feb')).toContainText('Nothing recorded');
   const totals = page.getByRole('row', { name: /^Week/ });
   await expect(totals).toContainText('32:00 of 37:30 target');
   await expect(totals).toContainText('−5:30 under');
@@ -219,7 +224,7 @@ test('passes axe in the dark theme, with warnings and a row menu open', async ({
   await page.emulateMedia({ colorScheme: 'dark', reducedMotion: 'reduce' });
   await page.goto(`/hours?week=${WEEK}`);
   await expect(page.locator('html')).toHaveClass(/\bdark\b/);
-  await expect(row(page, 'Fri 6 Feb')).toContainText('Nothing recorded');
+  await expect(notes(page, 'Fri 6 Feb')).toContainText('Nothing recorded');
   await expectNoA11yViolations(page);
   await page.getByRole('button', { name: 'Actions for Mon 2 Feb' }).click();
   await expect(page.getByRole('menuitem', { name: 'Clear day' })).toBeVisible();
@@ -236,15 +241,61 @@ test('reflows at the 320 CSS px floor (1280×800 at 400% zoom)', async ({ page }
   await expectNoA11yViolations(page);
 });
 
-test('lays the aside beside the table at 1920×1080, with no page scroll', async ({ page }) => {
-  await page.setViewportSize({ width: 1920, height: 1080 });
+for (const viewport of [
+  { width: 1280, height: 800 },
+  { width: 1920, height: 1080 },
+]) {
+  test(`lays the aside beside the table at ${String(viewport.width)}×${String(viewport.height)}, with no scroll`, async ({
+    page,
+  }) => {
+    await layoutCheck(page, viewport);
+  });
+}
+
+test('keeps every time readable with WCAG 1.4.12 text spacing', async ({ page }) => {
+  await page.clock.setFixedTime(BEFORE_SETTLEMENT);
   await signIn(page, E2E_WEEK_USER);
-  await page.goto(`/hours?week=${WEEK}`);
-  const table = page.getByRole('table', { name: 'Week of 2 Feb 2026' });
+  await seedExampleWeek(page.request, true);
+  await page.goto(`/hours?week=${EXAMPLE_WEEK}`);
+  await expect(field(page, 'Start', 'Mon 5 Oct')).toHaveValue('08:00');
+  // The success criterion's spacing: nothing may clip or overlap.
+  await page.addStyleTag({
+    content: `* {
+      line-height: 1.5 !important;
+      letter-spacing: 0.12em !important;
+      word-spacing: 0.16em !important;
+    }
+    p { margin-bottom: 2em !important; }`,
+  });
+  const clipped = await page
+    .getByRole('table', { name: 'Week of 5 Oct 2026' })
+    .evaluate((table) =>
+      [...table.querySelectorAll('input')]
+        .filter((input) => input.scrollWidth > input.clientWidth)
+        .map((input) => `${input.getAttribute('aria-label') ?? ''} "${input.value}"`),
+    );
+  expect(clipped).toEqual([]);
+});
+
+/**
+ * The aside sits beside the table, and the table fits its column: no page
+ * scroll and no table scroll, with the conversion's column showing and a row
+ * being edited (its Save button showing), the widest the table gets.
+ */
+async function layoutCheck(page: Page, viewport: { width: number; height: number }) {
+  await page.setViewportSize(viewport);
+  await page.clock.setFixedTime(BEFORE_SETTLEMENT);
+  await signIn(page, E2E_WEEK_USER);
+  await seedExampleWeek(page.request, true);
+  await page.goto(`/hours?week=${EXAMPLE_WEEK}`);
+  await expect(page.getByRole('columnheader', { name: 'Converted (preview)' })).toBeVisible();
+  await field(page, 'Start', 'Thu 8 Oct').fill('0900');
+  await expect(row(page, 'Thu 8 Oct')).toContainText('Unsaved');
+  const table = page.getByRole('table', { name: 'Week of 5 Oct 2026' });
   const aside = page.getByRole('complementary', { name: 'This week and balances' });
   await expect(aside.getByRole('region', { name: 'Balances' })).toBeVisible();
   await expect(table).toBeVisible();
-  await expect(field(page, 'Start', 'Mon 2 Feb')).toBeVisible();
+  await expect(field(page, 'Start', 'Mon 5 Oct')).toBeVisible();
   const tableBox = (await table.boundingBox())!;
   const asideBox = (await aside.boundingBox())!;
   // Beside, not below: to the right of the table and starting level with it.
@@ -257,8 +308,18 @@ test('lays the aside beside the table at 1920×1080, with no page scroll', async
       (element) => element.parentElement!.scrollWidth - element.parentElement!.clientWidth,
     ),
   ).toBeLessThanOrEqual(0);
+  // No empty band on a wide window: the card is sized to the table's needs and
+  // the columns share its width, so the row menu's column stays narrow.
+  const actions = page.getByRole('columnheader', { name: 'Actions' });
+  // The row being edited shows Save beside the menu: the column holds just those.
+  expect((await actions.boundingBox())!.width).toBeLessThanOrEqual(140);
+  expect(asideBox.x - (tableBox.x + tableBox.width)).toBeLessThanOrEqual(24);
   await expectNoA11yViolations(page);
-});
+  // Esc reverts the edited row, so nothing is left to guard.
+  await field(page, 'Start', 'Thu 8 Oct').focus();
+  await page.keyboard.press('Escape');
+  await expect(row(page, 'Thu 8 Oct')).not.toContainText('Unsaved');
+}
 
 /**
  * The aside's journeys work in the feature doc's worked example, the week of

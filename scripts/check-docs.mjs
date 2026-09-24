@@ -110,6 +110,18 @@ const STALE_TERMS = [
   ],
   [/\bdrawer\b/i, 'the sidebar collapses to an icon rail, never a drawer (docs/UX_STANDARDS.md)'],
   [
+    /sidebar[^.\n]{0,40}\b240px|\b240px[^.\n]{0,40}(sidebar|icon \+ label)|│ 240px/i,
+    'the sidebar is --sidebar-width; link DESIGN_SYSTEM.md → Layout rather than a number',
+  ],
+  [
+    /ThemeToggle|two-way (theme )?(toggle|control)/i,
+    'the theme control is the three-way Theme menu (docs/features/app-shell-refresh.md)',
+  ],
+  [
+    /no web font is loaded|forms swap the label|density retune/i,
+    'Inter is self-hosted, Button has isPending and the 32px density shipped (docs/features/app-shell-refresh.md)',
+  ],
+  [
     /`sm`\s*[,·]\s*`md`|`sm`[–-]`xl`|`sm \d+rem`/,
     'phone and tablet breakpoints are gone; verify at 1280, 1920 and 400% zoom (docs/FRONTEND_QUALITY.md)',
   ],

@@ -10,7 +10,7 @@ import { expectNoA11yViolations, signIn } from './support';
  * viewports and at the 320 CSS px reflow floor (a 1280×800 window at 400% zoom).
  */
 
-const SIDEBAR_WIDTH = 240;
+const SIDEBAR_WIDTH = 224;
 const RAIL_WIDTH = 56;
 
 function sidebar(page: Page): Locator {
@@ -174,10 +174,58 @@ test.describe('at the 320 CSS px reflow floor (1280×800 at 400% zoom)', () => {
     // Nothing in the header is hidden or clipped: it wraps instead.
     await expect(page.getByRole('banner').getByText(E2E_USER.email)).toBeVisible();
     await expect(page.getByRole('button', { name: 'Sign out' })).toBeVisible();
-    await expect(page.getByRole('button', { name: /Switch to (light|dark) theme/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: /^Theme: / })).toBeVisible();
 
     await expectNoPageHorizontalScroll(page);
     await expectNoA11yViolations(page);
+  });
+});
+
+test.describe('the theme menu', () => {
+  test.use({ viewport: { width: 1280, height: 800 } });
+
+  test('switches light, dark and system from the keyboard, and keeps the choice', async ({
+    page,
+  }) => {
+    await signIn(page);
+    await page.emulateMedia({ colorScheme: 'light', reducedMotion: 'reduce' });
+    const trigger = page.getByRole('button', { name: /^Theme: / });
+    await expect(trigger).toHaveAccessibleName('Theme: System');
+
+    await trigger.focus();
+    await page.keyboard.press('Enter');
+    const menu = page.getByRole('menu');
+    await expect(menu.getByRole('menuitemradio', { name: 'System' })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
+    await expectNoA11yViolations(page);
+    await menu.getByRole('menuitemradio', { name: 'Dark' }).focus();
+    await page.keyboard.press('Enter');
+    await expect(page.locator('html')).toHaveClass(/\bdark\b/);
+    await expect(page.getByRole('button', { name: 'Theme: Dark' })).toBeFocused();
+    // The focus the menu hands back does not bring the tooltip up.
+    await page.waitForTimeout(600);
+    await expect(page.getByRole('tooltip')).toHaveCount(0);
+    await expectNoA11yViolations(page);
+
+    // Kept across a reload, before first paint.
+    await page.reload();
+    await expect(page.locator('html')).toHaveClass(/\bdark\b/);
+
+    // With the mouse: the tooltip names the button on hover, never shows over
+    // the open menu, and is gone once a choice closes it.
+    const button = page.getByRole('button', { name: 'Theme: Dark' });
+    await button.hover();
+    await expect(page.getByRole('tooltip', { name: 'Theme' })).toBeVisible();
+    await button.click();
+    await expect(page.getByRole('menu')).toBeVisible();
+    await expect(page.getByRole('tooltip')).toHaveCount(0);
+    await page.getByRole('menuitemradio', { name: 'System' }).click();
+    await expect(page.locator('html')).not.toHaveClass(/\bdark\b/);
+    await page.mouse.move(600, 500);
+    await page.waitForTimeout(600);
+    await expect(page.getByRole('tooltip')).toHaveCount(0);
   });
 });
 

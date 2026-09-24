@@ -9,7 +9,15 @@ import {
   type IsoDate,
 } from '@repo/domain';
 import { Link } from '@tanstack/react-router';
-import { ChevronLeft, ChevronRight, Download } from 'lucide-react';
+import {
+  CalendarClock,
+  CalendarCog,
+  ChartColumn,
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  Settings,
+} from 'lucide-react';
 import * as React from 'react';
 
 import { useWeekConversion, useWeekWorkDays } from '../api/work-days';
@@ -22,8 +30,12 @@ import { fieldId } from './day-row';
 import { LoadError } from './request-states';
 import { columnCount, toEngineDay, WeekTable, WeekTableHead } from './week-table';
 
+import { PageHeader } from '@/components/layout/page-header';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Table, TableBody, TableCell, TableContainer, TableRow } from '@/components/ui/table';
 import { toast } from '@/components/ui/toast';
 import { usePublicHolidays } from '@/features/core/public-holidays';
 import { useDelayedFlag } from '@/hooks/use-delayed-flag';
@@ -64,39 +76,39 @@ const HEADING_ID = 'hours-week-heading';
 function LoadingTable() {
   const show = useDelayedFlag(true);
   return (
-    <div className="relative overflow-x-auto" aria-busy="true">
-      <table aria-labelledby={HEADING_ID} className="w-full text-sm">
+    <TableContainer aria-busy="true">
+      <Table aria-labelledby={HEADING_ID} className="text-small">
         <WeekTableHead />
-        <tbody>
+        <TableBody>
           {Array.from({ length: 7 }, (_, index) => (
-            <tr key={index} className="border-b">
-              <td colSpan={columnCount(false)} className="py-1">
+            <TableRow key={index} hover={false} tone={index % 2 === 1 ? 'stripe' : 'default'}>
+              <TableCell colSpan={columnCount(false)} className="h-(--row-height-comfortable)">
                 {index === 0 ? <span className="sr-only">Loading the week</span> : null}
-                {show ? <Skeleton className="h-9" /> : <div className="h-9" />}
-              </td>
-            </tr>
+                {show ? <Skeleton className="h-(--control-sm)" /> : null}
+              </TableCell>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
-    </div>
+        </TableBody>
+      </Table>
+    </TableContainer>
   );
 }
 
 /** A failed load: the table's head stays, with the error and Retry in its body. */
 function ErrorTable({ onRetry }: { onRetry: () => void }) {
   return (
-    <div className="relative overflow-x-auto">
-      <table aria-labelledby={HEADING_ID} className="w-full text-sm">
+    <TableContainer>
+      <Table aria-labelledby={HEADING_ID} className="text-small">
         <WeekTableHead />
-        <tbody>
-          <tr>
-            <td colSpan={columnCount(false)} className="py-3">
+        <TableBody>
+          <TableRow hover={false}>
+            <TableCell colSpan={columnCount(false)} className="py-3">
               <LoadError message="We couldn't load this week." onRetry={onRetry} />
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+            </TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
+    </TableContainer>
   );
 }
 
@@ -189,27 +201,31 @@ export function WeekView({ weekStart, today, onWeekChange, aside }: WeekViewProp
     body = <ErrorTable onRetry={retry} />;
   } else if (!trackingStart) {
     body = (
-      <div className="grid gap-2 text-sm">
-        <p>Set your working terms to start tracking hours.</p>
-        <p>
-          <Button asChild variant="outline" size="sm">
+      <EmptyState
+        icon={CalendarCog}
+        title="Set your working terms to start tracking hours."
+        description="Your terms set the flexi target for each weekday, the break rule and the working band."
+        action={
+          <Button asChild>
             <Link to="/hours/settings" search={{ tab: 'terms' }}>
               Set working terms
             </Link>
           </Button>
-        </p>
-      </div>
+        }
+      />
     );
   } else if (!tracked) {
     body = (
-      <div className="grid gap-2 text-sm">
-        <p>Tracking starts on {formatDate(trackingStart)}.</p>
-        <p>
-          <Button variant="outline" size="sm" onClick={() => onWeekChange(trackingStart)}>
+      <EmptyState
+        icon={CalendarClock}
+        title={`Tracking starts on ${formatDate(trackingStart)}.`}
+        description="Weeks before your first terms have nothing to track."
+        action={
+          <Button variant="outline" onClick={() => onWeekChange(trackingStart)}>
             Go to the first week
           </Button>
-        </p>
-      </div>
+        }
+      />
     );
   } else {
     body = (
@@ -231,73 +247,90 @@ export function WeekView({ weekStart, today, onWeekChange, aside }: WeekViewProp
     );
   }
 
+  const empty = tracked && days.data?.length === 0;
+
   return (
     <div className="grid grid-cols-1 gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight">Hours</h1>
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex min-w-0 items-center gap-1">
-            <Button
-              variant="outline"
-              size="icon"
-              aria-label="Previous week"
-              disabled={!canMoveWeek(weekStart, -1)}
-              onClick={() => onWeekChange(addDays(weekStart, -7))}
-            >
-              <ChevronLeft aria-hidden />
+      <PageHeader
+        title="Hours"
+        actions={
+          <>
+            <Button variant="ghost" asChild>
+              <Link to="/hours/summary" search={{ ...summaryRange, groupBy: 'week' }}>
+                <ChartColumn aria-hidden />
+                Summary
+              </Link>
             </Button>
-            <h2 id={HEADING_ID} aria-live="polite" className="min-w-0 px-2 text-base font-semibold">
-              Week of {formatDate(weekStart, 'medium')}
-            </h2>
-            <Button
-              variant="outline"
-              size="icon"
-              aria-label="Next week"
-              disabled={!canMoveWeek(weekStart, 1)}
-              onClick={() => onWeekChange(addDays(weekStart, 7))}
-            >
-              <ChevronRight aria-hidden />
+            <Button variant="ghost" asChild>
+              <Link to="/hours/settings">
+                <Settings aria-hidden />
+                Settings
+              </Link>
             </Button>
-          </div>
-          <Button variant="ghost" asChild>
-            <Link to="/hours/summary" search={{ ...summaryRange, groupBy: 'week' }}>
-              Summary
-            </Link>
-          </Button>
-          <Button variant="ghost" asChild>
-            <Link to="/hours/settings">Settings</Link>
-          </Button>
-          <Button variant="outline" onClick={downloadCsv} disabled={!tracked}>
-            <Download aria-hidden />
-            Download CSV
-          </Button>
-          <Button onClick={goToToday}>Go to today</Button>
+            <Button variant="outline" onClick={downloadCsv} disabled={!tracked}>
+              <Download aria-hidden />
+              Download CSV
+            </Button>
+            <Button onClick={goToToday}>Go to today</Button>
+          </>
+        }
+      />
+      {/* Layout: the table takes the room and the aside sits beside it once the
+          content is 56rem wide (a 1280px window); below that, down to the reflow
+          floor, the aside stacks under the table. */}
+      <div className="@container">
+        <div className="@4xl:grid-cols-main-aside @7xl:grid-cols-main-aside-wide grid grid-cols-1 items-start gap-4">
+          <section aria-labelledby={HEADING_ID} className="min-w-0">
+            <Card className="overflow-hidden">
+              <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b px-3 py-2">
+                <div className="flex min-w-0 items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label="Previous week"
+                    disabled={!canMoveWeek(weekStart, -1)}
+                    onClick={() => onWeekChange(addDays(weekStart, -7))}
+                  >
+                    <ChevronLeft aria-hidden />
+                  </Button>
+                  <h2 id={HEADING_ID} aria-live="polite" className="text-h3 min-w-0 px-1">
+                    Week of {formatDate(weekStart, 'medium')}
+                  </h2>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label="Next week"
+                    disabled={!canMoveWeek(weekStart, 1)}
+                    onClick={() => onWeekChange(addDays(weekStart, 7))}
+                  >
+                    <ChevronRight aria-hidden />
+                  </Button>
+                </div>
+                {empty ? (
+                  <p className="text-muted-foreground text-small">No time recorded this week.</p>
+                ) : null}
+              </div>
+              {body}
+              {tracked ? (
+                <p className="text-muted-foreground text-meta border-t px-3 py-2.5">
+                  Type times as 0830 or 8:30 and durations as 0:30, 30m or 7.5h. Enter saves a day;
+                  Esc undoes its changes.
+                </p>
+              ) : null}
+            </Card>
+          </section>
+          {aside ? (
+            <div data-slot="week-aside" className="min-w-0">
+              {aside({
+                weekStart,
+                asOf: today,
+                calculation:
+                  tracked && calculation?.week.weekStart === weekStart ? calculation : null,
+                recalculationNotice: recalculation.notice,
+              })}
+            </div>
+          ) : null}
         </div>
-      </div>
-      <p className="text-muted-foreground max-w-(--width-prose) text-sm">
-        Type times as 0830 or 8:30 and durations as 0:30, 30m or 7.5h. Enter saves a day; Esc undoes
-        its changes.
-      </p>
-      {/* Layout: the table takes the room; the aside sits beside it on a wide window
-          and wraps below it when both do not fit, down to the reflow floor. */}
-      <div className="flex flex-wrap items-start gap-6">
-        <section
-          aria-labelledby={HEADING_ID}
-          className="grid min-w-0 grow basis-4xl grid-cols-1 gap-3"
-        >
-          {body}
-        </section>
-        {aside ? (
-          <div data-slot="week-aside" className="max-w-full min-w-0 basis-(--width-aside)">
-            {aside({
-              weekStart,
-              asOf: today,
-              calculation:
-                tracked && calculation?.week.weekStart === weekStart ? calculation : null,
-              recalculationNotice: recalculation.notice,
-            })}
-          </div>
-        ) : null}
       </div>
     </div>
   );

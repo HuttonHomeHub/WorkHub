@@ -117,12 +117,13 @@ one that catches the rest — do it for every interactive change.
       shape. (1.4.1)
 - [ ] Correct in **light and dark**; check both.
 
-> **Control boundaries use `--input`.** It is `oklch(0.63 0 0)` in light and
-> `oklch(0.56 0 0)` in dark: at least 3:1 (1.4.11) against the background,
-> card and muted surfaces in both themes, and
-> `apps/web/src/styles/tokens-contrast.test.ts` fails if a change drops it
-> below. `--border` and `--sidebar-border` draw dividers and surfaces, which
-> 1.4.11 does not cover: never make them a control's only boundary.
+> **Every colour pair is measured.** `apps/web/src/styles/tokens-contrast.test.ts`
+> checks each foreground against each surface it appears on, in light and dark:
+> text at 4.5:1, and `--input` (control boundaries), `--ring` and state fills
+> at 3:1 (1.4.11), against the page, cards, popovers, muted wells and every
+> table row surface. A token change that drops a pair below fails the test.
+> `--border` and `--sidebar-border` draw dividers and surfaces, which 1.4.11
+> does not cover: never make them a control's only boundary.
 
 ### Zoom and reflow
 

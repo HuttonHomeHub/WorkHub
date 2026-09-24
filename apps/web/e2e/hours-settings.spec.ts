@@ -67,6 +67,16 @@ test('sets new terms from a Monday, and they are there after a reload', async ({
   await expect(form).toBeVisible();
   await expectNoA11yViolations(page);
 
+  // Every field in a group lines up: descriptions sit under the inputs.
+  const topOf = async (label: string) =>
+    Math.round((await form.getByLabel(label, { exact: true }).boundingBox())!.y);
+  const firstRow = await Promise.all(
+    ['TOIL cap a month', 'Conversion block', 'Most leave in a day'].map(topOf),
+  );
+  expect(new Set(firstRow).size).toBe(1);
+  const secondRow = await Promise.all(['Flexi credit cap', 'Flexi debit cap'].map(topOf));
+  expect(new Set(secondRow).size).toBe(1);
+
   await form.getByLabel('Applies from').fill(monday);
   const fridayTarget = form.getByLabel('Friday flexi target');
   await fridayTarget.fill('6h');

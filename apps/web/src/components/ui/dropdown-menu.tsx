@@ -1,4 +1,5 @@
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu';
+import { Check } from 'lucide-react';
 import * as React from 'react';
 
 import { cn } from '@/lib/utils';
@@ -35,9 +36,9 @@ function DropdownMenuTrigger(props: React.ComponentProps<typeof DropdownMenuPrim
  * both menus of a row look and behave the same.
  */
 const menuContentClasses =
-  'bg-popover text-popover-foreground z-(--z-popover) min-w-44 overflow-hidden rounded-md border p-1 text-sm shadow-md';
+  'bg-popover text-popover-foreground animate-enter text-body z-(--z-popover) min-w-44 overflow-hidden rounded-lg border p-1 shadow-md';
 const menuItemClasses =
-  'relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 outline-none select-none data-disabled:pointer-events-none data-disabled:opacity-50 data-highlighted:bg-accent data-highlighted:text-accent-foreground [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0';
+  'relative flex h-(--control-md) cursor-default items-center gap-2 rounded-md px-2 outline-none select-none data-disabled:pointer-events-none data-disabled:opacity-50 data-highlighted:bg-accent data-highlighted:text-accent-foreground [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0';
 const menuSeparatorClasses = 'bg-border -mx-1 my-1 h-px';
 
 /**
@@ -95,11 +96,55 @@ function DropdownMenuSeparator({
   );
 }
 
+/**
+ * A set of mutually exclusive choices in a menu, such as the theme. The
+ * checked item shows a tick as well as `aria-checked`, not colour alone.
+ */
+function DropdownMenuRadioGroup(
+  props: React.ComponentProps<typeof DropdownMenuPrimitive.RadioGroup>,
+) {
+  return <DropdownMenuPrimitive.RadioGroup {...props} />;
+}
+
+/** One choice in a `DropdownMenuRadioGroup`; Enter or Space chooses it. */
+function DropdownMenuRadioItem({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.RadioItem>) {
+  return (
+    <DropdownMenuPrimitive.RadioItem className={cn(menuItemClasses, 'pr-8', className)} {...props}>
+      {children}
+      <span className="absolute right-2 flex size-4 items-center justify-center">
+        <DropdownMenuPrimitive.ItemIndicator>
+          <Check aria-hidden />
+        </DropdownMenuPrimitive.ItemIndicator>
+      </span>
+    </DropdownMenuPrimitive.RadioItem>
+  );
+}
+
+/** A group's heading inside a menu (not focusable). */
+function DropdownMenuLabel({
+  className,
+  ...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.Label>) {
+  return (
+    <DropdownMenuPrimitive.Label
+      className={cn('text-muted-foreground text-meta px-2 py-1.5 font-medium', className)}
+      {...props}
+    />
+  );
+}
+
 export {
   closeOnTab,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
   menuContentClasses,

@@ -18,7 +18,7 @@ import type { WeekAsideContext } from './week-view';
 export function WeekAside({ weekStart, asOf, calculation, recalculationNotice }: WeekAsideContext) {
   const live = calculation ? liveWeekFigures(calculation.result, weekStart) : null;
   return (
-    <aside aria-label="This week and balances" className="grid gap-6">
+    <aside aria-label="This week and balances" className="grid gap-4">
       <ThisWeekPanel
         weekStart={weekStart}
         asOf={asOf}

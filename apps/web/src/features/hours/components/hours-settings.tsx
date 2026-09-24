@@ -5,6 +5,7 @@ import { HolidaysTab } from './holidays-tab';
 import { LeaveTab } from './leave-tab';
 import { TermsTab } from './terms-tab';
 
+import { PageHeader } from '@/components/layout/page-header';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const TAB_LABELS: Record<SettingsTab, string> = {
@@ -34,13 +35,12 @@ function isSettingsTab(value: string): value is SettingsTab {
  */
 export function HoursSettings({ tab, onTabChange, year, onYearChange }: HoursSettingsProps) {
   return (
-    <div className="grid grid-cols-1 gap-6">
-      <div className="grid grid-cols-1 gap-1">
-        <h1 className="text-2xl font-semibold tracking-tight">Hours settings</h1>
-        <p className="text-muted-foreground max-w-(--width-prose) text-sm">
-          Your working terms, leave years, opening balances and bank holidays.
-        </p>
-      </div>
+    // Settings are forms and short lists: capped at the form width, at the content's left edge.
+    <div className="grid max-w-(--width-form) grid-cols-1 gap-6">
+      <PageHeader
+        title="Hours settings"
+        description="Your working terms, leave years, opening balances and bank holidays."
+      />
       <Tabs
         value={tab}
         onValueChange={(value) => {

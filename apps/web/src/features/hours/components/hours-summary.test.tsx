@@ -104,6 +104,7 @@ describe('HoursSummary', () => {
     const headers = within(table)
       .getAllByRole('columnheader')
       .map((cell) => cell.textContent);
+    // TOIL and overtime are column groups over their short labels.
     expect(headers).toEqual([
       'Week',
       'Target',
@@ -114,12 +115,18 @@ describe('HoursSummary', () => {
       'Flexi',
       'Converted',
       'TOIL',
-      'TOIL taken',
-      'TOIL unused',
-      'Overtime paid',
-      'Overtime unpaid',
+      'Overtime',
       'Flexi balance at end',
+      'Earned',
+      'Taken',
+      'Unused',
+      'Paid',
+      'Unpaid',
     ]);
+    expect(within(table).getByRole('columnheader', { name: 'TOIL' })).toHaveAttribute(
+      'scope',
+      'colgroup',
+    );
     const example = within(table).getByRole('row', { name: /Week of 5 Oct 2026/ });
     const cells = within(example)
       .getAllByRole('cell')
@@ -173,7 +180,13 @@ describe('HoursSummary', () => {
     });
 
     const table = await screen.findByRole('table', { name: /Hours by month/ });
-    expect(within(table).getByRole('rowheader', { name: 'October 2026' })).toBeInTheDocument();
+    // October holds today: it is in progress, and the table says why its target is ahead.
+    expect(
+      within(table).getByRole('rowheader', { name: 'October 2026 In progress' }),
+    ).toBeInTheDocument();
+    expect(table).toHaveAccessibleDescription(
+      /^Target counts every working day of a period, including days still to come; flexi counts the days up to today, Wed 14 Oct\./,
+    );
     expect(within(table).queryByRole('columnheader', { name: 'Week' })).not.toBeInTheDocument();
 
     await user.selectOptions(screen.getByLabelText('Group by'), 'week');
@@ -214,7 +227,51 @@ describe('HoursSummary', () => {
       within(table)
         .getAllByRole('rowheader')
         .map((cell) => cell.textContent),
-    ).toEqual(['October 2026', 'Total']);
+    ).toEqual(['October 2026 In progress', 'Total']);
+  });
+
+  it('marks periods still to come, and shows notes as notes and warnings as warnings', async () => {
+    stubSummaries(() => ({
+      status: 200,
+      body: {
+        data: [
+          summaryGroup({
+            key: '2026-10-12',
+            start: '2026-10-12',
+            end: '2026-10-19',
+            warnings: [
+              { code: 'BREAK_RAISED', date: '2026-10-12' },
+              { code: 'MISSING_DAY', date: '2026-10-13' },
+            ],
+          }),
+          summaryGroup({
+            key: '2026-10-19',
+            start: '2026-10-19',
+            end: '2026-10-26',
+            creditedMinutes: 0,
+            workedMinutes: 0,
+            warnings: [],
+          }),
+        ],
+      },
+    }));
+    renderSummary();
+    const table = await screen.findByRole('table', { name: /Hours by week/ });
+    expect(
+      within(table).getByRole('rowheader', { name: 'Week of 12 Oct 2026 In progress' }),
+    ).toBeInTheDocument();
+    expect(
+      within(table).getByRole('rowheader', { name: 'Week of 19 Oct 2026 Upcoming' }),
+    ).toBeInTheDocument();
+    const warnings = within(table).getByRole('row', { name: /^Warnings for Week of 12 Oct 2026/ });
+    expect(warnings).toHaveTextContent('Note: Break raised to minimum');
+    expect(warnings).toHaveTextContent('Warning: Day not recorded');
+    expect(within(warnings).getByText('Break raised to minimum', { exact: false })).toHaveClass(
+      'text-info-text',
+    );
+    expect(within(warnings).getByText('Day not recorded', { exact: false })).toHaveClass(
+      'text-warning-text',
+    );
   });
 
   it('writes each preset range to the URL', async () => {

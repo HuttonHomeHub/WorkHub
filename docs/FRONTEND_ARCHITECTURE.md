@@ -386,9 +386,8 @@ sequenceDiagram
   stores the choice in `localStorage` under `theme`, toggles `.dark` on `<html>`,
   and follows `prefers-color-scheme` live in system mode.
 - An inline script in `index.html` applies the class before first paint.
-- **The shell's control is two-way today:** `ThemeToggle` in `app-shell.tsx`
-  flips light ⇄ dark and cannot return to system. A three-way control is in
-  PRODUCT.md's Next list.
+- **The shell's control is the Theme menu** in `app-shell.tsx`: Light, Dark
+  and System as radio items (DESIGN_SYSTEM.md → Themes).
 - Cross-tab theme sync is _planned_ alongside cross-tab sign-out.
 - Components never branch on theme in JS — tokens flip (ADR-0006).
 

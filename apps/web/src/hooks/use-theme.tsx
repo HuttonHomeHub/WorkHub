@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-type Theme = 'light' | 'dark' | 'system';
+export type Theme = 'light' | 'dark' | 'system';
 
 interface ThemeContextValue {
   theme: Theme;
@@ -10,6 +10,29 @@ interface ThemeContextValue {
 const ThemeContext = React.createContext<ThemeContextValue | null>(null);
 
 const STORAGE_KEY = 'theme';
+
+/**
+ * The stored preference, or `system` when there is none or storage is blocked
+ * (a private window, a browser policy): reading it must never throw and blank
+ * the app.
+ */
+function readStoredTheme(): Theme {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    return stored === 'light' || stored === 'dark' || stored === 'system' ? stored : 'system';
+  } catch {
+    return 'system';
+  }
+}
+
+/** Stores the preference; when storage is blocked it still applies for this visit. */
+function storeTheme(theme: Theme): void {
+  try {
+    localStorage.setItem(STORAGE_KEY, theme);
+  } catch {
+    // Blocked storage: the choice lasts until the page is reloaded.
+  }
+}
 
 function prefersDark(): boolean {
   return window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -27,10 +50,7 @@ function apply(theme: Theme): void {
  * provider keeps the class in sync afterwards (including live `system` changes).
  */
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = React.useState<Theme>(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    return stored === 'light' || stored === 'dark' || stored === 'system' ? stored : 'system';
-  });
+  const [theme, setThemeState] = React.useState<Theme>(readStoredTheme);
 
   React.useEffect(() => {
     apply(theme);
@@ -42,7 +62,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, [theme]);
 
   const setTheme = React.useCallback((next: Theme) => {
-    localStorage.setItem(STORAGE_KEY, next);
+    storeTheme(next);
     setThemeState(next);
   }, []);
 

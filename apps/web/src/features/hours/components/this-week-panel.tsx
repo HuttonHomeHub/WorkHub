@@ -1,4 +1,4 @@
-import { addDays, formatDuration, formatFlexi } from '@repo/domain';
+import { addDays, formatDuration } from '@repo/domain';
 import * as React from 'react';
 
 import {
@@ -11,9 +11,11 @@ import { useTimeSummaries } from '../api/time-summaries';
 import { figuresFromGroup, type LiveWeekFigures, type ThisWeekFigures } from '../this-week-figures';
 
 import { Figure } from './figure';
+import { FlexiValue } from './flexi-value';
 import { LoadError, LoadingRows, toastSaveError } from './request-states';
 
 import { Label } from '@/components/ui/label';
+import { ProgressBar } from '@/components/ui/progress';
 import { Switch } from '@/components/ui/switch';
 import { formatDate } from '@/lib/format';
 
@@ -66,7 +68,7 @@ function ConversionSwitchField({
   const id = React.useId();
   const checked = change.isPending ? change.variables.on : row !== undefined;
   return (
-    <div className="flex items-start gap-2">
+    <div className="bg-muted flex items-start gap-2.5 rounded-lg px-3 py-2.5">
       <Switch
         id={id}
         className="mt-0.5"
@@ -99,7 +101,7 @@ function ConversionSwitchField({
       <Label htmlFor={id} className="leading-5 font-normal">
         Convert this week&apos;s excess to TOIL and overtime
       </Label>
-      <span role="status" className="text-muted-foreground ml-auto text-xs leading-5">
+      <span role="status" className="text-muted-foreground text-meta ml-auto leading-5">
         {status}
       </span>
     </div>
@@ -109,13 +111,13 @@ function ConversionSwitchField({
 /** What the switch does with this week's excess, once it is on. */
 function ConversionSummary({ figures }: { figures: ThisWeekFigures }) {
   if (figures.excessMinutes <= 0) {
-    return <p className="text-muted-foreground">Nothing to convert</p>;
+    return <p className="text-muted-foreground text-small">Nothing to convert</p>;
   }
   if (figures.conversion === 'OFF') return null;
   // Rule 6: only whole blocks convert; the rest of E stays as flexi.
   if (figures.convertedMinutes <= 0) {
     return (
-      <p className="text-muted-foreground">
+      <p className="text-muted-foreground text-small">
         Less than one block ({formatDuration(figures.blockMinutes)}) to convert
       </p>
     );
@@ -133,10 +135,12 @@ function ConversionSummary({ figures }: { figures: ThisWeekFigures }) {
         </Figure>
       </dl>
       {remainder > 0 ? (
-        <p className="text-muted-foreground">{formatDuration(remainder)} stays as flexi</p>
+        <p className="text-muted-foreground text-small">
+          {formatDuration(remainder)} stays as flexi
+        </p>
       ) : null}
       {settlement ? (
-        <p className="text-muted-foreground">
+        <p className="text-muted-foreground text-small">
           {figures.conversion === 'APPLIED'
             ? `Applied ${settlement}`
             : `Preview until ${settlement}`}
@@ -179,7 +183,7 @@ export function ThisWeekPanel({ weekStart, asOf, live, recalculationNotice }: Th
   } else if (summaries.isPending || conversions.isPending) {
     body = <LoadingRows label="Loading this week's totals" rows={3} />;
   } else if (!figures) {
-    body = <p className="text-muted-foreground">Nothing is tracked this week.</p>;
+    body = <p className="text-muted-foreground text-small">Nothing is tracked this week.</p>;
   } else {
     const row = conversions.data.find((c) => c.weekStart === weekStart);
     const on = row !== undefined;
@@ -191,10 +195,17 @@ export function ThisWeekPanel({ weekStart, asOf, live, recalculationNotice }: Th
             {formatDuration(figures.creditedMinutes)} of {formatDuration(figures.targetMinutes)}{' '}
             target
           </Figure>
-          <Figure term="Week flexi">{formatFlexi(figures.rawFlexiMinutes)}</Figure>
+          <ProgressBar
+            className="mb-1"
+            value={figures.creditedMinutes}
+            max={figures.targetMinutes}
+          />
+          <Figure term="Week flexi">
+            <FlexiValue minutes={figures.rawFlexiMinutes} />
+          </Figure>
           {converting ? (
             <Figure term="After conversion">
-              {formatFlexi(figures.rawFlexiMinutes - figures.convertedMinutes)}
+              <FlexiValue minutes={figures.rawFlexiMinutes - figures.convertedMinutes} />
             </Figure>
           ) : null}
         </dl>
@@ -205,12 +216,15 @@ export function ThisWeekPanel({ weekStart, asOf, live, recalculationNotice }: Th
   }
 
   return (
-    <section aria-labelledby={headingId} className="grid gap-3 text-sm">
-      <h2 id={headingId} className="text-base font-semibold">
+    <section
+      aria-labelledby={headingId}
+      className="bg-card text-body grid gap-3 rounded-xl border p-4 shadow-xs"
+    >
+      <h2 id={headingId} className="text-h3">
         This week
       </h2>
       {body}
-      <p role="status" aria-live="polite" className="text-muted-foreground">
+      <p role="status" aria-live="polite" className="text-muted-foreground text-small">
         {recalculationNotice}
       </p>
     </section>

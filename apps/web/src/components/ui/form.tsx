@@ -81,7 +81,7 @@ function FormItem({ className, ...props }: React.ComponentPropsWithoutRef<'div'>
   const id = React.useId();
   return (
     <FormItemContext.Provider value={{ id }}>
-      <div className={cn('grid gap-2', className)} {...props} />
+      <div className={cn('grid gap-1.5', className)} {...props} />
     </FormItemContext.Provider>
   );
 }
@@ -89,7 +89,11 @@ function FormItem({ className, ...props }: React.ComponentPropsWithoutRef<'div'>
 function FormLabel({ className, ...props }: React.ComponentPropsWithoutRef<typeof Label>) {
   const { error, formItemId } = useFormField();
   return (
-    <Label className={cn(error && 'text-destructive', className)} htmlFor={formItemId} {...props} />
+    <Label
+      className={cn(error && 'text-destructive-text', className)}
+      htmlFor={formItemId}
+      {...props}
+    />
   );
 }
 
@@ -110,7 +114,7 @@ function FormDescription({ className, ...props }: React.ComponentPropsWithoutRef
   return (
     <p
       id={formDescriptionId}
-      className={cn('text-muted-foreground text-sm', className)}
+      className={cn('text-muted-foreground text-small', className)}
       {...props}
     />
   );
@@ -123,7 +127,7 @@ function FormMessage({ className, children, ...props }: React.ComponentPropsWith
   return (
     <p
       id={formMessageId}
-      className={cn('text-destructive text-sm font-medium', className)}
+      className={cn('text-destructive-text text-small font-medium', className)}
       {...props}
     >
       {body}

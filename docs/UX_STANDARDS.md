@@ -42,17 +42,18 @@ One shell, composed once as a layout route (`routes/_authed.tsx` →
 ├────────┬─────────────────────────────────────────────────┤
 │ side   │ page                                            │
 │ bar    │  ┌ page header: h1 · breadcrumb · primary action│
-│ 240px  │  ├ content                                      │
-│ (rail  │  │   list pane  │  detail pane                  │
-│  56px) │  └                                              │
+│ (or    │  ├ content                                      │
+│  the   │  │   list pane  │  detail pane                  │
+│  rail) │  └                                              │
 └────────┴─────────────────────────────────────────────────┘
 ```
 
 **Sidebar** (`components/layout/sidebar.tsx`): one entry per tool, built from
 the tool manifests in `app/tools.ts` (ADR-0020).
 
-- Two states: **expanded** (240px, icon + label) and **rail** (56px, icon only
-  with a tooltip). The toggle is a header button named "Sidebar" with
+- Two states: **expanded** (icon + label) and **rail** (icon only, with a
+  tooltip); their widths are `--sidebar-width` and `--sidebar-rail` in
+  [DESIGN_SYSTEM.md → Layout](DESIGN_SYSTEM.md#layout--partly-implemented). The toggle is a header button named "Sidebar" with
   `aria-expanded` and `aria-controls`, and a tooltip naming its action
   ("Collapse sidebar"); the state persists per browser in `localStorage` and is
   restored before first paint.
@@ -119,7 +120,7 @@ prose and forms (the signed-in home uses `--width-prose`).
 
 Compact density is a product decision (PRODUCT.md): **14px body text, 32px
 controls and table rows**. Sizes come from the density tokens in
-[DESIGN_SYSTEM.md](DESIGN_SYSTEM.md#density-and-control-sizing--proposed) — never from
+[DESIGN_SYSTEM.md](DESIGN_SYSTEM.md#density-and-control-sizing--implemented) — never from
 hand-picked heights.
 
 - **One scan order per screen:** title → primary data → supporting detail →
@@ -209,7 +210,9 @@ Lists and tables that support selection follow one pattern everywhere.
 
 ## Tables and grids
 
-One `DataTable` primitive (_planned_) — no bespoke `<table>` markup.
+One `DataTable` primitive (_planned_) — no bespoke `<table>` markup. Until it
+is built, tables use the `Table` parts in `components/ui/table.tsx` (zebra and
+hover rows, numeric columns, a totals footer; DESIGN_SYSTEM.md → Table).
 
 - **Semantics:** a real `<table>` with `<th scope>`. A grid with roving focus
   uses `role="grid"` only when cells are individually focusable.

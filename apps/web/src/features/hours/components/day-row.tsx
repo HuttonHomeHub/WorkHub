@@ -1,17 +1,12 @@
-import {
-  formatDuration,
-  formatFlexi,
-  type ConversionState,
-  type DayResult,
-  type IsoDate,
-} from '@repo/domain';
-import { Ellipsis, Info, TriangleAlert } from 'lucide-react';
+import { formatDuration, type ConversionState, type DayResult, type IsoDate } from '@repo/domain';
+import { CalendarDays, Ellipsis, Info, TriangleAlert } from 'lucide-react';
 import * as React from 'react';
 
 import { endsNextDay, type RowField, type RowText } from '../schemas/work-day';
 import type { RowWarning } from '../week/week-calculation';
 
 import { DurationInput } from './duration-input';
+import { FlexiValue } from './flexi-value';
 import { TimeInput } from './time-input';
 
 import { Badge } from '@/components/ui/badge';
@@ -28,6 +23,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { TableCell, TableRow, TableRowHeader } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 
 /** The id of a row's field, so the page can focus it ("Go to today", after Clear day). */
@@ -81,6 +77,8 @@ export interface DayRowProps {
   /** "Mon 5 Oct". */
   label: string;
   isToday: boolean;
+  /** An odd row of the week, drawn on the zebra stripe (with its notes row). */
+  striped: boolean;
   text: RowText;
   /** The row differs from what is saved. */
   dirty: boolean;
@@ -163,6 +161,7 @@ function DayRowComponent({
   date,
   label,
   isToday,
+  striped,
   text,
   dirty,
   hasSaved,
@@ -238,10 +237,11 @@ function DayRowComponent({
       'aria-invalid': error ? true : undefined,
       'aria-describedby': describedBy || undefined,
       hintVisibility: 'sr-only' as const,
-      className: 'w-18',
+      size: 'sm' as const,
+      className: 'text-small w-(--width-input-compact) px-0.5 text-center',
     };
     return (
-      <td className="px-1 py-1 align-top">
+      <TableCell className="px-0.5 align-top">
         {name === 'start' || name === 'end' ? (
           <TimeInput {...common} />
         ) : (
@@ -250,21 +250,30 @@ function DayRowComponent({
         {name === 'end' ? (
           // Not a live region: it would re-announce as a partial time is typed.
           // The End field's description reads it.
-          <span id={nextDayId} className="block text-xs font-medium">
+          <span id={nextDayId} className="text-muted-foreground text-meta block font-medium">
             {overnight ? '+1 day' : ''}
           </span>
         ) : null}
         {error ? (
-          <p id={errorId} className="text-destructive mt-1 max-w-24 text-xs">
+          <p id={errorId} className="text-destructive-text text-meta mt-1 max-w-24">
             {error}
           </p>
         ) : null}
-      </td>
+      </TableCell>
     );
   };
 
   const convertedMinutes =
     conversion === 'APPLIED' ? day.convertedMinutes : day.previewConvertedMinutes;
+
+  const tone = isToday ? 'highlight' : striped ? 'stripe' : 'default';
+  const onlyNotes = warnings.every((warning) => warning.kind !== 'warning');
+  // The day's notes row: its bank holiday, then its warnings and notes.
+  const hasNotes = day.bankHoliday || warnings.length > 0;
+  // A cell's content, centred on the 28px fields' line whatever else the row holds.
+  const figure = (content: React.ReactNode) => (
+    <div className="flex min-h-(--control-sm) items-center justify-end">{content}</div>
+  );
 
   return (
     <>
@@ -272,85 +281,60 @@ function DayRowComponent({
         {/* Without actions the trigger is off, so right-click and Shift+F10 keep
             the browser's own menu. */}
         <ContextMenuTrigger asChild disabled={menuItems.length === 0}>
-          <tr className={cn('border-b', saveErrors && 'border-b-0')} data-date={date}>
-            <th
-              scope="row"
+          <TableRow
+            tone={tone}
+            hover={!isToday}
+            className={cn((hasNotes || saveErrors) && 'border-b-0')}
+            data-date={date}
+          >
+            <TableRowHeader
               id={headerId}
-              className="py-1 pr-3 text-left align-top font-medium"
+              className="pr-1 align-top first:pl-3"
               aria-current={isToday ? 'date' : undefined}
             >
-              <div className="flex min-h-9 flex-col justify-center gap-1">
+              <div className="flex min-h-(--control-sm) flex-col items-start justify-center gap-0.5">
                 <span className="whitespace-nowrap tabular-nums">{label}</span>
-                {isToday ? <Badge variant="outline">Today</Badge> : null}
+                {isToday ? <Badge variant="primary">Today</Badge> : null}
                 {dirty ? (
-                  <span className="text-muted-foreground text-xs font-normal">Unsaved</span>
-                ) : null}
-                {day.bankHoliday ? (
-                  <Badge>
-                    {day.bankHolidayMinutes > 0
-                      ? `Bank holiday · ${formatDuration(day.bankHolidayMinutes)} credited`
-                      : 'Bank holiday · worked'}
-                  </Badge>
+                  <span className="text-muted-foreground text-meta font-normal">Unsaved</span>
                 ) : null}
               </div>
-            </th>
+            </TableRowHeader>
             {field('start')}
             {field('end')}
             {field('break')}
             {field('leave')}
             {field('toil')}
-            <td className="px-2 py-1 text-right align-top tabular-nums">
-              <div className="flex min-h-9 items-center justify-end">
-                {day.spanMinutes > 0 ? formatDuration(day.workedMinutes) : <Empty />}
-              </div>
-            </td>
-            <td className="px-2 py-1 text-right align-top tabular-nums">
-              <div className="flex min-h-9 items-center justify-end">
-                {day.creditedMinutes > 0 ? formatDuration(day.creditedMinutes) : <Empty />}
-              </div>
-            </td>
-            <td className="px-2 py-1 text-right align-top whitespace-nowrap tabular-nums">
-              <div className="flex min-h-9 items-center justify-end">
-                {day.counted ? formatFlexi(day.dayFlexiMinutes) : <Empty label="Not counted yet" />}
-              </div>
-            </td>
+            <TableCell numeric className="px-1 align-top">
+              {figure(day.spanMinutes > 0 ? formatDuration(day.workedMinutes) : <Empty />)}
+            </TableCell>
+            <TableCell numeric className="px-1 align-top">
+              {figure(day.creditedMinutes > 0 ? formatDuration(day.creditedMinutes) : <Empty />)}
+            </TableCell>
+            <TableCell numeric className="px-1 align-top">
+              {figure(
+                day.counted ? (
+                  <FlexiValue minutes={day.dayFlexiMinutes} />
+                ) : (
+                  <Empty label="Not counted yet" />
+                ),
+              )}
+            </TableCell>
             {conversion !== 'OFF' ? (
-              <td className="px-2 py-1 text-right align-top tabular-nums">
-                <div className="flex min-h-9 items-center justify-end">
-                  {convertedMinutes > 0 ? formatDuration(convertedMinutes) : <Empty />}
-                </div>
-              </td>
+              <TableCell numeric className="px-1 align-top">
+                {figure(convertedMinutes > 0 ? formatDuration(convertedMinutes) : <Empty />)}
+              </TableCell>
             ) : null}
-            <td className="px-2 py-1 align-top">
-              {warnings.length > 0 ? (
-                <ul className="grid min-h-9 content-center gap-0.5 text-xs">
-                  {warnings.map((warning) => (
-                    <li key={warning.text} className="flex items-start gap-1">
-                      {warning.kind === 'warning' ? (
-                        <>
-                          <TriangleAlert
-                            aria-hidden
-                            className="text-warning mt-px size-3.5 shrink-0"
-                          />
-                          <span className="sr-only">Warning: </span>
-                        </>
-                      ) : (
-                        <>
-                          <Info aria-hidden className="text-info mt-px size-3.5 shrink-0" />
-                          <span className="sr-only">Note: </span>
-                        </>
-                      )}
-                      <span>{warning.text}</span>
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
-            </td>
-            <td className="py-1 pl-2 align-top">
-              <div className="flex min-h-9 items-center justify-end gap-2">
+            <TableCell className="pl-1 align-top last:pr-2">
+              <div className="flex min-h-(--control-sm) items-center justify-end gap-0.5">
                 {dirty ? (
-                  <Button size="sm" onClick={() => onSave(date)} disabled={saving}>
-                    {saving ? 'Saving…' : 'Save'}
+                  <Button
+                    size="sm"
+                    className="text-small px-2"
+                    onClick={() => onSave(date)}
+                    isPending={saving}
+                  >
+                    Save
                     <span className="sr-only"> {label}</span>
                   </Button>
                 ) : null}
@@ -358,7 +342,7 @@ function DayRowComponent({
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="ghost"
-                      size="icon"
+                      size="icon-sm"
                       aria-label={`Actions for ${label}`}
                       disabled={menuItems.length === 0}
                     >
@@ -374,8 +358,8 @@ function DayRowComponent({
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
-            </td>
-          </tr>
+            </TableCell>
+          </TableRow>
         </ContextMenuTrigger>
         {menuItems.length > 0 ? (
           <ContextMenuContent onCloseAutoFocus={closeAutoFocus} aria-label={`Actions for ${label}`}>
@@ -387,10 +371,54 @@ function DayRowComponent({
           </ContextMenuContent>
         ) : null}
       </ContextMenu>
+      {hasNotes ? (
+        // The day's bank holiday, warnings and notes, in a row of their own
+        // under it: chips with an icon and text, never colour alone (rule 13).
+        <TableRow tone={tone} hover={false} className={cn(saveErrors && 'border-b-0')}>
+          <TableCell colSpan={columns} className="h-auto pt-0 pb-2 first:pl-3">
+            <span className="sr-only">
+              {onlyNotes ? 'Notes' : 'Warnings'} for {label}:{' '}
+            </span>
+            <ul className="flex flex-wrap gap-1.5">
+              {day.bankHoliday ? (
+                <li>
+                  <Badge>
+                    <CalendarDays aria-hidden />
+                    {day.bankHolidayMinutes > 0
+                      ? `Bank holiday · ${formatDuration(day.bankHolidayMinutes)} credited`
+                      : 'Bank holiday · worked'}
+                  </Badge>
+                </li>
+              ) : null}
+              {warnings.map((warning) => (
+                <li key={warning.text}>
+                  {warning.kind === 'warning' ? (
+                    <Badge variant="warning">
+                      <TriangleAlert aria-hidden />
+                      <span className="sr-only">Warning: </span>
+                      {warning.text}
+                    </Badge>
+                  ) : (
+                    <Badge variant="info">
+                      <Info aria-hidden />
+                      <span className="sr-only">Note: </span>
+                      {warning.text}
+                    </Badge>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </TableCell>
+        </TableRow>
+      ) : null}
       {saveErrors ? (
-        <tr className="border-b">
-          <td colSpan={columns} className="pb-2">
-            <div id={saveErrorId} role="alert" className="text-destructive text-sm">
+        <TableRow tone={tone} hover={false}>
+          <TableCell colSpan={columns} className="h-auto pt-0 pb-2 first:pl-3">
+            <div
+              id={saveErrorId}
+              role="alert"
+              className="bg-destructive-soft text-destructive-text rounded-md px-3 py-2"
+            >
               <p className="font-medium">We couldn&apos;t save {label}.</p>
               <ul className="list-disc pl-4">
                 {saveErrors.map((message, index) => (
@@ -398,8 +426,8 @@ function DayRowComponent({
                 ))}
               </ul>
             </div>
-          </td>
-        </tr>
+          </TableCell>
+        </TableRow>
       ) : null}
     </>
   );
