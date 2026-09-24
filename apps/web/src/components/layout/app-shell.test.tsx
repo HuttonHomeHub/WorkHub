@@ -219,6 +219,44 @@ describe('AppShell', () => {
     });
   });
 
+  describe('theme', () => {
+    it('offers light, dark and system in a menu, and applies the choice', async () => {
+      const user = userEvent.setup();
+      await renderShell();
+      const trigger = screen.getByRole('button', { name: 'Theme: Light' });
+      await user.click(trigger);
+      const menu = await screen.findByRole('menu', { name: /^Theme/ });
+      expect(within(menu).getByRole('menuitemradio', { name: 'Light' })).toHaveAttribute(
+        'aria-checked',
+        'true',
+      );
+      expect(
+        within(menu)
+          .getAllByRole('menuitemradio')
+          .map((item) => item.textContent),
+      ).toEqual(['Light', 'Dark', 'System']);
+
+      await user.click(within(menu).getByRole('menuitemradio', { name: 'Dark' }));
+      expect(document.documentElement).toHaveClass('dark');
+      expect(localStorage.getItem('theme')).toBe('dark');
+      expect(screen.getByRole('button', { name: 'Theme: Dark' })).toHaveFocus();
+      document.documentElement.classList.remove('dark');
+    });
+
+    it('is operable from the keyboard', async () => {
+      const user = userEvent.setup();
+      await renderShell();
+      screen.getByRole('button', { name: 'Theme: Light' }).focus();
+      await user.keyboard('{Enter}');
+      const menu = await screen.findByRole('menu', { name: /^Theme/ });
+      expect(within(menu).getByRole('menuitemradio', { name: 'Light' })).toHaveFocus();
+      await user.keyboard('{ArrowDown}{Enter}');
+      expect(document.documentElement).toHaveClass('dark');
+      expect(screen.getByRole('button', { name: 'Theme: Dark' })).toHaveFocus();
+      document.documentElement.classList.remove('dark');
+    });
+  });
+
   describe('skip link', () => {
     it('is the first tab stop and moves focus to main', async () => {
       const user = userEvent.setup();

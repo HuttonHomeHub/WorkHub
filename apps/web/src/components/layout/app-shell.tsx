@@ -1,11 +1,19 @@
-import { Moon, PanelLeftClose, PanelLeftOpen, Sun } from 'lucide-react';
+import { Monitor, Moon, PanelLeftClose, PanelLeftOpen, Sun, type LucideIcon } from 'lucide-react';
 import * as React from 'react';
 
 import { Sidebar } from '@/components/layout/sidebar';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Toaster } from '@/components/ui/toast';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useTheme } from '@/hooks/use-theme';
+import { useTheme, type Theme } from '@/hooks/use-theme';
 import { readPreference, writePreference } from '@/lib/preferences';
 import type { ToolManifest } from '@/lib/tool-manifest';
 
@@ -20,20 +28,54 @@ interface AppShellProps {
 const MAIN_ID = 'main';
 const SIDEBAR_ID = 'sidebar';
 
-function ThemeToggle() {
+const THEMES = [
+  { value: 'light', label: 'Light', icon: Sun },
+  { value: 'dark', label: 'Dark', icon: Moon },
+  { value: 'system', label: 'System', icon: Monitor },
+] as const satisfies readonly { value: Theme; label: string; icon: LucideIcon }[];
+
+function isTheme(value: string): value is Theme {
+  return THEMES.some((option) => option.value === value);
+}
+
+/**
+ * The three-way theme control (DESIGN_SYSTEM.md → Themes): a menu button named
+ * "Theme" with the choice in its description, opening Light, Dark and System
+ * as radio items. Its icon shows the choice. Keyboard: as DropdownMenu.
+ */
+function ThemeMenu() {
   const { theme, setTheme } = useTheme();
-  const isDark =
-    theme === 'dark' ||
-    (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const current = THEMES.find((option) => option.value === theme) ?? THEMES[2];
+  const Icon = current.icon;
   return (
-    <Button
-      variant="ghost"
-      size="icon"
-      aria-label={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
-      onClick={() => setTheme(isDark ? 'light' : 'dark')}
-    >
-      {isDark ? <Sun aria-hidden /> : <Moon aria-hidden />}
-    </Button>
+    <DropdownMenu>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" aria-label={`Theme: ${current.label}`}>
+              <Icon aria-hidden />
+            </Button>
+          </DropdownMenuTrigger>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">Theme</TooltipContent>
+      </Tooltip>
+      <DropdownMenuContent>
+        <DropdownMenuLabel>Theme</DropdownMenuLabel>
+        <DropdownMenuRadioGroup
+          value={theme}
+          onValueChange={(value) => {
+            if (isTheme(value)) setTheme(value);
+          }}
+        >
+          {THEMES.map((option) => (
+            <DropdownMenuRadioItem key={option.value} value={option.value}>
+              <option.icon aria-hidden />
+              {option.label}
+            </DropdownMenuRadioItem>
+          ))}
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
@@ -85,6 +127,21 @@ function SidebarToggle({ collapsed, onToggle }: { collapsed: boolean; onToggle: 
   );
 }
 
+/** The app's name beside its mark: a filled accent tile. Not a link, so it adds no tab stop. */
+function BrandMark() {
+  return (
+    <span className="flex items-center gap-2 px-1">
+      <span
+        aria-hidden
+        className="bg-primary text-primary-foreground text-meta flex size-6 items-center justify-center rounded-md font-bold shadow-xs"
+      >
+        W
+      </span>
+      <span className="text-body font-semibold tracking-tight">WorkHub</span>
+    </span>
+  );
+}
+
 /**
  * Moves keyboard focus past the header and sidebar to the page (WCAG 2.4.1).
  * Visually hidden until focused; it is the first stop in the tab order.
@@ -98,7 +155,7 @@ function SkipLink() {
         event.preventDefault();
         document.getElementById(MAIN_ID)?.focus();
       }}
-      className="bg-background text-foreground focus-visible:ring-ring focus-visible:ring-offset-background sr-only z-(--z-popover) rounded-md border px-3 py-2 text-sm font-medium shadow-md outline-none focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus-visible:ring-2 focus-visible:ring-offset-2"
+      className="focus-ring bg-popover text-foreground text-body sr-only z-(--z-popover) rounded-md border px-3 py-2 font-medium shadow-md focus:not-sr-only focus:fixed focus:top-2 focus:left-2"
     >
       Skip to main content
     </a>
@@ -123,19 +180,19 @@ export function AppShell({ tools, actions, children }: AppShellProps) {
     <TooltipProvider>
       <div className="bg-background text-foreground flex min-h-svh flex-col">
         <SkipLink />
-        <header className="bg-background/95 sticky top-0 z-(--z-header) flex min-h-(--header-height) flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b px-3 py-1.5 backdrop-blur max-md:static">
+        <header className="bg-background/85 sticky top-0 z-(--z-header) flex min-h-(--header-height) flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b px-3 py-2 backdrop-blur-md max-md:static">
           <div className="flex items-center gap-2">
             <SidebarToggle collapsed={collapsed} onToggle={toggle} />
-            <span className="font-semibold">WorkHub</span>
+            <BrandMark />
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <ThemeToggle />
+            <ThemeMenu />
             {actions}
           </div>
         </header>
         <div className="flex flex-1">
           <Sidebar id={SIDEBAR_ID} tools={tools} aria-label="Tools" />
-          <main id={MAIN_ID} tabIndex={-1} className="min-w-0 flex-1 p-6 outline-none">
+          <main id={MAIN_ID} tabIndex={-1} className="min-w-0 flex-1 px-6 pt-6 pb-12 outline-none">
             {/* Long words wrap rather than widen the page at the reflow floor. */}
             <div className="max-w-(--width-page) break-words">{children}</div>
           </main>
