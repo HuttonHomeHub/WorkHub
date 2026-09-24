@@ -2,14 +2,15 @@
  * WorkHub design tokens & global styles — the single source of truth for the
  * visual language. Tailwind CSS v4 (CSS-first) + shadcn/ui conventions.
  *
- * See docs/DESIGN_SYSTEM.md for the human-readable spec and rationale.
+ * See docs/DESIGN_SYSTEM.md for the human-readable spec and rationale, and
+ * docs/features/app-shell-refresh.md for the 2026-09 refresh that set them.
  *
  * Rules:
  *  - Components reference SEMANTIC tokens (e.g. `bg-primary`, `text-muted-foreground`),
  *    never raw palette values or magic hex codes.
- *  - Every colour is defined for both light and dark themes below.
- *  - Colour is authored in OKLCH for perceptual uniformity and predictable
- *    light/dark pairs.
+ *  - Every colour is defined for both light and dark themes below, as a
+ *    literal `oklch()` (no `var()` between colour tokens), so
+ *    tokens-contrast.test.ts can measure every pair in both themes.
  *
  * This file is the design-system implementation, imported once by the web
  * entry point (`src/main.tsx`).
@@ -41,70 +42,118 @@
 /* ------------------------------------------------------------------------- */
 /* Semantic tokens — LIGHT theme                                             */
 /* ------------------------------------------------------------------------- */
+/*
+ * The palette: cool "slate" neutrals carrying a hint of the accent's hue
+ * (265), one indigo accent, and four status colours, each as a solid fill (+
+ * its foreground), a soft (tinted) fill, and a text colour that reads on the
+ * page, cards, table rows and its own soft fill.
+ */
 :root {
-  /* Radius scale is derived from a single base for consistency. */
-  --radius: 0.625rem;
+  /* Radius scale is derived from a single base: 4, 6, 8, 12px. */
+  --radius: 0.5rem;
 
-  /* Surfaces */
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  /* Surfaces: the page sits a step below its cards, which carry a border and a
+     hairline shadow. */
+  --background: oklch(0.984 0.003 265);
+  --foreground: oklch(0.2 0.018 265);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  --card-foreground: oklch(0.2 0.018 265);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
+  --popover-foreground: oklch(0.2 0.018 265);
 
-  /* Brand / interactive */
-  --primary: oklch(0.51 0.18 255);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
+  /* Brand / interactive: one indigo accent. */
+  --primary: oklch(0.5 0.2 268);
+  --primary-foreground: oklch(0.985 0.004 265);
+  --secondary: oklch(0.955 0.006 265);
+  --secondary-foreground: oklch(0.24 0.018 265);
+  --accent: oklch(0.955 0.006 265);
+  --accent-foreground: oklch(0.2 0.018 265);
+  --muted: oklch(0.962 0.005 265);
+  --muted-foreground: oklch(0.49 0.018 265);
+
+  /* Table surfaces (DESIGN_SYSTEM.md → Tables): the zebra stripe, the hovered
+     row, and a highlighted row (today) tinted with the accent. */
+  --table-stripe: oklch(0.981 0.004 265);
+  --table-hover: oklch(0.964 0.008 265);
+  --highlight: oklch(0.962 0.022 268);
 
   /* Status */
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.985 0 0);
-  --success: oklch(0.52 0.14 155);
-  --success-foreground: oklch(0.985 0 0);
-  --warning: oklch(0.769 0.15 80);
-  --warning-foreground: oklch(0.205 0 0);
-  --info: oklch(0.5 0.14 240);
-  --info-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.55 0.2 27);
+  --destructive-foreground: oklch(0.985 0.004 265);
+  --destructive-soft: oklch(0.96 0.025 25);
+  --destructive-text: oklch(0.5 0.19 27);
+  --success: oklch(0.52 0.13 155);
+  --success-foreground: oklch(0.985 0.004 265);
+  --success-soft: oklch(0.962 0.035 155);
+  --success-text: oklch(0.47 0.12 155);
+  --warning: oklch(0.78 0.15 78);
+  --warning-foreground: oklch(0.22 0.03 60);
+  --warning-soft: oklch(0.965 0.045 85);
+  --warning-text: oklch(0.5 0.12 60);
+  --info: oklch(0.52 0.15 245);
+  --info-foreground: oklch(0.985 0.004 265);
+  --info-soft: oklch(0.96 0.025 245);
+  --info-text: oklch(0.48 0.14 250);
 
   /* Lines & focus */
-  --border: oklch(0.922 0 0);
-  /* Control boundaries (WCAG 1.4.11): ≥ 3:1 on background, card and muted (tokens-contrast.test.ts). */
-  --input: oklch(0.63 0 0);
-  --ring: oklch(0.51 0.18 255);
+  --border: oklch(0.915 0.006 265);
+  /* Control boundaries (WCAG 1.4.11): ≥ 3:1 on every surface a control sits on (tokens-contrast.test.ts). */
+  --input: oklch(0.63 0.012 265);
+  --ring: oklch(0.5 0.2 268);
 
   /* Data visualisation (see dataviz standards in DESIGN_SYSTEM.md) */
-  --chart-1: oklch(0.51 0.18 255);
+  --chart-1: oklch(0.5 0.2 268);
   --chart-2: oklch(0.6 0.13 185);
   --chart-3: oklch(0.6 0.13 155);
   --chart-4: oklch(0.769 0.15 80);
   --chart-5: oklch(0.627 0.2 320);
 
   /* Sidebar surface (navigation shell) */
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.51 0.18 255);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.51 0.18 255);
+  --sidebar: oklch(0.972 0.004 265);
+  --sidebar-foreground: oklch(0.3 0.018 265);
+  --sidebar-primary: oklch(0.5 0.2 268);
+  --sidebar-primary-foreground: oklch(0.985 0.004 265);
+  --sidebar-accent: oklch(0.93 0.01 265);
+  --sidebar-accent-foreground: oklch(0.18 0.018 265);
+  --sidebar-border: oklch(0.915 0.006 265);
+  --sidebar-ring: oklch(0.5 0.2 268);
 
-  /* Typography */
+  /* Elevation (DESIGN_SYSTEM.md → Elevation): used as `shadow-xs` … `shadow-lg`. */
+  --elevation-xs: 0 1px 2px 0 oklch(0.2 0.02 265 / 0.05);
+  --elevation-sm: 0 1px 2px 0 oklch(0.2 0.02 265 / 0.05), 0 1px 3px 0 oklch(0.2 0.02 265 / 0.06);
+  --elevation-md:
+    0 4px 12px -2px oklch(0.2 0.02 265 / 0.1), 0 2px 4px -2px oklch(0.2 0.02 265 / 0.06);
+  --elevation-lg:
+    0 16px 40px -12px oklch(0.2 0.02 265 / 0.22), 0 4px 10px -4px oklch(0.2 0.02 265 / 0.08);
+
+  /* Typography: Inter, self-hosted from @fontsource-variable/inter (main.tsx). */
   --font-sans:
-    'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial,
+    'Inter Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial,
     sans-serif;
-  --font-mono: ui-monospace, 'JetBrains Mono', 'SFMono-Regular', 'Menlo', 'Consolas', monospace;
+  --font-mono: ui-monospace, 'SFMono-Regular', 'Menlo', 'Consolas', monospace;
+
+  /* Density (DESIGN_SYSTEM.md → Density). Use as `h-(--control-md)`. In rem, so
+     they follow the owner's text size. */
+  --control-sm: 1.75rem;
+  --control-md: 2rem;
+  --control-lg: 2.5rem;
+  --row-height: 2rem;
+  --row-height-comfortable: 2.5rem;
+  --icon-button: 2rem;
+
+  /* Motion (DESIGN_SYSTEM.md → Motion). Colour transitions default to 120ms
+     with the `ease-out` curve (the @theme block below). */
+  --duration-fast: 120ms;
+  --duration-base: 180ms;
+  --duration-slow: 240ms;
+
+  /* Focus ring (DESIGN_SYSTEM.md → Focus ring): the `focus-ring` utility. */
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
 
   /* Layout (DESIGN_SYSTEM.md → Layout). Use as `w-(--sidebar-width)`. */
   --header-height: 48px;
-  --sidebar-width: 240px;
+  --sidebar-width: 224px;
   --sidebar-rail: 56px;
   --width-prose: 72ch;
   --width-form: 880px;
@@ -115,9 +164,18 @@
   --width-dialog: 28rem;
   /* A page's side column, such as the hours week view's aside; it stacks below
      the main content when both do not fit (DESIGN_SYSTEM.md → Layout). */
-  --width-aside: 20rem;
+  --width-aside: 16rem;
+  /* The same column once the content is 80rem wide or more (a 1920px window). */
+  --width-aside-wide: 20rem;
+  /* Field widths: a time or duration in a dense table row, a short form field
+     (a duration, a year), a date. */
+  --width-input-compact: 3rem;
+  --width-input-short: 6.5rem;
+  --width-input-date: 10rem;
 
   /* Z-index (DESIGN_SYSTEM.md → Z-index). Use as `z-(--z-header)`; never a numeric z-*. */
+  --z-base: 0;
+  --z-sticky: 10;
   --z-header: 20;
   --z-popover: 40;
   --z-modal: 50;
@@ -127,50 +185,68 @@
 /* ------------------------------------------------------------------------- */
 /* Semantic tokens — DARK theme                                              */
 /* ------------------------------------------------------------------------- */
+/* Elevation comes from lighter surfaces, not shadows (DESIGN_SYSTEM.md → Dark mode). */
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
+  --background: oklch(0.16 0.006 265);
+  --foreground: oklch(0.955 0.004 265);
+  --card: oklch(0.198 0.008 265);
+  --card-foreground: oklch(0.955 0.004 265);
+  --popover: oklch(0.225 0.009 265);
+  --popover-foreground: oklch(0.955 0.004 265);
 
-  --primary: oklch(0.65 0.17 255);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
+  --primary: oklch(0.7 0.14 268);
+  --primary-foreground: oklch(0.17 0.02 268);
+  --secondary: oklch(0.262 0.01 265);
+  --secondary-foreground: oklch(0.955 0.004 265);
+  --accent: oklch(0.262 0.01 265);
+  --accent-foreground: oklch(0.955 0.004 265);
+  --muted: oklch(0.25 0.01 265);
+  --muted-foreground: oklch(0.72 0.014 265);
 
-  --destructive: oklch(0.52 0.2 22.216);
-  --destructive-foreground: oklch(0.985 0 0);
-  --success: oklch(0.696 0.14 160);
-  --success-foreground: oklch(0.205 0 0);
-  --warning: oklch(0.82 0.16 82);
-  --warning-foreground: oklch(0.205 0 0);
-  --info: oklch(0.7 0.13 240);
-  --info-foreground: oklch(0.205 0 0);
+  --table-stripe: oklch(0.213 0.008 265);
+  --table-hover: oklch(0.243 0.011 265);
+  --highlight: oklch(0.245 0.032 268);
 
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(0.56 0 0);
-  --ring: oklch(0.65 0.17 255);
+  --destructive: oklch(0.52 0.19 25);
+  --destructive-foreground: oklch(0.985 0.004 265);
+  --destructive-soft: oklch(0.28 0.07 25);
+  --destructive-text: oklch(0.76 0.14 25);
+  --success: oklch(0.7 0.14 160);
+  --success-foreground: oklch(0.17 0.02 160);
+  --success-soft: oklch(0.275 0.05 160);
+  --success-text: oklch(0.79 0.13 160);
+  --warning: oklch(0.82 0.15 82);
+  --warning-foreground: oklch(0.2 0.03 60);
+  --warning-soft: oklch(0.29 0.055 75);
+  --warning-text: oklch(0.85 0.13 85);
+  --info: oklch(0.72 0.12 240);
+  --info-foreground: oklch(0.17 0.02 240);
+  --info-soft: oklch(0.275 0.05 245);
+  --info-text: oklch(0.8 0.1 240);
 
-  --chart-1: oklch(0.65 0.17 255);
+  --border: oklch(1 0 0 / 9%);
+  --input: oklch(0.57 0.012 265);
+  --ring: oklch(0.7 0.14 268);
+
+  --chart-1: oklch(0.7 0.14 268);
   --chart-2: oklch(0.696 0.14 185);
   --chart-3: oklch(0.696 0.14 160);
   --chart-4: oklch(0.82 0.16 82);
   --chart-5: oklch(0.7 0.19 320);
 
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.65 0.17 255);
-  --sidebar-primary-foreground: oklch(0.205 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.65 0.17 255);
+  --sidebar: oklch(0.18 0.007 265);
+  --sidebar-foreground: oklch(0.86 0.008 265);
+  --sidebar-primary: oklch(0.7 0.14 268);
+  --sidebar-primary-foreground: oklch(0.17 0.02 268);
+  --sidebar-accent: oklch(0.262 0.012 265);
+  --sidebar-accent-foreground: oklch(0.975 0.004 265);
+  --sidebar-border: oklch(1 0 0 / 9%);
+  --sidebar-ring: oklch(0.7 0.14 268);
+
+  --elevation-xs: 0 1px 2px 0 oklch(0 0 0 / 0.3);
+  --elevation-sm: 0 1px 2px 0 oklch(0 0 0 / 0.3), 0 1px 3px 0 oklch(0 0 0 / 0.2);
+  --elevation-md: 0 4px 12px -2px oklch(0 0 0 / 0.45), 0 2px 4px -2px oklch(0 0 0 / 0.3);
+  --elevation-lg: 0 16px 40px -12px oklch(0 0 0 / 0.6), 0 4px 10px -4px oklch(0 0 0 / 0.35);
 }
 
 /* ------------------------------------------------------------------------- */
@@ -191,14 +267,25 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
+  --color-table-stripe: var(--table-stripe);
+  --color-table-hover: var(--table-hover);
+  --color-highlight: var(--highlight);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-destructive-soft: var(--destructive-soft);
+  --color-destructive-text: var(--destructive-text);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
+  --color-success-soft: var(--success-soft);
+  --color-success-text: var(--success-text);
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-text: var(--warning-text);
   --color-info: var(--info);
   --color-info-foreground: var(--info-foreground);
+  --color-info-soft: var(--info-soft);
+  --color-info-text: var(--info-text);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -224,6 +311,98 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+
+  --shadow-xs: var(--elevation-xs);
+  --shadow-sm: var(--elevation-sm);
+  --shadow-md: var(--elevation-md);
+  --shadow-lg: var(--elevation-lg);
+}
+
+/*
+ * The desktop type scale (DESIGN_SYSTEM.md → Typography): `text-meta`,
+ * `text-small`, `text-body` and `text-lead`, and the headings `text-h3`,
+ * `text-h2` and `text-h1`, which carry their own weight and tracking.
+ */
+@theme {
+  --text-meta: 0.75rem;
+  --text-meta--line-height: 1rem;
+  --text-small: 0.8125rem;
+  --text-small--line-height: 1.125rem;
+  --text-body: 0.875rem;
+  --text-body--line-height: 1.25rem;
+  --text-lead: 1rem;
+  --text-lead--line-height: 1.5rem;
+  --text-h3: 0.9375rem;
+  --text-h3--line-height: 1.375rem;
+  --text-h3--font-weight: 600;
+  --text-h2: 1.125rem;
+  --text-h2--line-height: 1.75rem;
+  --text-h2--font-weight: 600;
+  --text-h2--letter-spacing: -0.01em;
+  --text-h1: 1.5rem;
+  --text-h1--line-height: 2rem;
+  --text-h1--font-weight: 600;
+  --text-h1--letter-spacing: -0.02em;
+
+  /* Motion easings (DESIGN_SYSTEM.md → Motion), replacing Tailwind's. */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --default-transition-duration: 120ms;
+  --default-transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Entrances move but never fade, so an axe run straight after one never
+     samples a half-transparent colour. Reduced motion collapses them. */
+  --animate-enter: enter 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-enter-from-end: enter-from-end 180ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  @keyframes enter {
+    from {
+      transform: translateY(0.25rem) scale(0.98);
+    }
+  }
+  @keyframes enter-from-end {
+    from {
+      transform: translateX(1rem);
+    }
+  }
+}
+
+/*
+ * The one focus indicator (DESIGN_SYSTEM.md → Focus ring): a 2px `ring`
+ * outline with a 2px gap, on `:focus-visible` only. Every interactive
+ * primitive applies it; an outline (unlike a box-shadow) survives forced
+ * colours.
+ */
+@utility focus-ring {
+  &:focus-visible {
+    outline: var(--focus-ring-width) solid var(--ring);
+    outline-offset: var(--focus-ring-offset);
+  }
+}
+
+/* The same ring drawn inside the element: for a scroll region whose edges would clip it. */
+@utility focus-ring-inset {
+  &:focus-visible {
+    outline: var(--focus-ring-width) solid var(--ring);
+    outline-offset: calc(var(--focus-ring-width) * -1);
+  }
+}
+
+/* The current row's marker: an accent bar on its first cell (Table's `highlight` tone). */
+@utility row-marker {
+  & > :first-child {
+    box-shadow: inset 3px 0 0 var(--primary);
+  }
+}
+
+/* A page's main column beside its aside (`--width-aside`); apply it in a container query. */
+@utility grid-cols-main-aside {
+  grid-template-columns: minmax(0, 1fr) var(--width-aside);
+}
+
+@utility grid-cols-main-aside-wide {
+  grid-template-columns: minmax(0, 1fr) var(--width-aside-wide);
 }
 
 /* ------------------------------------------------------------------------- */
@@ -240,13 +419,22 @@
     text-size-adjust: 100%;
     /* Keep focused and scrolled-to elements clear of the sticky header (WCAG 2.4.11). */
     scroll-padding-top: var(--header-height);
+    /* Scrollbars follow the theme; they are never hidden. */
+    scrollbar-width: thin;
+    scrollbar-color: var(--input) transparent;
   }
 
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply bg-background text-foreground text-body font-sans antialiased;
     font-feature-settings:
       'rlig' 1,
-      'calt' 1;
+      'calt' 1,
+      'cv11' 1;
+  }
+
+  /* Selected text stays readable in both themes. */
+  ::selection {
+    @apply bg-highlight text-foreground;
   }
 
   /*
