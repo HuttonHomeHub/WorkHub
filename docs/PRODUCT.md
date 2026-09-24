@@ -142,15 +142,15 @@ lives in each tool's feature doc; the hours tracker's rules are in
 
 What exists today:
 
-| Area        | Capability                                                                                                                                                                                                                  |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Auth        | Email/password sign-in and sign-out, sessions (Better Auth)                                                                                                                                                                 |
-| Accounts    | CLI create and reset-password; seeded `dev@example.com` locally                                                                                                                                                             |
-| Web         | Protected shell with the tools sidebar and a theme toggle                                                                                                                                                                   |
-| API         | `GET /api/v1/me`, `GET /api/v1/config`, health endpoints, OpenAPI                                                                                                                                                           |
-| Feature kit | `pnpm gen:feature` from the reference template (ADR-0015)                                                                                                                                                                   |
-| Delivery    | CI (quality, template, e2e), Changesets, GHCR images                                                                                                                                                                        |
-| Hours tool  | Hours tracker — **shipped** 2026-09-23: the week view at `/hours` with its aside, the summary at `/hours/summary`, the settings at `/hours/settings`, CSV and `pnpm data:export` ([feature doc](features/hours-tracker.md)) |
+| Area        | Capability                                                                                                                                                                                                                      |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Auth        | Email/password sign-in and sign-out, sessions (Better Auth)                                                                                                                                                                     |
+| Accounts    | CLI create and reset-password; seeded `dev@example.com` locally                                                                                                                                                                 |
+| Web         | Protected shell with the tools sidebar and a three-way theme menu; the design system refreshed on 2026-09-24 ([app shell refresh](features/app-shell-refresh.md)): palette, Inter, type scale, 32px density, motion, focus ring |
+| API         | `GET /api/v1/me`, `GET /api/v1/config`, health endpoints, OpenAPI                                                                                                                                                               |
+| Feature kit | `pnpm gen:feature` from the reference template (ADR-0015)                                                                                                                                                                       |
+| Delivery    | CI (quality, template, e2e), Changesets, GHCR images                                                                                                                                                                            |
+| Hours tool  | Hours tracker — **shipped** 2026-09-23: the week view at `/hours` with its aside, the summary at `/hours/summary`, the settings at `/hours/settings`, CSV and `pnpm data:export` ([feature doc](features/hours-tracker.md))     |
 
 Not built: passkeys, backups, the command palette.
 
@@ -171,10 +171,10 @@ candidates are in [BACKLOG.md](BACKLOG.md).
 - `M` Backups: nightly dump, encrypted off-site copy, restore drill, data export.
 - `L` Login hardening — passkeys, session policy, brute-force posture; required
   before the first public deployment.
-- `L` App shell: density tokens (32px controls), the remaining layout, z-index
-  and motion tokens, three-way theme, router pending and error states — per
-  UX_STANDARDS.md and DESIGN_SYSTEM.md. The sidebar rail, skip link, landmarks
-  and content width shipped with the hours tracker's slice 1.
+- `S` App shell: router pending and error states (UX_STANDARDS.md → Timing).
+  The rest of the item — density tokens, the layout, z-index and motion
+  tokens, the three-way theme — shipped with the
+  [app shell refresh](features/app-shell-refresh.md) on 2026-09-24.
 - `M` CI: Docker image build, Firefox e2e at 1280×800 and 1920×1080, multi-arch
   (amd64 + arm64) images.
 

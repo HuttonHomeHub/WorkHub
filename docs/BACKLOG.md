@@ -10,9 +10,6 @@ finished item; move a scheduled one to PRODUCT.md.
 
 - `S` Lint PR titles in CI with commitlint (squash-merge titles skip the local
   hook); Dependabot's `chore(deps-dev)` prefix must pass the scope list.
-- `S` Extend `apps/web/src/styles/tokens-contrast.test.ts` (today `--input`
-  only) to every fill/foreground pair in `globals.css`, light and dark, with a
-  general OKLCH → sRGB conversion for chromatic tokens.
 - `M` Extend `pnpm gen:feature` to scaffold the frontend side (`api/` hooks on
   `apiClient`, list route, form) so the web pattern is generated and CI-verified.
 - `S` Review the template's indexes with database-architect: `@@index([ownerId])`
@@ -21,13 +18,7 @@ finished item; move a scheduled one to PRODUCT.md.
   a second model exists.
 - `S` Tune per-route rate limits for sensitive endpoints as they appear.
 - `S` Bundle-size budget check for the web app in CI.
-- `S` Load Inter (self-hosted `woff2`, preloaded) or drop it from `--font-sans`
-  (DESIGN_SYSTEM.md → Typography).
-- `S` `Button` pending state (spinner, `disabled`, `aria-busy`) replacing
-  label-swapping in forms.
 - `S` Error summary in the `Form` primitive, linking each failure to its field.
-- `S` Unify the focus ring: `Button` and `Input` use different ring/offset
-  classes (DESIGN_SYSTEM.md → Focus ring).
 - `S` Drop the unsupported webkit project from `apps/web/playwright.config.ts`.
 - `S` A keyboard-only Playwright journey through sign-in, a tool and sign-out,
   and a 400%-zoom reflow check on every screen (the app shell has both).

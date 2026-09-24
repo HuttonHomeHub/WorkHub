@@ -20,6 +20,7 @@ documentation afterwards. The process around them is in
 
 ## Index
 
-| Feature                           | Status  | Summary                                                             |
-| --------------------------------- | ------- | ------------------------------------------------------------------- |
-| [Hours tracker](hours-tracker.md) | Shipped | The first tool: daily hours, weekly flexi, TOIL, overtime and leave |
+| Feature                                   | Status  | Summary                                                              |
+| ----------------------------------------- | ------- | -------------------------------------------------------------------- |
+| [Hours tracker](hours-tracker.md)         | Shipped | The first tool: daily hours, weekly flexi, TOIL, overtime and leave  |
+| [App shell refresh](app-shell-refresh.md) | Shipped | The calm, polished look: tokens, primitives, shell and hours screens |

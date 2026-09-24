@@ -515,7 +515,8 @@ name in the rail state.
   grid: a full-bleed day table, and a fixed-width aside that stacks below the
   table when the reflow floor is reached.
 - **Table:** a real `<table>` with seven day rows and a row header per date.
-  - Bank holidays show a badge ("Bank holiday · 7:30 credited").
+  - Bank holidays show a tag ("Bank holiday · 7:30 credited") in the day's
+    notes row (below).
   - Flexi and Converted columns are right-aligned with tabular numerals.
     Converted appears only when the switch is on, and reads "(preview)" before
     settlement.
@@ -531,6 +532,10 @@ name in the rail state.
   `7.5h` → `h:mm`).
 - **Warnings** use a ⚠ icon with text in the row ("Below 5:30 minimum", "Before
   07:00") and a list in the aside. Warnings never block saving.
+  Since the [app shell refresh](app-shell-refresh.md), a day's warnings, notes
+  and bank holiday are chips in a row of their own under the day (named
+  "Warnings for …" or "Notes for …"), not a column, so the table fits beside
+  the aside at 1280px.
 - **Aside, This week:**
   - credited vs target, and the week's flexi before and after conversion;
   - the **"Convert this week's excess to TOIL and overtime" switch**. It is a
@@ -573,7 +578,10 @@ name in the rail state.
   - TOIL, TOIL taken, TOIL unused;
   - overtime paid and unpaid;
   - flexi balance at the end.
-- A totals row, warning badges with text, and a leave-year strip (allowance, used,
+- A totals row, warning chips (and note chips, drawn as notes) with text,
+  "In progress" and "Upcoming" tags on periods not yet over with a footnote on
+  their target ([app shell refresh](app-shell-refresh.md#summary-target-to-date)),
+  and a leave-year strip (allowance, used,
   remaining).
 - The empty range state reads "No time recorded between these dates".
 

@@ -119,7 +119,7 @@ prose and forms (the signed-in home uses `--width-prose`).
 
 Compact density is a product decision (PRODUCT.md): **14px body text, 32px
 controls and table rows**. Sizes come from the density tokens in
-[DESIGN_SYSTEM.md](DESIGN_SYSTEM.md#density-and-control-sizing--proposed) — never from
+[DESIGN_SYSTEM.md](DESIGN_SYSTEM.md#density-and-control-sizing--implemented) — never from
 hand-picked heights.
 
 - **One scan order per screen:** title → primary data → supporting detail →
@@ -209,7 +209,9 @@ Lists and tables that support selection follow one pattern everywhere.
 
 ## Tables and grids
 
-One `DataTable` primitive (_planned_) — no bespoke `<table>` markup.
+One `DataTable` primitive (_planned_) — no bespoke `<table>` markup. Until it
+is built, tables use the `Table` parts in `components/ui/table.tsx` (zebra and
+hover rows, numeric columns, a totals footer; DESIGN_SYSTEM.md → Table).
 
 - **Semantics:** a real `<table>` with `<th scope>`. A grid with roving focus
   uses `role="grid"` only when cells are individually focusable.

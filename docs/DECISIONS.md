@@ -10,6 +10,29 @@ get an ADR instead (and may be linked from here).
 
 ---
 
+### 2026-09-24 — The app shell refresh: Inter, a slate and indigo palette, 32px density
+
+**Decision.** WorkHub's look is a calm, polished pro tool, as the owner chose on
+2026-09-23 ([app shell refresh](features/app-shell-refresh.md)): Inter
+self-hosted from `@fontsource-variable/inter`; slate neutrals with one indigo
+accent and soft status chips; 32px controls, 8px radius, hairline card shadows;
+motion tokens; a three-way Theme menu; `Table`, `ProgressBar` and `EmptyState`
+primitives. The sidebar is 224px and the week view's aside 16rem at 1280px.
+The week view's warnings moved to a row under each day. The summary labels
+periods that are not over instead of computing a target to date.
+
+**Why.** The owner asked for the app to "look amazing" and for every visual
+issue to be fixed. The font was named in the stack but never loaded. At 1280px
+the week table and its aside did not fit side by side: the sidebar's 16px, the
+aside's 2rem and the warnings column were what made them fit. A client-side
+target to date would repeat the engine's day rules and be wrong whenever a
+future day holds leave or a bank holiday.
+
+**Consequences.** A new runtime dependency (fonts only: 48 kB of latin woff2 on
+first visit, no JavaScript). Every colour pair is measured in both themes by
+`tokens-contrast.test.ts`. A target-to-date figure, if wanted, belongs in
+`time-summaries`.
+
 ### 2026-09-23 — Pin the dev container to Debian bookworm
 
 **Decision.** The dev container image is

@@ -68,8 +68,13 @@ change class (CLAUDE.md §3).
   (`button.tsx`, `alert.tsx`).
 - **Size variants are required** on any control that appears in both forms and
   dense tables: `sm` (28px), `default` (32px), `lg` (40px) per
-  [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md#density-and-control-sizing--proposed). Today `Button`
-  has them (at the old 32/36/40px scale) and `Input` does not.
+  [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md#density-and-control-sizing--implemented). `Button`,
+  `Input` and `NativeSelect` have them.
+- **A pending action shows on its button**: `Button isPending` (a spinner,
+  `disabled`, `aria-busy`) keeps the label, so the button's name and width do
+  not change while it saves. Never swap the label for "Saving…".
+- **Focus** is the `focus-ring` utility on every interactive primitive, never a
+  primitive's own ring classes (DESIGN_SYSTEM.md → Focus ring).
 - **`asChild`** (Radix `Slot`) for rendering a primitive's styling on another
   element, as `Button asChild` wraps a router `Link`.
 - **Controlled and uncontrolled** where it matters (`value`/`defaultValue`,
