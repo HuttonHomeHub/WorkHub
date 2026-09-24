@@ -18,6 +18,7 @@ import type { WorkDay } from '../api/work-days';
 
 import type * as TimeInputModule from './time-input';
 import { WeekAside } from './week-aside';
+import { WeekOverview } from './week-overview';
 import { WeekView } from './week-view';
 
 /** How often each time field has rendered, by its id (for the memoised rows). */
@@ -141,7 +142,12 @@ async function renderWeek({
           weekStart={weekStart}
           today={today}
           onWeekChange={onWeekChange}
-          {...(withAside ? { aside: (context) => <WeekAside {...context} /> } : {})}
+          {...(withAside
+            ? {
+                aside: (context) => <WeekAside {...context} />,
+                overview: (context) => <WeekOverview {...context} />,
+              }
+            : {})}
         />
       </>
     ),
@@ -627,29 +633,38 @@ function stubWithAside({
   return { ...api, aside };
 }
 
+/** A headline tile's figure and detail, by its label. */
+function tile(tiles: HTMLElement, label: string): string | null | undefined {
+  return within(tiles).getByText(label).nextElementSibling?.textContent;
+}
+
 describe('WeekView with its aside', () => {
-  it('shows This week and Balances in a named aside, following unsaved typing', async () => {
+  it('shows the headline tiles and a named aside, following unsaved typing', async () => {
     const user = userEvent.setup();
     stubWithAside();
     await renderWeek({ withAside: true });
 
+    const tiles = await screen.findByRole('region', { name: 'Headline figures' });
     const aside = await screen.findByRole('complementary', { name: 'This week and balances' });
-    const thisWeek = within(aside).getByRole('region', { name: 'This week' });
-    expect(await within(thisWeek).findByText('40:30 of 37:30 target')).toBeInTheDocument();
-    expect(within(thisWeek).getByText('+3:00 over')).toBeInTheDocument();
-    expect(within(thisWeek).getByText('2:00 unpaid')).toBeInTheDocument();
-    expect(await within(aside).findByRole('region', { name: 'Balances' })).toHaveTextContent(
-      '+3:12 over',
-    );
+    const conversion = within(aside).getByRole('region', { name: 'Conversion' });
+    expect(await within(tiles).findByText('of 37:30 target')).toBeInTheDocument();
+    expect(tile(tiles, 'Credited')).toBe('40:30 of 37:30 target');
+    expect(tile(tiles, 'Week flexi')).toBe('+3:00 over 3:00 converted Fri 9 Oct');
+    expect(await within(conversion).findByText('2:00 unpaid')).toBeInTheDocument();
+    await within(tiles).findByText('+3:12 over');
+    expect(tile(tiles, 'Flexi balance')).toBe('+3:12 over To the end of Mon 12 Oct');
+    expect(
+      await within(aside).findByRole('region', { name: 'TOIL and overtime' }),
+    ).toBeInTheDocument();
 
     // An unsaved hour more on Wednesday: the week-local figures follow at once;
     // the TOIL and overtime split waits for the saved figures.
     const end = field('End', 'Wed 7 Oct');
     await user.clear(end);
     await user.type(end, '1700');
-    expect(within(thisWeek).getByText('41:30 of 37:30 target')).toBeInTheDocument();
-    expect(within(thisWeek).getByText('+4:00 over')).toBeInTheDocument();
-    expect(within(thisWeek).getByText('2:00 unpaid')).toBeInTheDocument();
+    expect(tile(tiles, 'Credited')).toBe('41:30 of 37:30 target');
+    expect(within(tiles).getByText('+4:00 over')).toBeInTheDocument();
+    expect(within(conversion).getByText('2:00 unpaid')).toBeInTheDocument();
   });
 
   it("links to the summary for the week's month, and to settings", async () => {
@@ -703,7 +718,7 @@ describe('WeekView with its aside', () => {
         }),
     });
     await renderWeek({ withAside: true });
-    const thisWeek = await screen.findByRole('region', { name: 'This week' });
+    const thisWeek = await screen.findByRole('region', { name: 'Conversion' });
     await within(thisWeek).findByText('2:00 unpaid');
 
     const end = field('End', 'Tue 6 Oct');
@@ -726,7 +741,7 @@ describe('WeekView with its aside', () => {
     const { aside } = stubWithAside();
     aside.group = summaryGroup({ conversion: 'PREVIEW' });
     await renderWeek({ withAside: true, today: '2026-10-08' });
-    const thisWeek = await screen.findByRole('region', { name: 'This week' });
+    const thisWeek = await screen.findByRole('region', { name: 'Conversion' });
     await within(thisWeek).findByText('Preview until Fri 9 Oct');
     await user.type(field('Break', 'Thu 8 Oct'), '{Control>}a{/Control}0:45{Enter}');
     expect(await screen.findByText('Thu 8 Oct saved')).toBeInTheDocument();

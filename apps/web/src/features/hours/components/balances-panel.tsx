@@ -4,7 +4,6 @@ import * as React from 'react';
 import { useTimeBalances } from '../api/time-balances';
 
 import { Figure } from './figure';
-import { FlexiValue } from './flexi-value';
 import { LoadError, LoadingRows } from './request-states';
 
 import { formatDate } from '@/lib/format';
@@ -20,10 +19,10 @@ function overtimeText(paid: number, unpaid: number): string {
 }
 
 /**
- * The aside's "Balances" panel (feature doc → UI → Aside, Balances): the
- * flexi balance, this month's TOIL against its cap, this year's overtime
- * (paid and unpaid), and the leave left in the year, from `time-balances` as
- * of `asOf`. Flexi shows its direction in words, never colour alone.
+ * The aside's "TOIL and overtime" panel (feature doc → UI → Aside,
+ * Balances): this month's TOIL against its cap and taken, and this year's
+ * overtime (paid and unpaid), from `time-balances` as of `asOf`. The flexi
+ * balance and the leave left are headline tiles (`WeekOverview`).
  */
 export function BalancesPanel({ asOf }: BalancesPanelProps) {
   const balances = useTimeBalances(asOf);
@@ -50,9 +49,6 @@ export function BalancesPanel({ asOf }: BalancesPanelProps) {
     const year = asOf.slice(0, 4);
     body = (
       <dl className="grid gap-1">
-        <Figure term="Flexi">
-          <FlexiValue minutes={data.flexiMinutes} />
-        </Figure>
         <Figure term={`TOIL ${formatDate(asOf, 'month')}`}>
           {formatDuration(data.toilMonthMinutes)} of {formatDuration(data.toilCapMinutes)}
         </Figure>
@@ -61,12 +57,6 @@ export function BalancesPanel({ asOf }: BalancesPanelProps) {
         </Figure>
         <Figure term={`Overtime ${year}`}>
           {overtimeText(data.overtimePaidYearMinutes, data.overtimeUnpaidYearMinutes)}
-        </Figure>
-        <Figure term={`Leave left ${year}`}>
-          {formatDuration(data.leaveRemainingMinutes)}
-          {data.leaveRemainingMinutes < 0 ? (
-            <span className="text-warning-text"> (over allowance)</span>
-          ) : null}
         </Figure>
       </dl>
     );
@@ -79,7 +69,7 @@ export function BalancesPanel({ asOf }: BalancesPanelProps) {
     >
       <div className="grid gap-0.5">
         <h2 id={headingId} className="text-h3">
-          Balances
+          TOIL and overtime
         </h2>
         <p className="text-muted-foreground text-meta">
           To the end of {formatDate(asOf, 'weekdayDayMonth')}

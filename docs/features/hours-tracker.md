@@ -536,8 +536,15 @@ name in the rail state.
   and bank holiday are chips in a row of their own under the day (named
   "Warnings for …" or "Notes for …"), not a column, so the table fits beside
   the aside at 1280px.
-- **Aside, This week:**
-  - credited vs target, and the week's flexi before and after conversion;
+- **Headline tiles** (since the [command centre look](app-shell-refresh.md#command-centre-2026-09-24)):
+  above the table and aside, four `StatTile`s in a `<dl>` named "Headline
+  figures": Credited (of the target, with a bar), Week flexi (and what
+  conversion does with it: "3:00 converts Fri 25 Sep", "Stays as flexi"),
+  Flexi balance (to the end of today) and Leave left in the year (of the
+  allowance, with a bar). The week's figures follow unsaved typing.
+- **Aside, This week** (headed "Conversion" since the command centre look;
+  credited and the week flexi moved to the tiles):
+  - the week's flexi after conversion, while converting;
   - the **"Convert this week's excess to TOIL and overtime" switch**. It is a
     single reversible toggle, so it saves immediately with a quiet "Saved", as
     UX_STANDARDS.md allows. Switching it back is the undo, so there is no toast;
@@ -546,8 +553,14 @@ name in the rail state.
   - "Nothing to convert" when the week is net zero or negative; "Less than one
     block (0:30) to convert" when E is under a block; and, when E is not a
     whole number of blocks, the remainder ("0:15 stays as flexi").
-- **Aside, Balances:** flexi, TOIL this month (with the cap), overtime this year
-  (paid and unpaid), and leave remaining.
+- **Aside, Balances** (headed "TOIL and overtime" since the command centre
+  look; the flexi balance and leave left moved to the tiles): TOIL this month
+  (with the cap) and taken, and overtime this year (paid and unpaid).
+- **Timeline column:** once the week card is 64rem wide (a 1920px window), a
+  Timeline column after TOIL taken draws each day's start to end to scale on
+  the working band, widened to whole hours to take in the saved days; days to
+  come are drawn lighter. It repeats Start and End as a picture (named "07:30
+  to 15:30"), so it is hidden, not squeezed, on narrower windows.
 - **Edits after settlement:** after the save, an info toast (4s) names the
   recalculated week and months (rule 11), and the polite live region in the aside
   announces it.

@@ -158,21 +158,6 @@ function SidebarToggle({ collapsed, onToggle }: { collapsed: boolean; onToggle: 
   );
 }
 
-/** The app's name beside its mark: a filled accent tile. Not a link, so it adds no tab stop. */
-function BrandMark() {
-  return (
-    <span className="flex items-center gap-2 px-1">
-      <span
-        aria-hidden
-        className="bg-primary text-primary-foreground text-meta flex size-6 items-center justify-center rounded-md font-bold shadow-xs"
-      >
-        W
-      </span>
-      <span className="text-body font-semibold tracking-tight">WorkHub</span>
-    </span>
-  );
-}
-
 /**
  * Moves keyboard focus past the header and sidebar to the page (WCAG 2.4.1).
  * Visually hidden until focused; it is the first stop in the tab order.
@@ -195,7 +180,8 @@ function SkipLink() {
 
 /**
  * The authenticated app shell (docs/UX_STANDARDS.md → App shell): a skip link,
- * a 48px sticky header (`<header>`), the tools sidebar (`<nav>`), the page
+ * a 48px sticky header (`<header>`), the full-height tools sidebar (`<nav>`,
+ * with the brand at its top), the page
  * (`<main>`) and the one toaster. Content fills the window up to `--width-page`; pages cap prose
  * and forms themselves.
  *
@@ -209,25 +195,32 @@ export function AppShell({ tools, actions, children }: AppShellProps) {
     // The shell is the only place with tooltips today; providing them here keeps
     // Radix out of the sign-in page's JavaScript.
     <TooltipProvider>
-      <div className="bg-background text-foreground flex min-h-svh flex-col">
+      {/* A grid keeps the DOM order skip link, header, sidebar, page (so Tab
+          reaches the header's controls first) while the sidebar runs the full
+          height on the left. */}
+      <div className="bg-background text-foreground grid min-h-svh grid-cols-[auto_minmax(0,1fr)] grid-rows-[auto_1fr]">
         <SkipLink />
-        <header className="bg-background/85 sticky top-0 z-(--z-header) flex min-h-(--header-height) flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b px-3 py-2 backdrop-blur-md max-md:static">
-          <div className="flex items-center gap-2">
-            <SidebarToggle collapsed={collapsed} onToggle={toggle} />
-            <BrandMark />
-          </div>
+        <header className="bg-background/85 sticky top-0 z-(--z-header) col-start-2 row-start-1 flex min-h-(--header-height) flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b px-4 py-2 backdrop-blur-md max-md:static">
+          <SidebarToggle collapsed={collapsed} onToggle={toggle} />
           <div className="flex flex-wrap items-center gap-2">
             <ThemeMenu />
             {actions}
           </div>
         </header>
-        <div className="flex flex-1">
-          <Sidebar id={SIDEBAR_ID} tools={tools} aria-label="Tools" />
-          <main id={MAIN_ID} tabIndex={-1} className="min-w-0 flex-1 px-6 pt-6 pb-12 outline-none">
-            {/* Long words wrap rather than widen the page at the reflow floor. */}
-            <div className="max-w-(--width-page) break-words">{children}</div>
-          </main>
-        </div>
+        <Sidebar
+          id={SIDEBAR_ID}
+          tools={tools}
+          aria-label="Tools"
+          className="col-start-1 row-span-2 row-start-1"
+        />
+        <main
+          id={MAIN_ID}
+          tabIndex={-1}
+          className="col-start-2 row-start-2 min-w-0 px-8 pt-7 pb-12 outline-none max-md:px-4"
+        >
+          {/* Long words wrap rather than widen the page at the reflow floor. */}
+          <div className="max-w-(--width-page) break-words">{children}</div>
+        </main>
         {/* After <main> in the DOM, so Tab from the page reaches a toast's action. */}
         <Toaster label="Notifications" dismissLabel="Dismiss notification" />
       </div>

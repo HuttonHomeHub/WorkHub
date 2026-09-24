@@ -26,6 +26,7 @@ import {
 import { weekDates } from '../week/week-dates';
 
 import { DayRow, dayFigures, fieldId } from './day-row';
+import { scaleLabel, TIMELINE_CELL, timelineScale, type TimelineScale } from './day-timeline';
 import { FlexiValue } from './flexi-value';
 import { actionErrorMessage, toastSaveError } from './request-states';
 
@@ -109,6 +110,8 @@ function columnsFor(converting: boolean) {
     { key: 'break', label: 'Break', numeric: false },
     { key: 'leave', label: 'Leave', numeric: false },
     { key: 'toil', label: 'TOIL taken', numeric: false },
+    // Shown only once the week card is 64rem wide (a 1920px window): `TIMELINE_CELL`.
+    { key: 'timeline', label: 'Timeline', numeric: false },
     { key: 'worked', label: 'Worked', numeric: true },
     { key: 'credited', label: 'Credited', numeric: true },
     { key: 'flexi', label: 'Flexi', numeric: true },
@@ -120,9 +123,12 @@ function columnsFor(converting: boolean) {
 export function WeekTableHead({
   converting = false,
   preview = false,
+  scale,
 }: {
   converting?: boolean;
   preview?: boolean;
+  /** The Timeline column's hours ("07:00–19:00"). */
+  scale?: TimelineScale;
 }) {
   return (
     <TableHeader>
@@ -132,9 +138,21 @@ export function WeekTableHead({
             key={column.key}
             numeric={column.numeric}
             // Field headers wrap ("TOIL taken") to the fields' width.
-            className={column.numeric ? 'px-1' : 'px-0.5 whitespace-normal first:pr-1 first:pl-3'}
+            className={
+              column.key === 'timeline'
+                ? TIMELINE_CELL
+                : column.numeric
+                  ? 'px-1'
+                  : 'px-0.5 whitespace-normal first:pr-1 first:pl-3'
+            }
           >
             {column.label}
+            {column.key === 'timeline' && scale ? (
+              <>
+                {' '}
+                <span className="text-meta ml-1 font-normal tabular-nums">{scaleLabel(scale)}</span>
+              </>
+            ) : null}
             {column.key === 'converted' && preview ? (
               <>
                 {' '}
@@ -429,7 +447,22 @@ export function WeekTable({
   const onSave = useStableHandler(save);
   const onClear = useStableHandler(clear);
 
-  if (!calculation) return null;
+  // The Timeline column's hours, from the saved rows only: typing never moves
+  // them (so a keystroke re-renders only its own row); an unsaved span past
+  // them is clamped to the track.
+  const band = calculation?.terms;
+  const scale = React.useMemo(
+    () =>
+      band
+        ? timelineScale(
+            band,
+            savedDays.map((day) => textFromSaved(day)),
+          )
+        : null,
+    [band, savedDays],
+  );
+
+  if (!calculation || !scale) return null;
   const { days, week, terms: weekTerms } = calculation;
   const showConverted = week.conversion !== 'OFF';
   const columns = columnCount(showConverted);
@@ -441,7 +474,11 @@ export function WeekTable({
     <>
       <TableContainer>
         <Table aria-labelledby={labelledBy} className="text-small">
-          <WeekTableHead converting={showConverted} preview={week.conversion === 'PREVIEW'} />
+          <WeekTableHead
+            converting={showConverted}
+            preview={week.conversion === 'PREVIEW'}
+            scale={scale}
+          />
           <TableBody>
             {dates.map((date, index) => {
               const day = days[index]!;
@@ -467,6 +504,9 @@ export function WeekTable({
                   date={date}
                   label={labelOf(date)}
                   isToday={date === today}
+                  upcoming={date > today}
+                  scaleFrom={scale.from}
+                  scaleTo={scale.to}
                   striped={index % 2 === 1}
                   text={text}
                   dirty={dirty}
@@ -493,6 +533,7 @@ export function WeekTable({
             <TableRow hover={false}>
               <TableRowHeader className="pr-1 align-top first:pl-3">Week</TableRowHeader>
               <TableCell colSpan={5} />
+              <TableCell className={TIMELINE_CELL} />
               <TableCell numeric className="px-1 align-top">
                 {formatDuration(days.reduce((sum, day) => sum + day.workedMinutes, 0))}
               </TableCell>

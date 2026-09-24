@@ -1,7 +1,7 @@
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router';
 import { z } from 'zod';
 
-import { WeekAside, WeekView } from '@/features/hours';
+import { WeekAside, WeekOverview, WeekView } from '@/features/hours';
 import { todayInLondon } from '@/features/hours/week/week-dates';
 
 /**
@@ -43,6 +43,7 @@ function HoursWeekPage() {
       today={today}
       onWeekChange={(next) => void navigate({ search: { week: next } })}
       aside={(context) => <WeekAside {...context} />}
+      overview={(context) => <WeekOverview {...context} />}
     />
   );
 }

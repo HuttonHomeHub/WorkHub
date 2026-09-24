@@ -76,6 +76,9 @@
   --table-stripe: oklch(0.981 0.004 265);
   --table-hover: oklch(0.964 0.008 265);
   --highlight: oklch(0.962 0.022 268);
+  /* A day still to come on the week's timeline: a lighter accent, solid so its
+     3:1 on the muted track is measured (tokens-contrast.test.ts). */
+  --timeline-upcoming: oklch(0.62 0.13 268);
 
   /* Status */
   --destructive: oklch(0.55 0.2 27);
@@ -108,15 +111,17 @@
   --chart-4: oklch(0.769 0.15 80);
   --chart-5: oklch(0.627 0.2 320);
 
-  /* Sidebar surface (navigation shell) */
-  --sidebar: oklch(0.972 0.004 265);
-  --sidebar-foreground: oklch(0.3 0.018 265);
-  --sidebar-primary: oklch(0.5 0.2 268);
-  --sidebar-primary-foreground: oklch(0.985 0.004 265);
-  --sidebar-accent: oklch(0.93 0.01 265);
-  --sidebar-accent-foreground: oklch(0.18 0.018 265);
-  --sidebar-border: oklch(0.915 0.006 265);
-  --sidebar-ring: oklch(0.5 0.2 268);
+  /* Sidebar surface (navigation shell): a deep indigo panel in both themes
+     (the "command centre" look, docs/features/app-shell-refresh.md). It has
+     its own focus ring, since the page's ring would not reach 3:1 on it. */
+  --sidebar: oklch(0.24 0.05 272);
+  --sidebar-foreground: oklch(0.85 0.03 272);
+  --sidebar-primary: oklch(0.74 0.13 272);
+  --sidebar-primary-foreground: oklch(0.2 0.04 272);
+  --sidebar-accent: oklch(0.32 0.06 272);
+  --sidebar-accent-foreground: oklch(0.985 0.004 265);
+  --sidebar-border: oklch(0.3 0.05 272);
+  --sidebar-ring: oklch(0.8 0.11 272);
 
   /* Elevation (DESIGN_SYSTEM.md → Elevation): used as `shadow-xs` … `shadow-lg`. */
   --elevation-xs: 0 1px 2px 0 oklch(0.2 0.02 265 / 0.05);
@@ -167,9 +172,10 @@
   --width-aside: 15.5rem;
   /* The same column once the content is 80rem wide or more (a 1920px window). */
   --width-aside-wide: 20rem;
-  /* The most a dense data card (the hours week table) grows to beside its aside;
-     past it the columns would drift apart. */
-  --width-data-card: 62rem;
+  /* The most a dense data card (the hours week table) grows to beside its aside.
+     From 64rem the week table shows its Timeline column, which takes the
+     spare width, so the other columns never drift apart. */
+  --width-data-card: 80rem;
   /* Field widths: a time or duration in a dense table row, a short form field
      (a duration, a year), a date. */
   --width-input-compact: 3.25rem;
@@ -209,6 +215,7 @@
   --table-stripe: oklch(0.213 0.008 265);
   --table-hover: oklch(0.243 0.011 265);
   --highlight: oklch(0.245 0.032 268);
+  --timeline-upcoming: oklch(0.55 0.1 268);
 
   --destructive: oklch(0.52 0.19 25);
   --destructive-foreground: oklch(0.985 0.004 265);
@@ -237,14 +244,14 @@
   --chart-4: oklch(0.82 0.16 82);
   --chart-5: oklch(0.7 0.19 320);
 
-  --sidebar: oklch(0.18 0.007 265);
-  --sidebar-foreground: oklch(0.86 0.008 265);
-  --sidebar-primary: oklch(0.7 0.14 268);
-  --sidebar-primary-foreground: oklch(0.17 0.02 268);
-  --sidebar-accent: oklch(0.262 0.012 265);
-  --sidebar-accent-foreground: oklch(0.975 0.004 265);
-  --sidebar-border: oklch(1 0 0 / 9%);
-  --sidebar-ring: oklch(0.7 0.14 268);
+  --sidebar: oklch(0.2 0.04 272);
+  --sidebar-foreground: oklch(0.84 0.03 272);
+  --sidebar-primary: oklch(0.74 0.13 272);
+  --sidebar-primary-foreground: oklch(0.2 0.04 272);
+  --sidebar-accent: oklch(0.28 0.055 272);
+  --sidebar-accent-foreground: oklch(0.985 0.004 265);
+  --sidebar-border: oklch(0.26 0.04 272);
+  --sidebar-ring: oklch(0.8 0.11 272);
 
   --elevation-xs: 0 1px 2px 0 oklch(0 0 0 / 0.3);
   --elevation-sm: 0 1px 2px 0 oklch(0 0 0 / 0.3), 0 1px 3px 0 oklch(0 0 0 / 0.2);
@@ -273,6 +280,7 @@
   --color-table-stripe: var(--table-stripe);
   --color-table-hover: var(--table-hover);
   --color-highlight: var(--highlight);
+  --color-timeline-upcoming: var(--timeline-upcoming);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-destructive-soft: var(--destructive-soft);
@@ -323,8 +331,9 @@
 
 /*
  * The desktop type scale (DESIGN_SYSTEM.md → Typography): `text-meta`,
- * `text-small`, `text-body` and `text-lead`, and the headings `text-h3`,
- * `text-h2` and `text-h1`, which carry their own weight and tracking.
+ * `text-small`, `text-body` and `text-lead`, the headings `text-h3`,
+ * `text-h2` and `text-h1`, which carry their own weight and tracking, and
+ * `text-figure` for a headline number.
  */
 @theme {
   --text-meta: 0.75rem;
@@ -346,6 +355,11 @@
   --text-h1--line-height: 2rem;
   --text-h1--font-weight: 600;
   --text-h1--letter-spacing: -0.02em;
+  /* A headline figure (StatTile). */
+  --text-figure: 1.75rem;
+  --text-figure--line-height: 2.25rem;
+  --text-figure--font-weight: 600;
+  --text-figure--letter-spacing: -0.02em;
 
   /* Motion easings (DESIGN_SYSTEM.md → Motion), replacing Tailwind's. */
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
@@ -390,6 +404,11 @@
     outline: var(--focus-ring-width) solid var(--ring);
     outline-offset: calc(var(--focus-ring-width) * -1);
   }
+}
+
+/* Inside the sidebar the focus ring uses its own colour (`--sidebar-ring`). */
+@utility sidebar-scope {
+  --ring: var(--sidebar-ring);
 }
 
 /* The current row's marker: an accent bar on its first cell (Table's `highlight` tone). */

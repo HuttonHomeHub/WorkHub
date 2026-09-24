@@ -15,7 +15,6 @@ import { FlexiValue } from './flexi-value';
 import { LoadError, LoadingRows, toastSaveError } from './request-states';
 
 import { Label } from '@/components/ui/label';
-import { ProgressBar } from '@/components/ui/progress';
 import { Switch } from '@/components/ui/switch';
 import { formatDate } from '@/lib/format';
 
@@ -151,9 +150,9 @@ function ConversionSummary({ figures }: { figures: ThisWeekFigures }) {
 }
 
 /**
- * The aside's "This week" panel (feature doc → UI → Aside, This week):
- * credited time against the target, the week's flexi before and after
- * conversion, the conversion switch, and with it on, the TOIL and overtime it
+ * The aside's "Conversion" panel (feature doc → UI → Aside, This week): the
+ * week's flexi after conversion, the conversion switch, and with it on, the
+ * TOIL and overtime it
  * makes, as a preview until the settlement day and applied from then, and
  * any remainder under a whole block that stays as flexi; or "Nothing to
  * convert" for a week that is net zero or negative, and "Less than one block
@@ -190,25 +189,13 @@ export function ThisWeekPanel({ weekStart, asOf, live, recalculationNotice }: Th
     const converting = on && figures.conversion !== 'OFF' && figures.excessMinutes > 0;
     body = (
       <div className="grid gap-3">
-        <dl className="grid gap-1">
-          <Figure term="Credited">
-            {formatDuration(figures.creditedMinutes)} of {formatDuration(figures.targetMinutes)}{' '}
-            target
-          </Figure>
-          <ProgressBar
-            className="mb-1"
-            value={figures.creditedMinutes}
-            max={figures.targetMinutes}
-          />
-          <Figure term="Week flexi">
-            <FlexiValue minutes={figures.rawFlexiMinutes} />
-          </Figure>
-          {converting ? (
+        {converting ? (
+          <dl className="grid gap-1">
             <Figure term="After conversion">
               <FlexiValue minutes={figures.rawFlexiMinutes - figures.convertedMinutes} />
             </Figure>
-          ) : null}
-        </dl>
+          </dl>
+        ) : null}
         <ConversionSwitchField weekStart={weekStart} row={row} onReload={retry} />
         {on ? <ConversionSummary figures={figures} /> : null}
       </div>
@@ -221,7 +208,7 @@ export function ThisWeekPanel({ weekStart, asOf, live, recalculationNotice }: Th
       className="bg-card text-body grid gap-3 rounded-xl border p-4 shadow-xs"
     >
       <h2 id={headingId} className="text-h3">
-        This week
+        Conversion
       </h2>
       {body}
       <p role="status" aria-live="polite" className="text-muted-foreground text-small">

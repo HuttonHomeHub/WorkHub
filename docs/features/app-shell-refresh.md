@@ -200,3 +200,23 @@ by a page that uses their characters.
   (existing journeys, updated). `e2e/screenshots.spec.ts` takes a review set of
   every hours screen at both sizes in both themes when `E2E_SCREENSHOT_DIR` is
   set; the images are for people to look at and are never committed.
+
+## Command centre (2026-09-24)
+
+The owner found the calm refresh still "basic", compared three mockups (a
+command centre, a timeline, a bold editorial layout) and chose **A: Command
+centre**. What changed:
+
+- **Shell:** the sidebar is a deep indigo panel in both themes and runs the
+  full height of the window, with the WorkHub mark at its top; the header sits
+  beside it. A CSS grid keeps the DOM order (skip link, header, sidebar, page).
+  The sidebar has its own focus ring (`--sidebar-ring`, via `sidebar-scope`),
+  measured at 3:1 on its surface and accent.
+- **Headline tiles:** the week view opens with four `StatTile`s — Credited,
+  Week flexi, Flexi balance, Leave left — with bars for the target and the
+  allowance. The aside keeps only what the tiles do not show: the
+  conversion ("Conversion") and TOIL and overtime.
+- **Week table:** a Timeline column draws each day to scale when the card is
+  64rem wide (so `--width-data-card` is now 80rem), and a day's flexi is a pill
+  on its status's soft fill.
+- **Tokens:** `text-figure` (28px) for headline numbers.

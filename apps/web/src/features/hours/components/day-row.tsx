@@ -5,6 +5,7 @@ import * as React from 'react';
 import { endsNextDay, type RowField, type RowText } from '../schemas/work-day';
 import type { RowWarning } from '../week/week-calculation';
 
+import { DayTimeline, TIMELINE_CELL } from './day-timeline';
 import { DurationInput } from './duration-input';
 import { FlexiValue } from './flexi-value';
 import { TimeInput } from './time-input';
@@ -77,6 +78,11 @@ export interface DayRowProps {
   /** "Mon 5 Oct". */
   label: string;
   isToday: boolean;
+  /** A day after today: its timeline is drawn lighter. */
+  upcoming: boolean;
+  /** The week's timeline scale, in minutes after midnight (`timelineScale`). */
+  scaleFrom: number;
+  scaleTo: number;
   /** An odd row of the week, drawn on the zebra stripe (with its notes row). */
   striped: boolean;
   text: RowText;
@@ -161,6 +167,9 @@ function DayRowComponent({
   date,
   label,
   isToday,
+  upcoming,
+  scaleFrom,
+  scaleTo,
   striped,
   text,
   dirty,
@@ -305,6 +314,16 @@ function DayRowComponent({
             {field('break')}
             {field('leave')}
             {field('toil')}
+            <TableCell className={cn(TIMELINE_CELL, 'align-top')}>
+              <div className="flex min-h-(--control-sm) items-center">
+                <DayTimeline
+                  start={text.start}
+                  end={text.end}
+                  scale={{ from: scaleFrom, to: scaleTo }}
+                  upcoming={upcoming}
+                />
+              </div>
+            </TableCell>
             <TableCell numeric className="px-1 align-top">
               {figure(day.spanMinutes > 0 ? formatDuration(day.workedMinutes) : <Empty />)}
             </TableCell>
@@ -314,7 +333,7 @@ function DayRowComponent({
             <TableCell numeric className="px-1 align-top">
               {figure(
                 day.counted ? (
-                  <FlexiValue minutes={day.dayFlexiMinutes} />
+                  <FlexiValue minutes={day.dayFlexiMinutes} pill />
                 ) : (
                   <Empty label="Not counted yet" />
                 ),

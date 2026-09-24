@@ -50,20 +50,21 @@ records the roles; `globals.css` holds the values, each a literal `oklch()` so
 the contrast test can read it. The palette and its reasoning are in
 [features/app-shell-refresh.md](features/app-shell-refresh.md#palette).
 
-| Role                                         | Light                                 | Dark                                  | Use                                                             |
-| -------------------------------------------- | ------------------------------------- | ------------------------------------- | --------------------------------------------------------------- |
-| `background` / `foreground`                  | `0.984 0.003 265` / `0.2 0.018 265`   | `0.16 0.006 265` / `0.955`            | The page (a step below cards) and default text                  |
-| `card`, `popover` (+ `-foreground`)          | white                                 | `0.198` / `0.225`                     | Raised surfaces, overlays: lighter is higher in dark            |
-| `primary` / `-foreground`                    | indigo `0.5 0.2 268`                  | `0.7 0.14 268`                        | The accent: primary actions, active state, links, the ring      |
-| `secondary`, `accent`, `muted`               | `0.955`–`0.962`, slate                | `0.25`–`0.262`, slate                 | Secondary surfaces, hover, wells                                |
-| `muted-foreground`                           | `0.49 0.018 265`                      | `0.72 0.014 265`                      | Meta text, column headers                                       |
-| `table-stripe` / `table-hover` / `highlight` | `0.981` / `0.964` / `0.962 0.022 268` | `0.213` / `0.243` / `0.245 0.032 268` | Zebra rows, the hovered row, the current row and selection      |
-| `destructive`, `success`, `warning`, `info`  | solid fills with a `-foreground`      | re-tuned                              | Filled status: buttons, the progress bar, the switch            |
-| `…-soft` / `…-text` (each status)            | a tinted fill / a text colour         | re-tuned                              | Status chips (`Badge`), alerts, flexi, field errors             |
-| `border` / `input`                           | `0.915` / `0.63 0.012 265`            | `1 0 0 / 9%` / `0.57 0.012 265`       | Dividers / control boundaries                                   |
-| `ring`                                       | = `primary`                           | = `primary`                           | Focus indicator                                                 |
-| `chart-1…5`                                  | indigo, teal, green, amber, magenta   | brightened                            | Categorical series                                              |
-| `sidebar*`                                   | `0.972` surface, `0.93` accent        | `0.18` surface, `0.262` accent        | Navigation shell: the sidebar (`components/layout/sidebar.tsx`) |
+| Role                                         | Light                                      | Dark                                  | Use                                                                                                                                             |
+| -------------------------------------------- | ------------------------------------------ | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `background` / `foreground`                  | `0.984 0.003 265` / `0.2 0.018 265`        | `0.16 0.006 265` / `0.955`            | The page (a step below cards) and default text                                                                                                  |
+| `card`, `popover` (+ `-foreground`)          | white                                      | `0.198` / `0.225`                     | Raised surfaces, overlays: lighter is higher in dark                                                                                            |
+| `primary` / `-foreground`                    | indigo `0.5 0.2 268`                       | `0.7 0.14 268`                        | The accent: primary actions, active state, links, the ring                                                                                      |
+| `secondary`, `accent`, `muted`               | `0.955`–`0.962`, slate                     | `0.25`–`0.262`, slate                 | Secondary surfaces, hover, wells                                                                                                                |
+| `muted-foreground`                           | `0.49 0.018 265`                           | `0.72 0.014 265`                      | Meta text, column headers                                                                                                                       |
+| `table-stripe` / `table-hover` / `highlight` | `0.981` / `0.964` / `0.962 0.022 268`      | `0.213` / `0.243` / `0.245 0.032 268` | Zebra rows, the hovered row, the current row and selection                                                                                      |
+| `timeline-upcoming`                          | `0.62 0.13 268`                            | `0.55 0.1 268`                        | A day still to come on the week's timeline (3:1 on `muted`)                                                                                     |
+| `destructive`, `success`, `warning`, `info`  | solid fills with a `-foreground`           | re-tuned                              | Filled status: buttons, the progress bar, the switch                                                                                            |
+| `…-soft` / `…-text` (each status)            | a tinted fill / a text colour              | re-tuned                              | Status chips (`Badge`), alerts, flexi, field errors                                                                                             |
+| `border` / `input`                           | `0.915` / `0.63 0.012 265`                 | `1 0 0 / 9%` / `0.57 0.012 265`       | Dividers / control boundaries                                                                                                                   |
+| `ring`                                       | = `primary`                                | = `primary`                           | Focus indicator                                                                                                                                 |
+| `chart-1…5`                                  | indigo, teal, green, amber, magenta        | brightened                            | Categorical series                                                                                                                              |
+| `sidebar*`                                   | `0.24 0.05 272` deep indigo, `0.32` accent | `0.2 0.04 272`, `0.28` accent         | Navigation shell: the sidebar (`components/layout/sidebar.tsx`), dark in both themes, with its own `sidebar-ring` (the `sidebar-scope` utility) |
 
 **Rules:**
 
@@ -113,19 +114,21 @@ monospace stack.
 **Desktop type scale.** 14px body (PRODUCT.md). Use these steps only; they are
 utilities in `globals.css` (`@theme`), and `cn()` knows them as font sizes.
 
-| Step         | Size / line-height | Weight  | Use                                                   |
-| ------------ | ------------------ | ------- | ----------------------------------------------------- |
-| `text-meta`  | 12px / 16px        | 400/500 | Timestamps, counts, tags, table sub-labels            |
-| `text-small` | 13px / 18px        | 400     | Dense tables, help text, column headers, descriptions |
-| `text-body`  | **14px / 20px**    | 400     | Body, inputs, buttons — the default                   |
-| `text-lead`  | 16px / 24px        | 400/500 | Lead paragraph, an empty state's sentence             |
-| `text-h3`    | 15px / 22px        | 600     | Card and section titles                               |
-| `text-h2`    | 18px / 28px        | 600     | Section headings, a dialog's title, stat figures      |
-| `text-h1`    | 24px / 32px        | 600     | Page title (−0.02em tracking)                         |
+| Step          | Size / line-height | Weight  | Use                                                   |
+| ------------- | ------------------ | ------- | ----------------------------------------------------- |
+| `text-meta`   | 12px / 16px        | 400/500 | Timestamps, counts, tags, table sub-labels            |
+| `text-small`  | 13px / 18px        | 400     | Dense tables, help text, column headers, descriptions |
+| `text-body`   | **14px / 20px**    | 400     | Body, inputs, buttons — the default                   |
+| `text-lead`   | 16px / 24px        | 400/500 | Lead paragraph, an empty state's sentence             |
+| `text-h3`     | 15px / 22px        | 600     | Card and section titles                               |
+| `text-h2`     | 18px / 28px        | 600     | Section headings, a dialog's title, stat figures      |
+| `text-h1`     | 24px / 32px        | 600     | Page title (−0.02em tracking)                         |
+| `text-figure` | 28px / 36px        | 600     | A headline figure in a `StatTile` (−0.02em tracking)  |
 
 - **Weights:** 400 body, 500 labels/buttons/active nav, 600 headings. Nothing
   heavier (the brand tile's letter is the one exception).
-- Headings above 24px do not earn their space at this density.
+- Headings above 24px do not earn their space at this density; `text-figure` is
+  for numbers in a `StatTile`, never a heading.
 - **One `<h1>` per page** (the `PageHeader`), levels never skip.
 - **Tabular numerals** (`tabular-nums`) are **required** on any column of
   numbers — durations, amounts, counts, dates in a column. `Table`'s `numeric`
@@ -166,25 +169,25 @@ Prose widths and pane sizes are decisions, not ad-hoc classes
 custom properties on `:root`, used as `w-(--sidebar-width)` or
 `max-w-(--width-prose)`.
 
-| Token                   | Value   | Meaning                                                                                                   | Status      |
-| ----------------------- | ------- | --------------------------------------------------------------------------------------------------------- | ----------- |
-| `--sidebar-width`       | 224px   | Expanded sidebar                                                                                          | implemented |
-| `--sidebar-rail`        | 56px    | Collapsed icon rail                                                                                       | implemented |
-| `--header-height`       | 48px    | Sticky header, and the page's scroll padding                                                              | implemented |
-| `--width-prose`         | 72ch    | Reading text and single-column settings                                                                   | implemented |
-| `--width-form`          | 880px   | Forms with side-by-side fields                                                                            | implemented |
-| `--width-page`          | 1600px  | Cap for the whole content region above 2560px                                                             | implemented |
-| `--width-toast`         | 24rem   | The toaster's width                                                                                       | implemented |
-| `--width-dialog`        | 28rem   | An AlertDialog's width (full width below it)                                                              | implemented |
-| `--width-aside`         | 15.5rem | A page's side column, beside the content from a 56rem content width (container query); below it otherwise | implemented |
-| `--width-aside-wide`    | 20rem   | The same column from an 80rem content width                                                               | implemented |
-| `--width-data-card`     | 62rem   | The most a dense data card (the week table) grows to beside its aside; its columns share that width       | implemented |
-| `--width-input-compact` | 3.25rem | A time or duration field in a dense table row; "08:00" fits at WCAG 1.4.12 text spacing                   | implemented |
-| `--width-input-short`   | 6.5rem  | A short form field: a duration, a year                                                                    | implemented |
-| `--width-input-date`    | 10rem   | A date field or a short select                                                                            | implemented |
-| `--pane-list-min`       | 280px   | List pane minimum                                                                                         | proposed    |
-| `--pane-list-default`   | 380px   | List pane default                                                                                         | proposed    |
-| `--pane-detail-min`     | 480px   | Detail pane minimum, below which panes stack                                                              | proposed    |
+| Token                   | Value   | Meaning                                                                                                                     | Status      |
+| ----------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------- | ----------- |
+| `--sidebar-width`       | 224px   | Expanded sidebar                                                                                                            | implemented |
+| `--sidebar-rail`        | 56px    | Collapsed icon rail                                                                                                         | implemented |
+| `--header-height`       | 48px    | Sticky header, and the page's scroll padding                                                                                | implemented |
+| `--width-prose`         | 72ch    | Reading text and single-column settings                                                                                     | implemented |
+| `--width-form`          | 880px   | Forms with side-by-side fields                                                                                              | implemented |
+| `--width-page`          | 1600px  | Cap for the whole content region above 2560px                                                                               | implemented |
+| `--width-toast`         | 24rem   | The toaster's width                                                                                                         | implemented |
+| `--width-dialog`        | 28rem   | An AlertDialog's width (full width below it)                                                                                | implemented |
+| `--width-aside`         | 15.5rem | A page's side column, beside the content from a 56rem content width (container query); below it otherwise                   | implemented |
+| `--width-aside-wide`    | 20rem   | The same column from an 80rem content width                                                                                 | implemented |
+| `--width-data-card`     | 80rem   | The most a dense data card (the week table) grows to beside its aside; from 64rem its Timeline column takes the spare width | implemented |
+| `--width-input-compact` | 3.25rem | A time or duration field in a dense table row; "08:00" fits at WCAG 1.4.12 text spacing                                     | implemented |
+| `--width-input-short`   | 6.5rem  | A short form field: a duration, a year                                                                                      | implemented |
+| `--width-input-date`    | 10rem   | A date field or a short select                                                                                              | implemented |
+| `--pane-list-min`       | 280px   | List pane minimum                                                                                                           | proposed    |
+| `--pane-list-default`   | 380px   | List pane default                                                                                                           | proposed    |
+| `--pane-detail-min`     | 480px   | Detail pane minimum, below which panes stack                                                                                | proposed    |
 
 **Sidebar variant — implemented.** `globals.css` defines one custom variant
 for the shell, driven by `data-sidebar` on `<html>` (set before first paint):
@@ -338,6 +341,7 @@ contract and a test.
 | **Badge**        | A short, non-interactive tag: `text-meta`, 500 weight, `radius-md`, sized to its text. Variants `default` (neutral), `outline`, `primary` (filled accent: "Today"), and soft status chips `warning` (with a ⚠), `info` (notes, "In progress"), `success`, `destructive`. Its meaning is always in its text, never colour alone; an icon is `aria-hidden`. It wraps rather than widening a table cell. Not focusable.                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | **Table**        | `components/ui/table.tsx`: `TableContainer` (owns horizontal scroll; `scrollable` makes it a named, focusable region), `Table`, `TableHeader` (a quiet `muted` band, 13px muted headers), `TableBody`, `TableFooter` (totals), `TableRow` (`tone` `zebra \| stripe \| highlight`, `hover`), `TableHead` (`scope="col"`), `TableRowHeader` (`scope="row"`), `TableCell`; `numeric` right-aligns in tabular numerals. Rows are at least `--row-height`. The shared look until `DataTable` is built.                                                                                                                                                                                                                                                                                                                                                                                            |
 | **ProgressBar**  | A slim, **decorative** (`aria-hidden`) bar of `value` against `max`: accent until the whole is reached, then `success`. The figure beside it carries the meaning. Its fill width is its one inline style, a data value.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| **StatTile**     | `components/ui/stat-tile.tsx`: one headline figure as a card — a `<dt>` label (with an optional decorative icon in an accent tile), then a `<dd>` holding the figure in `text-figure`, an optional `ProgressBar`, and a muted detail line read with the figure ("Credited, 39:00 of 37:30 target"). Place tiles in a `<dl>`; `value={undefined}` shows a skeleton, so mark the `<dl>` `aria-busy` while loading.                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | **EmptyState**   | "Nothing here yet": a muted icon tile, the situation in a sentence (`text-lead`), what to do (muted), and at most one action. It replaces the content it stands for; not a live region.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |     |
 
 ### Planned
