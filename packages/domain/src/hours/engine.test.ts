@@ -51,7 +51,7 @@ describe('worked example, week of 5 October 2026', () => {
     });
   });
 
-  it('switch on: levels 3:00 into TOIL up to the cap and unpaid overtime', () => {
+  it('switch on: levels 3:00 in 0:30 blocks into TOIL up to the cap and unpaid overtime', () => {
     const result = calculateHours(
       input('2026-10-05', '2026-10-10', {
         days: exampleWeek,
@@ -64,10 +64,13 @@ describe('worked example, week of 5 October 2026', () => {
     const week = result.weeks.find((w) => w.weekStart === '2026-10-05')!;
     expect(week.conversion).toBe('APPLIED');
     expect(week.excessMinutes).toBe(m('3:00'));
+    expect(week).toMatchObject({ blockMinutes: 30, convertedMinutes: m('3:00') });
+    // Six blocks: Tue, Tue, Tue (tie with Mon at 1:30, latest), Mon, Thu (tie
+    // Mon/Tue/Thu at 1:00, latest), Tue.
     expect(week.allocation).toEqual({
-      '2026-10-05': m('0:50'),
-      '2026-10-06': m('1:50'),
-      '2026-10-08': m('0:20'),
+      '2026-10-05': m('0:30'),
+      '2026-10-06': m('2:00'),
+      '2026-10-08': m('0:30'),
     });
 
     const rows = ['2026-10-05', '2026-10-06', '2026-10-07', '2026-10-08', '2026-10-09'].map((d) => {
@@ -75,10 +78,10 @@ describe('worked example, week of 5 October 2026', () => {
       return [r.dayFlexiMinutes, r.toilMinutes, r.overtimeUnpaidMinutes];
     });
     expect(rows).toEqual([
-      [m('0:40'), m('0:50'), 0],
-      [m('0:40'), m('0:10'), m('1:40')],
+      [m('1:00'), m('0:30'), 0],
+      [m('0:30'), m('0:30'), m('1:30')],
       [0, 0, 0],
-      [m('0:40'), 0, m('0:20')],
+      [m('0:30'), 0, m('0:30')],
       [m('-2:00'), 0, 0],
     ]);
     expect(week).toMatchObject({
@@ -395,7 +398,7 @@ describe('conversion (rule 6)', () => {
       '2026-10-10',
       ['2026-10-05', '2026-10-06', '2026-10-07', '2026-10-08', '2026-10-09'].map(nine),
     );
-    // E = 5 × 1:30 = 7:30; every day gives 1:30, but along the way ties go latest first.
+    // E = 5 × 1:30 = 7:30, fifteen blocks; every day gives 1:30, ties latest first.
     expect(result.weeks[0]!.allocation).toEqual({
       '2026-10-05': 90,
       '2026-10-06': 90,
@@ -410,8 +413,20 @@ describe('conversion (rule 6)', () => {
       nine('2026-10-08'),
       nine('2026-10-09'),
     ]);
-    // E = 4 × 1:30 − 0:01 = 5:59: the earliest date gives one minute less.
-    expect(odd.weeks[0]!.allocation).toMatchObject({ '2026-10-05': 89, '2026-10-09': 90 });
+    // E = 4 × 1:30 − 0:01 = 5:59: eleven blocks (5:30), taken Fri, Thu, Tue,
+    // Mon twice round and then Fri, Thu, Tue, so Monday gives one block less
+    // and 0:29 stays as flexi.
+    expect(odd.weeks[0]).toMatchObject({
+      excessMinutes: m('5:59'),
+      convertedMinutes: m('5:30'),
+      allocation: {
+        '2026-10-05': m('1:00'),
+        '2026-10-06': m('1:30'),
+        '2026-10-08': m('1:30'),
+        '2026-10-09': m('1:30'),
+      },
+    });
+    expect(balancesAt(odd).flexiMinutes).toBe(29);
   });
 
   it('takes minutes below the target when that is where the level falls', () => {
@@ -424,6 +439,18 @@ describe('conversion (rule 6)', () => {
       day('2026-10-09', null, null, { leaveMinutes: m('7:30') }),
     ]);
     expect(result.weeks[0]!.allocation).toEqual({ '2026-10-05': m('4:30') });
+    // Mon: 5:00 worked + 3:30 leave is +1:00 raw flexi but −2:30 against the
+    // target in worked time; Tue–Fri are on target. E = 1:00, two blocks, from
+    // the on-target days, latest first: Fri and Thu end 0:30 below target.
+    const below = on('2026-10-10', [
+      day('2026-10-05', '08:00', '13:00', { leaveMinutes: m('3:30') }),
+      ...['2026-10-06', '2026-10-07', '2026-10-08', '2026-10-09'].map((d) =>
+        day(d, '08:00', '16:00', { breakMinutes: 30 }),
+      ),
+    ]);
+    expect(below.weeks[0]!.allocation).toEqual({ '2026-10-08': 30, '2026-10-09': 30 });
+    expect(dayOf(below, '2026-10-09').dayFlexiMinutes).toBe(-30);
+    expect(dayOf(below, '2026-10-05').dayFlexiMinutes).toBe(m('1:00'));
     // Now a week where levelling goes below target on several days.
     const tight = on('2026-10-10', [
       day('2026-10-05', '08:00', '16:00', { breakMinutes: 30 }),
@@ -432,6 +459,109 @@ describe('conversion (rule 6)', () => {
     ]);
     // Mon–Tue 0 surplus, Wed–Fri missing (−22:30), Sat +3:00: net negative, nothing allocated.
     expect(tight.weeks[0]!.excessMinutes).toBe(0);
+  });
+
+  it('converts whole blocks and leaves the remainder as flexi (E = 2:45)', () => {
+    const short = [...exampleWeek.slice(0, 4), day('2026-10-09', '08:00', '13:15')];
+    const result = on('2026-10-10', short);
+    const week = result.weeks[0]!;
+    // Five blocks (2:30) convert: Tue, Tue, Tue, Mon, Thu; 0:15 stays as flexi.
+    expect(week).toMatchObject({
+      excessMinutes: m('2:45'),
+      convertedMinutes: m('2:30'),
+      allocation: { '2026-10-05': m('0:30'), '2026-10-06': m('1:30'), '2026-10-08': m('0:30') },
+      toilMinutes: m('2:30'),
+    });
+    // Raw flexi is unchanged; only the allocated minutes leave the days.
+    expect(dayOf(result, '2026-10-06')).toMatchObject({
+      rawFlexiMinutes: m('2:30'),
+      dayFlexiMinutes: m('1:00'),
+    });
+    expect(balancesAt(result).flexiMinutes).toBe(m('0:15'));
+    const [group] = summarise(result, '2026-10-05', '2026-10-12', 'week');
+    expect(group).toMatchObject({ convertedMinutes: m('2:30'), flexiMinutes: m('0:15') });
+  });
+
+  it("uses the block in the week's terms: 0:15 and 1:00", () => {
+    const withBlock = (conversionBlockMinutes: number) =>
+      calculateHours(
+        input(
+          '2026-10-05',
+          '2026-10-10',
+          { days: exampleWeek, conversions: ['2026-10-05'] },
+          { conversionBlockMinutes },
+        ),
+      ).weeks[0]!;
+    expect(withBlock(15)).toMatchObject({
+      blockMinutes: 15,
+      convertedMinutes: m('3:00'),
+      allocation: { '2026-10-05': m('0:45'), '2026-10-06': m('1:45'), '2026-10-08': m('0:30') },
+    });
+    expect(withBlock(60)).toMatchObject({
+      blockMinutes: 60,
+      convertedMinutes: m('3:00'),
+      allocation: { '2026-10-05': m('1:00'), '2026-10-06': m('2:00') },
+    });
+  });
+
+  it('converts nothing when E is less than one block, and E stays as flexi', () => {
+    // Mon–Thu are +5:00. Fri 3:10 is −4:20, so E = 0:40: one block converts.
+    const result = on('2026-10-10', [
+      ...exampleWeek.slice(0, 4),
+      day('2026-10-09', '08:00', '11:10'),
+    ]);
+    expect(result.weeks[0]).toMatchObject({ excessMinutes: m('0:40'), convertedMinutes: 30 });
+    const tiny = on('2026-10-10', [
+      ...exampleWeek.slice(0, 4),
+      day('2026-10-09', '08:00', '10:40'), // 2:40 is −4:50, so E = 0:10
+    ]);
+    expect(tiny.weeks[0]).toMatchObject({
+      conversion: 'APPLIED',
+      excessMinutes: m('0:10'),
+      convertedMinutes: 0,
+      allocation: {},
+      toilMinutes: 0,
+    });
+    expect(balancesAt(tiny).flexiMinutes).toBe(m('0:10'));
+    // A block larger than E converts nothing either.
+    const large = calculateHours(
+      input(
+        '2026-10-05',
+        '2026-10-10',
+        { days: exampleWeek, conversions: ['2026-10-05'] },
+        { conversionBlockMinutes: 240 },
+      ),
+    );
+    expect(large.weeks[0]).toMatchObject({ excessMinutes: m('3:00'), convertedMinutes: 0 });
+    expect(balancesAt(large).flexiMinutes).toBe(m('3:00'));
+  });
+
+  it('previews in whole blocks too', () => {
+    const thursday = on('2026-10-08', exampleWeek.slice(0, 3));
+    // E = 4:00 over Mon +1:30 and Tue +2:30: eight blocks.
+    expect(thursday.weeks[0]).toMatchObject({
+      conversion: 'PREVIEW',
+      convertedMinutes: m('4:00'),
+      allocation: { '2026-10-05': m('1:30'), '2026-10-06': m('2:30') },
+    });
+    for (const d of thursday.days) expect(d.previewConvertedMinutes % 30).toBe(0);
+  });
+
+  it('may split a block between TOIL and overtime at the monthly cap', () => {
+    const result = on('2026-10-10', exampleWeek, {
+      adjustments: [{ effectiveDate: '2026-10-05', balance: 'TOIL', minutes: m('6:45') }],
+    });
+    // Mon's block takes October to 7:15; Tue's first block reaches the cap
+    // after 0:15, so 0:15 is TOIL and 1:45 overtime.
+    expect(dayOf(result, '2026-10-06')).toMatchObject({
+      convertedMinutes: m('2:00'),
+      toilMinutes: m('0:15'),
+      overtimeUnpaidMinutes: m('1:45'),
+    });
+    expect(result.weeks[0]).toMatchObject({
+      toilMinutes: m('0:45'),
+      overtimeUnpaidMinutes: m('2:15'),
+    });
   });
 
   it('recomputes the excess when weekend time is added after settlement', () => {
@@ -495,11 +625,24 @@ describe('months (rules 7 and 8)', () => {
     });
   });
 
-  it('makes the minute over the cap overtime', () => {
+  it('makes the minute over the cap overtime, even mid-block', () => {
+    // Two 0:30 blocks convert; October already has 6:31, so the cap is
+    // reached one minute before the end of the second block.
+    const result = convertOn(weekWithExcess(60), '2026-10-10', m('6:31'));
+    expect(dayOf(result, '2026-10-05')).toMatchObject({
+      convertedMinutes: 60,
+      toilMinutes: 59,
+      overtimeUnpaidMinutes: 1,
+    });
+  });
+
+  it('leaves a minute over a whole block as flexi', () => {
     const result = convertOn(weekWithExcess(61), '2026-10-10', m('6:30'));
     expect(dayOf(result, '2026-10-05')).toMatchObject({
+      convertedMinutes: 60,
       toilMinutes: 60,
-      overtimeUnpaidMinutes: 1,
+      overtimeUnpaidMinutes: 0,
+      dayFlexiMinutes: 1,
     });
   });
 

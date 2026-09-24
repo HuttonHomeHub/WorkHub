@@ -6,6 +6,8 @@ import type { WorkTerms } from './types.js';
 export const STANDARD_DAY_MINUTES = 450;
 /** The default yearly leave allowance, 247:30 (bank holidays included). */
 export const DEFAULT_LEAVE_ALLOWANCE_MINUTES = 14_850;
+/** Conversion turns whole 0:30 blocks into TOIL and overtime by default. */
+export const DEFAULT_CONVERSION_BLOCK_MINUTES = 30;
 /** Bought leave adds five standard days, 37:30. */
 export const BOUGHT_LEAVE_MINUTES = 2_250;
 
@@ -21,6 +23,7 @@ export function defaultWorkTerms(effectiveFrom: IsoDate): WorkTerms {
     bandEndMinutes: 19 * 60,
     paidOvertimeAllowed: false,
     toilMonthlyCapMinutes: STANDARD_DAY_MINUTES,
+    conversionBlockMinutes: DEFAULT_CONVERSION_BLOCK_MINUTES,
     leaveDayMaxMinutes: STANDARD_DAY_MINUTES,
     flexiCreditCapMinutes: null,
     flexiDebitCapMinutes: null,
