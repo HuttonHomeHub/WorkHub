@@ -1,6 +1,6 @@
 import { act, configure, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { WorkTerm } from '../api/keys';
 
@@ -38,8 +38,15 @@ function terms(id: string, effectiveFrom: string, overrides: Partial<WorkTerm> =
 configure({ asyncUtilTimeout: 5_000 });
 vi.setConfig({ testTimeout: 20_000 });
 
+// "(current)" depends on today: Thursday 24 September 2026, in Europe/London.
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date('2026-09-24T12:00:00Z'));
+});
+
 afterEach(() => {
   act(() => dismissToast());
+  vi.useRealTimers();
   vi.unstubAllGlobals();
 });
 
@@ -74,7 +81,28 @@ describe('TermsTab', () => {
       targetMinutes: { mon: 450, sat: null },
       paidOvertimeAllowed: false,
     });
-    expect(await screen.findByText('(current)')).toBeInTheDocument();
+    // Terms from a Monday still to come are upcoming, not current.
+    expect(await screen.findByText('(upcoming)')).toBeInTheDocument();
+  });
+
+  it('marks the terms in force today as current, not later ones (regression)', async () => {
+    stubApi(
+      on('GET', '/api/v1/work-terms', () =>
+        page([
+          terms('later', '2026-09-28'),
+          terms('now', '2026-09-14'),
+          terms('old', '2026-09-07'),
+        ]),
+      ),
+    );
+    renderWithApi(<TermsTab />);
+    const saved = await screen.findByRole('region', { name: 'Saved terms' });
+    const table = await within(saved).findByRole('table');
+    const rowFor = (date: string) => within(table).getByRole('row', { name: new RegExp(date) });
+    expect(rowFor('Mon 28 Sep 2026')).toHaveTextContent('(upcoming)');
+    expect(rowFor('Mon 14 Sep 2026')).toHaveTextContent('(current)');
+    expect(rowFor('Mon 7 Sep 2026')).not.toHaveTextContent(/current|upcoming/);
+    expect(within(table).getAllByText('(current)')).toHaveLength(1);
   });
 
   it('deletes terms at once, offers undo, and restores them', async () => {
