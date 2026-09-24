@@ -55,6 +55,7 @@ function terms(effectiveFrom = '2026-09-07'): WorkTerm {
     bandEnd: '19:00',
     paidOvertimeAllowed: false,
     toilMonthlyCapMinutes: 450,
+    conversionBlockMinutes: 30,
     leaveDayMaxMinutes: 450,
     flexiCreditCapMinutes: null,
     flexiDebitCapMinutes: null,
@@ -672,8 +673,9 @@ describe('WeekView with its aside', () => {
     aside.group = summaryGroup();
     await user.click(toggle);
     expect(await screen.findByRole('columnheader', { name: 'Converted' })).toBeInTheDocument();
-    // Tuesday gives 1:50 in the worked example.
-    expect(row('Tue 6 Oct')).toHaveTextContent('1:50');
+    // Tuesday gives four 0:30 blocks (2:00) in the worked example, leaving +0:30.
+    expect(row('Tue 6 Oct')).toHaveTextContent('2:00');
+    expect(row('Tue 6 Oct')).toHaveTextContent('+0:30 over');
 
     aside.group = summaryGroup({ conversion: 'OFF', conversionToilMinutes: 0 });
     await user.click(toggle);

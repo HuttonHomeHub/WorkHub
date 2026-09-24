@@ -129,14 +129,19 @@ export function calculateHours(input: HoursInput, options: CalculateOptions = {}
     }
     // Only worked minutes can be converted. Crediting time off at most the
     // target (rule 4, in computeDay) keeps E within them; the clamp is a
-    // guard so the calculation can never fail.
+    // guard. Levelling converts whole blocks only (the week's terms: they
+    // never change mid-week); the rest of E stays as flexi on the days.
+    const blockMinutes = termsOn(weekStart).conversionBlockMinutes;
     const counted = weekDays.filter((day) => day.counted);
     const convertible = Math.min(
       excessMinutes,
       counted.reduce((sum, day) => sum + day.workedMinutes, 0),
     );
     const allocation =
-      conversion !== 'OFF' && convertible > 0 ? levelExcess(convertible, counted) : {};
+      conversion !== 'OFF' && convertible > 0
+        ? levelExcess(convertible, counted, blockMinutes)
+        : {};
+    const convertedMinutes = Object.values(allocation).reduce((sum, minutes) => sum + minutes, 0);
     for (const [date, minutes] of Object.entries(allocation)) {
       const day = byDate.get(date)!;
       if (conversion === 'APPLIED') {
@@ -151,6 +156,8 @@ export function calculateHours(input: HoursInput, options: CalculateOptions = {}
       settlementDate,
       conversion,
       excessMinutes,
+      blockMinutes,
+      convertedMinutes,
       allocation,
       toilMinutes: 0,
       overtimePaidMinutes: 0,

@@ -259,6 +259,72 @@ describe.skipIf(!hasDatabase)('Time summaries and balances API (e2e)', () => {
     ]);
   });
 
+  it('converts whole blocks and leaves the rest of the excess as flexi', async () => {
+    await post('work-terms', { effectiveFrom: '2026-10-05' });
+    // The worked example with Friday 5:15 (E = 2:45): five 0:30 blocks
+    // convert (Tue 1:30, Mon 0:30, Thu 0:30) and 0:15 stays as flexi.
+    await bstDay('2026-10-05', '08:00', '17:30');
+    await bstDay('2026-10-06', '07:30', '18:00');
+    await bstDay('2026-10-07', '08:00', '16:00');
+    await bstDay('2026-10-08', '08:00', '17:00');
+    await bstDay('2026-10-09', '08:00', '13:15', 0);
+    await post('excess-conversions', { weekStart: '2026-10-05' });
+
+    const days = await summaries({
+      from: '2026-10-05',
+      to: '2026-10-12',
+      groupBy: 'day',
+      asOf: '2026-10-10',
+    }).expect(200);
+    const converted = (days.body.data as { key: string; convertedMinutes: number }[]).map(
+      (group) => [group.key, group.convertedMinutes],
+    );
+    expect(converted.slice(0, 5)).toEqual([
+      ['2026-10-05', 30],
+      ['2026-10-06', 90],
+      ['2026-10-07', 0],
+      ['2026-10-08', 30],
+      ['2026-10-09', 0],
+    ]);
+    const week = await summaries({
+      from: '2026-10-05',
+      to: '2026-10-12',
+      asOf: '2026-10-10',
+    }).expect(200);
+    expect(week.body.data[0]).toMatchObject({
+      conversion: 'APPLIED',
+      excessMinutes: 165,
+      conversionBlockMinutes: 30,
+      conversionMinutes: 150,
+      convertedMinutes: 150,
+      flexiMinutes: 15,
+      conversionToilMinutes: 150,
+      flexiBalanceEndMinutes: 15,
+    });
+    expect((await balances('2026-10-10').expect(200)).body.data.flexiMinutes).toBe(15);
+  });
+
+  it('follows the conversion block in the week’s terms (1:00)', async () => {
+    await post('work-terms', { effectiveFrom: '2026-10-05', conversionBlockMinutes: 60 });
+    // Monday +1:45: one 1:00 block converts; 0:45 stays as flexi.
+    await bstDay('2026-10-05', '08:00', '17:45', 0);
+    for (const d of ['2026-10-06', '2026-10-07', '2026-10-08', '2026-10-09'])
+      await bstDay(d, '08:00', '16:00');
+    await post('excess-conversions', { weekStart: '2026-10-05' });
+    const week = await summaries({
+      from: '2026-10-05',
+      to: '2026-10-12',
+      asOf: '2026-10-10',
+    }).expect(200);
+    expect(week.body.data[0]).toMatchObject({
+      excessMinutes: 105,
+      conversionBlockMinutes: 60,
+      conversionMinutes: 60,
+      convertedMinutes: 60,
+      flexiMinutes: 45,
+    });
+  });
+
   it('answers at the edges of the 2000–2100 window, never a 500 (security review)', async () => {
     await post('work-terms', { effectiveFrom: '2100-11-29' });
     // Widening the last partial week of 2100 would end in 2101.

@@ -112,6 +112,15 @@ function ConversionSummary({ figures }: { figures: ThisWeekFigures }) {
     return <p className="text-muted-foreground">Nothing to convert</p>;
   }
   if (figures.conversion === 'OFF') return null;
+  // Rule 6: only whole blocks convert; the rest of E stays as flexi.
+  if (figures.convertedMinutes <= 0) {
+    return (
+      <p className="text-muted-foreground">
+        Less than one block ({formatDuration(figures.blockMinutes)}) to convert
+      </p>
+    );
+  }
+  const remainder = figures.excessMinutes - figures.convertedMinutes;
   const settlement = figures.settlementDate
     ? formatDate(figures.settlementDate, 'weekdayDayMonth')
     : null;
@@ -123,6 +132,9 @@ function ConversionSummary({ figures }: { figures: ThisWeekFigures }) {
           {overtimeText(figures.overtimePaidMinutes, figures.overtimeUnpaidMinutes)}
         </Figure>
       </dl>
+      {remainder > 0 ? (
+        <p className="text-muted-foreground">{formatDuration(remainder)} stays as flexi</p>
+      ) : null}
       {settlement ? (
         <p className="text-muted-foreground">
           {figures.conversion === 'APPLIED'
@@ -138,8 +150,10 @@ function ConversionSummary({ figures }: { figures: ThisWeekFigures }) {
  * The aside's "This week" panel (feature doc → UI → Aside, This week):
  * credited time against the target, the week's flexi before and after
  * conversion, the conversion switch, and with it on, the TOIL and overtime it
- * makes, as a preview until the settlement day and applied from then; or
- * "Nothing to convert" for a week that is net zero or negative.
+ * makes, as a preview until the settlement day and applied from then, and
+ * any remainder under a whole block that stays as flexi; or "Nothing to
+ * convert" for a week that is net zero or negative, and "Less than one block
+ * (0:30) to convert" when E is under one block.
  *
  * It loads the week's saved figures and its switch itself; pass `live` for
  * the week-local figures including unsaved rows.
@@ -180,7 +194,7 @@ export function ThisWeekPanel({ weekStart, asOf, live, recalculationNotice }: Th
           <Figure term="Week flexi">{formatFlexi(figures.rawFlexiMinutes)}</Figure>
           {converting ? (
             <Figure term="After conversion">
-              {formatFlexi(figures.rawFlexiMinutes - figures.excessMinutes)}
+              {formatFlexi(figures.rawFlexiMinutes - figures.convertedMinutes)}
             </Figure>
           ) : null}
         </dl>

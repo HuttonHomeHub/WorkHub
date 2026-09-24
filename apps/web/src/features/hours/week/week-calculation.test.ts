@@ -120,7 +120,8 @@ describe('calculateWeek', () => {
       publicHolidays: [],
       asOf: '2026-10-12',
     })!;
-    expect(on.days.map((d) => d.convertedMinutes)).toEqual([50, 110, 0, 20, 0, 0, 0]);
+    // Levelled in 0:30 blocks (rule 6): Mon 0:30, Tue 2:00, Thu 0:30.
+    expect(on.days.map((d) => d.convertedMinutes)).toEqual([30, 120, 0, 30, 0, 0, 0]);
     expect(weekTotals(on.days).flexiMinutes).toBe(0);
 
     // Before the settlement day (Friday), the conversion is a preview only.
@@ -229,6 +230,7 @@ describe('toEngineTerms', () => {
       bandEnd: '18:45',
       paidOvertimeAllowed: false,
       toilMonthlyCapMinutes: 450,
+      conversionBlockMinutes: 30,
       leaveDayMaxMinutes: 450,
       flexiCreditCapMinutes: null,
       flexiDebitCapMinutes: 600,

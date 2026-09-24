@@ -1,6 +1,8 @@
 import { defaultWorkTerms, formatDuration, formatTimeOfDay } from '@repo/domain';
 import {
   BALANCE_CAP_MAX_MINUTES,
+  CONVERSION_BLOCK_MAX_MINUTES,
+  CONVERSION_BLOCK_MIN_MINUTES,
   HOURS_YEAR_MAX,
   HOURS_YEAR_MIN,
   LARGE_MINUTES_MAX,
@@ -57,6 +59,10 @@ export const workTermsFormSchema = z
     bandEnd: timeOfDay,
     paidOvertimeAllowed: z.boolean(),
     toilMonthlyCapMinutes: requiredDuration({ max: BALANCE_CAP_MAX_MINUTES }),
+    conversionBlockMinutes: requiredDuration({
+      min: CONVERSION_BLOCK_MIN_MINUTES,
+      max: CONVERSION_BLOCK_MAX_MINUTES,
+    }),
     leaveDayMaxMinutes: requiredDuration({ max: MINUTES_PER_DAY }),
     flexiCreditCapMinutes: optionalDuration({ max: BALANCE_CAP_MAX_MINUTES }),
     flexiDebitCapMinutes: optionalDuration({ max: BALANCE_CAP_MAX_MINUTES }),
@@ -116,6 +122,7 @@ export function workTermsFormValues(
     bandEnd: source.bandEnd,
     paidOvertimeAllowed: source.paidOvertimeAllowed,
     toilMonthlyCapMinutes: durationText(source.toilMonthlyCapMinutes),
+    conversionBlockMinutes: durationText(source.conversionBlockMinutes),
     leaveDayMaxMinutes: durationText(source.leaveDayMaxMinutes),
     flexiCreditCapMinutes: durationText(source.flexiCreditCapMinutes),
     flexiDebitCapMinutes: durationText(source.flexiDebitCapMinutes),

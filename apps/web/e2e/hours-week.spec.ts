@@ -381,9 +381,9 @@ test('switches conversion on and off: a preview before settlement, applied from 
     .click();
   await expect(asideOf(page)).toContainText('Applied Fri 9 Oct');
   await expect(page.getByRole('columnheader', { name: 'Converted', exact: true })).toBeVisible();
-  // The worked example's levelling: Tuesday converts 1:50, and every day is +0:40 or less.
-  await expect(row(page, 'Tue 6 Oct')).toContainText('1:50');
-  await expect(row(page, 'Tue 6 Oct')).toContainText('+0:40 over');
+  // The worked example's levelling in 0:30 blocks: Tuesday converts 2:00 and keeps +0:30.
+  await expect(row(page, 'Tue 6 Oct')).toContainText('2:00');
+  await expect(row(page, 'Tue 6 Oct')).toContainText('+0:30 over');
   await expectNoA11yViolations(page);
 });
 
@@ -444,7 +444,7 @@ test('the browser totals equal the API totals for the worked-example week', asyn
   );
   await expect(figure(page, 'Week flexi')).toHaveText(flexi(api.rawFlexiMinutes!));
   await expect(figure(page, 'After conversion')).toHaveText(
-    flexi(api.rawFlexiMinutes! - api.excessMinutes!),
+    flexi(api.rawFlexiMinutes! - api.conversionMinutes!),
   );
   await expect(figure(page, 'TOIL')).toHaveText(hm(api.conversionToilMinutes!));
   await expect(figure(page, 'Overtime')).toHaveText(

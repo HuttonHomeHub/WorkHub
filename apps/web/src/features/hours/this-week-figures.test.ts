@@ -51,11 +51,35 @@ describe('liveWeekFigures', () => {
       creditedMinutes: 2430,
       rawFlexiMinutes: 180,
       excessMinutes: 180,
+      blockMinutes: 30,
+      convertedMinutes: 180,
     });
     // The same totals `time-summaries` builds with `summarise`.
     const [group] = summarise(result, '2026-10-05', '2026-10-12', 'week');
     expect(figures?.creditedMinutes).toBe(group?.creditedMinutes);
     expect(figures?.rawFlexiMinutes).toBe(group?.rawFlexiMinutes);
+  });
+
+  it('gives the whole blocks that convert, and 0 with the switch off', () => {
+    const short = [...days.slice(0, 4), day('2026-10-09', '08:00', '13:15', 0)];
+    const result = calculateHours({
+      terms: [defaultWorkTerms('2026-10-05')],
+      days: short,
+      conversions: ['2026-10-05'],
+      publicHolidays: [],
+      adjustments: [],
+      leaveYears: [],
+      asOf: '2026-10-12',
+    });
+    // E = 2:45: five 0:30 blocks convert, 0:15 stays as flexi.
+    expect(liveWeekFigures(result, '2026-10-05')).toMatchObject({
+      excessMinutes: 165,
+      blockMinutes: 30,
+      convertedMinutes: 150,
+    });
+    expect(liveWeekFigures(run('2026-10-12', []), '2026-10-05')).toMatchObject({
+      convertedMinutes: 0,
+    });
   });
 
   it('leaves out the TOIL and overtime split, which a one-week run gets wrong', () => {

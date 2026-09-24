@@ -1,4 +1,9 @@
-import { addDays, type ConversionState, type HoursResult } from '@repo/domain';
+import {
+  addDays,
+  type ConversionState,
+  DEFAULT_CONVERSION_BLOCK_MINUTES,
+  type HoursResult,
+} from '@repo/domain';
 
 import type { SummaryGroup } from './api/keys';
 
@@ -18,6 +23,13 @@ export interface ThisWeekFigures {
   settlementDate: string | null;
   /** E: the week's net positive flexi, which the switch converts. */
   excessMinutes: number;
+  /** The conversion block in the week's terms (rule 6). */
+  blockMinutes: number;
+  /**
+   * The whole blocks of E the conversion takes (preview or applied; 0 when
+   * off). The rest of E stays as flexi.
+   */
+  convertedMinutes: number;
   /** The conversion's TOIL and overtime (a preview before settlement). */
   toilMinutes: number;
   overtimePaidMinutes: number;
@@ -33,6 +45,8 @@ export function figuresFromGroup(group: SummaryGroup): ThisWeekFigures {
     conversion: group.conversion ?? 'OFF',
     settlementDate: group.settlementDate ?? null,
     excessMinutes: group.excessMinutes ?? 0,
+    blockMinutes: group.conversionBlockMinutes ?? DEFAULT_CONVERSION_BLOCK_MINUTES,
+    convertedMinutes: group.conversionMinutes ?? 0,
     toilMinutes: group.conversionToilMinutes ?? 0,
     overtimePaidMinutes: group.conversionOvertimePaidMinutes ?? 0,
     overtimeUnpaidMinutes: group.conversionOvertimeUnpaidMinutes ?? 0,
@@ -48,14 +62,19 @@ export function figuresFromGroup(group: SummaryGroup): ThisWeekFigures {
  */
 export type LiveWeekFigures = Pick<
   ThisWeekFigures,
-  'targetMinutes' | 'creditedMinutes' | 'rawFlexiMinutes' | 'excessMinutes'
+  | 'targetMinutes'
+  | 'creditedMinutes'
+  | 'rawFlexiMinutes'
+  | 'excessMinutes'
+  | 'blockMinutes'
+  | 'convertedMinutes'
 >;
 
 /**
  * The week's week-local figures from an engine result (`calculateWeek` in the
  * week view, over saved data plus unsaved rows), for `ThisWeekPanel`'s `live`
- * prop: credited against target, the week's raw flexi, and its excess E (so
- * "After conversion" follows typing too). `null` when the result does not
+ * prop: credited against target, the week's raw flexi, its excess E and the
+ * whole blocks of it that convert (so "After conversion" follows typing too). `null` when the result does not
  * cover the week.
  */
 export function liveWeekFigures(result: HoursResult, weekStart: string): LiveWeekFigures | null {
@@ -76,5 +95,7 @@ export function liveWeekFigures(result: HoursResult, weekStart: string): LiveWee
     creditedMinutes: credited,
     rawFlexiMinutes: rawFlexi,
     excessMinutes: week.excessMinutes,
+    blockMinutes: week.blockMinutes,
+    convertedMinutes: week.convertedMinutes,
   };
 }

@@ -52,6 +52,9 @@ export class WorkTermResponseDto {
   @ApiProperty()
   toilMonthlyCapMinutes!: number;
 
+  @ApiProperty({ description: 'Conversion turns whole blocks of this many minutes (rule 6).' })
+  conversionBlockMinutes!: number;
+
   @ApiProperty()
   leaveDayMaxMinutes!: number;
 
@@ -100,6 +103,7 @@ export class WorkTermResponseDto {
       bandEnd: fromDbTime(entity.bandEnd),
       paidOvertimeAllowed: entity.paidOvertimeAllowed,
       toilMonthlyCapMinutes: entity.toilMonthlyCapMinutes,
+      conversionBlockMinutes: entity.conversionBlockMinutes,
       leaveDayMaxMinutes: entity.leaveDayMaxMinutes,
       flexiCreditCapMinutes: entity.flexiCreditCapMinutes,
       flexiDebitCapMinutes: entity.flexiDebitCapMinutes,

@@ -47,6 +47,7 @@ export function toEngineTerms(row: WorkTerm): WorkTerms {
     bandEndMinutes: dbTimeMinutes(row.bandEnd),
     paidOvertimeAllowed: row.paidOvertimeAllowed,
     toilMonthlyCapMinutes: row.toilMonthlyCapMinutes,
+    conversionBlockMinutes: row.conversionBlockMinutes,
     leaveDayMaxMinutes: row.leaveDayMaxMinutes,
     flexiCreditCapMinutes: row.flexiCreditCapMinutes,
     flexiDebitCapMinutes: row.flexiDebitCapMinutes,

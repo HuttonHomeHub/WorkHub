@@ -144,39 +144,42 @@ model PublicHoliday {
 // - ck_work_terms_toil_monthly_cap_range, ck_work_terms_flexi_credit_cap_range,
 //   ck_work_terms_flexi_debit_cap_range: 0–10080 (one week of minutes; these
 //   are balances, not a single day, so the per-day 1440 bound is too tight);
+// - ck_work_terms_conversion_block_range: 1–480 (migration
+//   add_conversion_block; a block of at least a minute, at most 8:00);
 // - uq_work_terms_owner_id_effective_from_active: one active row per Monday
 //   (partial unique on deleted_at IS NULL); also the list/lookup index.
 model WorkTerm {
-  id                    String    @id @default(uuid(7)) @db.Uuid
-  ownerId               String    @map("owner_id") @db.Uuid
-  effectiveFrom         DateTime  @map("effective_from") @db.Date
-  targetMinutesMon      Int?      @default(450) @map("target_minutes_mon")
-  targetMinutesTue      Int?      @default(450) @map("target_minutes_tue")
-  targetMinutesWed      Int?      @default(450) @map("target_minutes_wed")
-  targetMinutesThu      Int?      @default(450) @map("target_minutes_thu")
-  targetMinutesFri      Int?      @default(450) @map("target_minutes_fri")
-  targetMinutesSat      Int?      @map("target_minutes_sat")
-  targetMinutesSun      Int?      @map("target_minutes_sun")
-  minMinutesMon         Int?      @default(450) @map("min_minutes_mon")
-  minMinutesTue         Int?      @default(450) @map("min_minutes_tue")
-  minMinutesWed         Int?      @default(450) @map("min_minutes_wed")
-  minMinutesThu         Int?      @default(450) @map("min_minutes_thu")
-  minMinutesFri         Int?      @default(330) @map("min_minutes_fri")
-  minMinutesSat         Int?      @map("min_minutes_sat")
-  minMinutesSun         Int?      @map("min_minutes_sun")
-  breakThresholdMinutes Int       @default(360) @map("break_threshold_minutes")
-  breakMinimumMinutes   Int       @default(30) @map("break_minimum_minutes")
-  bandStart             DateTime  @default(dbgenerated("'07:00:00'::time without time zone")) @map("band_start") @db.Time(0)
-  bandEnd               DateTime  @default(dbgenerated("'19:00:00'::time without time zone")) @map("band_end") @db.Time(0)
-  paidOvertimeAllowed   Boolean   @default(false) @map("paid_overtime_allowed")
-  toilMonthlyCapMinutes Int       @default(450) @map("toil_monthly_cap_minutes")
-  leaveDayMaxMinutes    Int       @default(450) @map("leave_day_max_minutes")
-  flexiCreditCapMinutes Int?      @map("flexi_credit_cap_minutes")
-  flexiDebitCapMinutes  Int?      @map("flexi_debit_cap_minutes")
-  version               Int       @default(1)
-  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
-  deletedAt             DateTime? @map("deleted_at") @db.Timestamptz(3)
+  id                     String    @id @default(uuid(7)) @db.Uuid
+  ownerId                String    @map("owner_id") @db.Uuid
+  effectiveFrom          DateTime  @map("effective_from") @db.Date
+  targetMinutesMon       Int?      @default(450) @map("target_minutes_mon")
+  targetMinutesTue       Int?      @default(450) @map("target_minutes_tue")
+  targetMinutesWed       Int?      @default(450) @map("target_minutes_wed")
+  targetMinutesThu       Int?      @default(450) @map("target_minutes_thu")
+  targetMinutesFri       Int?      @default(450) @map("target_minutes_fri")
+  targetMinutesSat       Int?      @map("target_minutes_sat")
+  targetMinutesSun       Int?      @map("target_minutes_sun")
+  minMinutesMon          Int?      @default(450) @map("min_minutes_mon")
+  minMinutesTue          Int?      @default(450) @map("min_minutes_tue")
+  minMinutesWed          Int?      @default(450) @map("min_minutes_wed")
+  minMinutesThu          Int?      @default(450) @map("min_minutes_thu")
+  minMinutesFri          Int?      @default(330) @map("min_minutes_fri")
+  minMinutesSat          Int?      @map("min_minutes_sat")
+  minMinutesSun          Int?      @map("min_minutes_sun")
+  breakThresholdMinutes  Int       @default(360) @map("break_threshold_minutes")
+  breakMinimumMinutes    Int       @default(30) @map("break_minimum_minutes")
+  bandStart              DateTime  @default(dbgenerated("'07:00:00'::time without time zone")) @map("band_start") @db.Time(0)
+  bandEnd                DateTime  @default(dbgenerated("'19:00:00'::time without time zone")) @map("band_end") @db.Time(0)
+  paidOvertimeAllowed    Boolean   @default(false) @map("paid_overtime_allowed")
+  toilMonthlyCapMinutes  Int       @default(450) @map("toil_monthly_cap_minutes")
+  conversionBlockMinutes Int       @default(30) @map("conversion_block_minutes")
+  leaveDayMaxMinutes     Int       @default(450) @map("leave_day_max_minutes")
+  flexiCreditCapMinutes  Int?      @map("flexi_credit_cap_minutes")
+  flexiDebitCapMinutes   Int?      @map("flexi_debit_cap_minutes")
+  version                Int       @default(1)
+  createdAt              DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt              DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt              DateTime? @map("deleted_at") @db.Timestamptz(3)
 
   owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 

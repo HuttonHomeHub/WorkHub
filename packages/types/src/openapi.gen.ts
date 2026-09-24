@@ -455,6 +455,8 @@ export interface components {
       bandEnd: string;
       paidOvertimeAllowed: boolean;
       toilMonthlyCapMinutes: number;
+      /** @description Conversion turns whole blocks of this many minutes (rule 6). */
+      conversionBlockMinutes: number;
       leaveDayMaxMinutes: number;
       flexiCreditCapMinutes: number | null;
       flexiDebitCapMinutes: number | null;
@@ -514,6 +516,11 @@ export interface components {
       paidOvertimeAllowed: boolean;
       /** @default 450 */
       toilMonthlyCapMinutes: number;
+      /**
+       * @description Conversion turns whole blocks of this many minutes into TOIL and overtime; the rest of the week’s excess stays as flexi.
+       * @default 30
+       */
+      conversionBlockMinutes: number;
       /** @default 450 */
       leaveDayMaxMinutes: number;
       flexiCreditCapMinutes?: number | null;
@@ -549,6 +556,11 @@ export interface components {
       paidOvertimeAllowed: boolean;
       /** @default 450 */
       toilMonthlyCapMinutes: number;
+      /**
+       * @description Conversion turns whole blocks of this many minutes into TOIL and overtime; the rest of the week’s excess stays as flexi.
+       * @default 30
+       */
+      conversionBlockMinutes: number;
       /** @default 450 */
       leaveDayMaxMinutes: number;
       flexiCreditCapMinutes?: number | null;
@@ -865,6 +877,10 @@ export interface components {
       settlementDate?: string | null;
       /** @description Week groups only: E, the net positive flexi. */
       excessMinutes?: number;
+      /** @description Week groups only: the conversion block in the week’s terms (rule 6). */
+      conversionBlockMinutes?: number;
+      /** @description Week groups only: the whole blocks of E the conversion takes, preview or applied (0 when off); the rest of E stays as flexi. */
+      conversionMinutes?: number;
       /** @description Week groups only: TOIL from the conversion (preview or applied). */
       conversionToilMinutes?: number;
       /** @description Week groups only: paid overtime from the conversion. */

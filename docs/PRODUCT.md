@@ -119,24 +119,24 @@ Use these terms consistently in code, UI copy and docs. Tool-specific detail
 lives in each tool's feature doc; the hours tracker's rules are in
 [features/hours-tracker.md](features/hours-tracker.md).
 
-| Term                          | Meaning                                                                                                                                |
-| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| **Tool**                      | A self-contained part of WorkHub with its own sidebar entry, routes, API modules and data, such as Hours (ADR-0020).                   |
-| **Core data**                 | Records more than one tool needs, such as bank holidays. Tools read them; core never depends on a tool (ADR-0020).                     |
-| **Work terms**                | The owner's effective-dated working settings: flexi targets, daily minimums, break rule, working band, caps and paid overtime allowed. |
-| **Flexi target**              | The time a working day is expected to credit: 7:30 Mon–Fri, so 37:30 a week. Drives the flexi calculation.                             |
-| **Daily minimum**             | The least time to work on a day (7:30 Mon–Thu, 5:30 Fri). Raises a warning only; it never changes a number.                            |
-| **Flexi**                     | Credited time minus the flexi target, accrued day by day into a balance that can go negative.                                          |
-| **TOIL**                      | Time off in lieu, converted from excess flexi. It must be taken in the calendar month it is placed in.                                 |
-| **TOIL cap**                  | The most TOIL a calendar month can hold: 7:30. Converted time beyond it becomes overtime.                                              |
-| **Overtime (paid or unpaid)** | Converted time over the TOIL cap, or TOIL unused at month end. Paid when paid overtime is allowed on that date, otherwise unpaid.      |
-| **Paid overtime allowed**     | A work terms setting, off by default, that makes overtime paid from its effective date.                                                |
-| **Leave year and allowance**  | Leave runs 1 January to 31 December against an allowance in hours: 247:30, which includes bank holidays.                               |
-| **Bought leave**              | An optional extra 37:30 of leave added to a single leave year.                                                                         |
-| **Bank holiday credit**       | 7:30 credited on a working day that is an England and Wales bank holiday, and deducted from the leave allowance.                       |
-| **Working band**              | The expected window for work, 07:00–19:00 by default. Time outside it raises a warning.                                                |
-| **Settlement**                | The point at which a week's excess conversion applies: the week's last working day, Friday by default.                                 |
-| **Excess conversion**         | A per-week switch. When on, the week's positive flexi at settlement becomes TOIL up to the cap, then overtime, spread across days.     |
+| Term                          | Meaning                                                                                                                                                                                   |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Tool**                      | A self-contained part of WorkHub with its own sidebar entry, routes, API modules and data, such as Hours (ADR-0020).                                                                      |
+| **Core data**                 | Records more than one tool needs, such as bank holidays. Tools read them; core never depends on a tool (ADR-0020).                                                                        |
+| **Work terms**                | The owner's effective-dated working settings: flexi targets, daily minimums, break rule, working band, caps and paid overtime allowed.                                                    |
+| **Flexi target**              | The time a working day is expected to credit: 7:30 Mon–Fri, so 37:30 a week. Drives the flexi calculation.                                                                                |
+| **Daily minimum**             | The least time to work on a day (7:30 Mon–Thu, 5:30 Fri). Raises a warning only; it never changes a number.                                                                               |
+| **Flexi**                     | Credited time minus the flexi target, accrued day by day into a balance that can go negative.                                                                                             |
+| **TOIL**                      | Time off in lieu, converted from excess flexi. It must be taken in the calendar month it is placed in.                                                                                    |
+| **TOIL cap**                  | The most TOIL a calendar month can hold: 7:30. Converted time beyond it becomes overtime.                                                                                                 |
+| **Overtime (paid or unpaid)** | Converted time over the TOIL cap, or TOIL unused at month end. Paid when paid overtime is allowed on that date, otherwise unpaid.                                                         |
+| **Paid overtime allowed**     | A work terms setting, off by default, that makes overtime paid from its effective date.                                                                                                   |
+| **Leave year and allowance**  | Leave runs 1 January to 31 December against an allowance in hours: 247:30, which includes bank holidays.                                                                                  |
+| **Bought leave**              | An optional extra 37:30 of leave added to a single leave year.                                                                                                                            |
+| **Bank holiday credit**       | 7:30 credited on a working day that is an England and Wales bank holiday, and deducted from the leave allowance.                                                                          |
+| **Working band**              | The expected window for work, 07:00–19:00 by default. Time outside it raises a warning.                                                                                                   |
+| **Settlement**                | The point at which a week's excess conversion applies: the week's last working day, Friday by default.                                                                                    |
+| **Excess conversion**         | A per-week switch. When on, whole blocks (default 0:30) of the week's positive flexi at settlement become TOIL up to the cap, then overtime, spread across days; the rest stays as flexi. |
 
 ## Feature inventory
 

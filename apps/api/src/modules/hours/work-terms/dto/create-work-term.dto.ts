@@ -1,5 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { BALANCE_CAP_MAX_MINUTES, MINUTES_PER_DAY } from '@repo/types';
+import {
+  BALANCE_CAP_MAX_MINUTES,
+  CONVERSION_BLOCK_DEFAULT_MINUTES,
+  CONVERSION_BLOCK_MAX_MINUTES,
+  CONVERSION_BLOCK_MIN_MINUTES,
+  MINUTES_PER_DAY,
+} from '@repo/types';
 import { Type } from 'class-transformer';
 import {
   IsBoolean,
@@ -88,6 +94,19 @@ export class CreateWorkTermDto {
   @Min(0)
   @Max(BALANCE_CAP_MAX_MINUTES)
   toilMonthlyCapMinutes?: number;
+
+  @ApiPropertyOptional({
+    minimum: CONVERSION_BLOCK_MIN_MINUTES,
+    maximum: CONVERSION_BLOCK_MAX_MINUTES,
+    default: CONVERSION_BLOCK_DEFAULT_MINUTES,
+    description:
+      'Conversion turns whole blocks of this many minutes into TOIL and overtime; the rest of the week’s excess stays as flexi.',
+  })
+  @IsOmittable()
+  @IsInt()
+  @Min(CONVERSION_BLOCK_MIN_MINUTES)
+  @Max(CONVERSION_BLOCK_MAX_MINUTES)
+  conversionBlockMinutes?: number;
 
   @ApiPropertyOptional({ minimum: 0, maximum: MINUTES_PER_DAY, default: 450 })
   @IsOmittable()

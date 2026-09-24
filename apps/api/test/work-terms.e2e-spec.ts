@@ -91,6 +91,7 @@ describe.skipIf(!hasDatabase)('Work terms API (e2e)', () => {
       bandEnd: '19:00',
       paidOvertimeAllowed: false,
       toilMonthlyCapMinutes: 450,
+      conversionBlockMinutes: 30,
       leaveDayMaxMinutes: 450,
       flexiCreditCapMinutes: null,
       flexiDebitCapMinutes: null,
@@ -225,6 +226,42 @@ describe.skipIf(!hasDatabase)('Work terms API (e2e)', () => {
     // The stored minimums are untouched by the rejected bodies.
     const row = await request(server()).get(`${base}/${id}`).expect(200);
     expect(row.body.data).toMatchObject({ minimumMinutes: { mon: 450, fri: 330 }, version: 1 });
+  });
+
+  it('stores a custom conversion block, and keeps it through an update that omits it', async () => {
+    const res = await create({ effectiveFrom: '2026-10-05', conversionBlockMinutes: 15 }).expect(
+      201,
+    );
+    expect(res.body.data.conversionBlockMinutes).toBe(15);
+    const id = res.body.data.id as string;
+    const updated = await request(server())
+      .patch(`${base}/${id}`)
+      .send({ version: 1, toilMonthlyCapMinutes: 600 })
+      .expect(200);
+    expect(updated.body.data).toMatchObject({ conversionBlockMinutes: 15, version: 2 });
+    const changed = await request(server())
+      .patch(`${base}/${id}`)
+      .send({ version: 2, conversionBlockMinutes: 60 })
+      .expect(200);
+    expect(changed.body.data.conversionBlockMinutes).toBe(60);
+  });
+
+  it('rejects a conversion block outside 1–480, a fraction and null (422)', async () => {
+    for (const conversionBlockMinutes of [0, 481, 1.5, -30, null]) {
+      const res = await create({ effectiveFrom: '2026-10-05', conversionBlockMinutes }).expect(422);
+      expect(res.body.error.code).toBe('VALIDATION_FAILED');
+    }
+    await create({ effectiveFrom: '2026-10-05', conversionBlockMinutes: 1 }).expect(201);
+    await create({ effectiveFrom: '2026-10-12', conversionBlockMinutes: 480 }).expect(201);
+    const id = (await create({ effectiveFrom: '2026-10-19' }).expect(201)).body.data.id as string;
+    await request(server())
+      .patch(`${base}/${id}`)
+      .send({ version: 1, conversionBlockMinutes: null })
+      .expect(422);
+    // The database agrees (ck_work_terms_conversion_block_range).
+    await expect(
+      prisma.workTerm.update({ where: { id }, data: { conversionBlockMinutes: 481 } }),
+    ).rejects.toThrow();
   });
 
   it('still accepts null to clear a flexi cap', async () => {

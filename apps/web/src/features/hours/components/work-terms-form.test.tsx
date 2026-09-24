@@ -63,6 +63,35 @@ describe('WorkTermsForm', () => {
     });
   });
 
+  it('has a conversion block, 0:30 by default, that submits in minutes', async () => {
+    const user = userEvent.setup();
+    const { onSubmit } = renderForm();
+    const block = screen.getByLabelText('Conversion block');
+    expect(block).toHaveValue('0:30');
+    expect(block).toHaveAccessibleDescription(
+      expect.stringContaining(
+        'Conversion turns whole blocks into TOIL and overtime; the rest stays as flexi. Default 0:30.',
+      ),
+    );
+
+    await user.clear(block);
+    await user.type(block, '15m');
+    await user.click(screen.getByRole('button', { name: 'Save new terms' }));
+    const [values] = onSubmit.mock.calls[0] as [Record<string, unknown>];
+    expect(values).toMatchObject({ conversionBlockMinutes: 15 });
+  });
+
+  it('flags a conversion block of 0:00', async () => {
+    const user = userEvent.setup();
+    const { onSubmit } = renderForm();
+    const block = screen.getByLabelText('Conversion block');
+    await user.clear(block);
+    await user.type(block, '0');
+    await user.click(screen.getByRole('button', { name: 'Save new terms' }));
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(block).toHaveAccessibleDescription(expect.stringContaining('Enter more than 0:00.'));
+  });
+
   it('flags a minimum above its target, linked to the field, and focuses the first error', async () => {
     const user = userEvent.setup();
     const { onSubmit } = renderForm();

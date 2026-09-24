@@ -28,6 +28,8 @@ export function summaryGroup(overrides: Partial<SummaryGroup> = {}): SummaryGrou
     conversion: 'APPLIED',
     settlementDate: '2026-10-09',
     excessMinutes: 180,
+    conversionBlockMinutes: 30,
+    conversionMinutes: 180,
     conversionToilMinutes: 60,
     conversionOvertimePaidMinutes: 0,
     conversionOvertimeUnpaidMinutes: 120,

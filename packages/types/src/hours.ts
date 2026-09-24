@@ -10,6 +10,17 @@ export const MINUTES_PER_DAY = 1440;
 /** The most a balance cap (TOIL a month, flexi credit or debit) may be: a week. */
 export const BALANCE_CAP_MAX_MINUTES = 10_080;
 
+/**
+ * The conversion block (rule 6): conversion turns whole blocks of this many
+ * minutes into TOIL and overtime, and the rest of a week's excess stays as
+ * flexi. At least a minute (a block of 1 is minute-by-minute levelling); at
+ * most 8:00, the longest block a timesheet could sensibly take, since a block
+ * over a day's target would rarely convert anything.
+ */
+export const CONVERSION_BLOCK_MIN_MINUTES = 1;
+export const CONVERSION_BLOCK_MAX_MINUTES = 480;
+export const CONVERSION_BLOCK_DEFAULT_MINUTES = 30;
+
 /** The most a leave allowance, or the size of a time adjustment, may be. */
 export const LARGE_MINUTES_MAX = 100_000;
 

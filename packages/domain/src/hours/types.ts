@@ -35,6 +35,11 @@ export interface WorkTerms {
   bandEndMinutes: number;
   paidOvertimeAllowed: boolean;
   toilMonthlyCapMinutes: number;
+  /**
+   * Rule 6: conversion turns whole blocks of this many minutes into TOIL and
+   * overtime; the rest of the week's excess stays as flexi.
+   */
+  conversionBlockMinutes: number;
   leaveDayMaxMinutes: number;
   flexiCreditCapMinutes: number | null;
   flexiDebitCapMinutes: number | null;
@@ -148,7 +153,14 @@ export interface WeekResult {
   conversion: ConversionState;
   /** E: the week's net positive flexi over counted days. */
   excessMinutes: number;
-  /** Per-date allocation of E (applied or preview). */
+  /** The conversion block in force for the week (terms never change mid-week). */
+  blockMinutes: number;
+  /**
+   * The minutes the conversion takes from E (applied or preview): whole
+   * blocks, 0 when the switch is off. The rest of E stays as flexi.
+   */
+  convertedMinutes: number;
+  /** Per-date allocation of the converted minutes (applied or preview). */
   allocation: Record<IsoDate, number>;
   toilMinutes: number;
   overtimePaidMinutes: number;

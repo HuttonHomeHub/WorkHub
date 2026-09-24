@@ -60,6 +60,7 @@ function DurationField({
     | 'breakThresholdMinutes'
     | 'breakMinimumMinutes'
     | 'toilMonthlyCapMinutes'
+    | 'conversionBlockMinutes'
     | 'leaveDayMaxMinutes'
     | 'flexiCreditCapMinutes'
     | 'flexiDebitCapMinutes';
@@ -309,6 +310,12 @@ export function WorkTermsForm({
               control={form.control}
               name="toilMonthlyCapMinutes"
               label="TOIL cap a month"
+            />
+            <DurationField
+              control={form.control}
+              name="conversionBlockMinutes"
+              label="Conversion block"
+              description="Conversion turns whole blocks into TOIL and overtime; the rest stays as flexi. Default 0:30."
             />
             <DurationField
               control={form.control}

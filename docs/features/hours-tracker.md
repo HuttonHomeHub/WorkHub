@@ -23,7 +23,8 @@ When this ships the owner can:
   balance can go negative;
 - switch on "convert this week's excess" for a week. At settlement the week's
   net excess becomes TOIL, up to 7:30 a month, and the rest becomes overtime,
-  spread over the days by levelling;
+  spread over the days by levelling in whole blocks (0:30 by default); minutes
+  short of a block stay as flexi;
 - see unused TOIL convert to overtime at month end. Overtime is paid only while
   paid overtime is allowed in the settings;
 - record leave in hours against a 247:30 yearly allowance, with England and
@@ -36,21 +37,21 @@ When this ships the owner can:
 Use these terms in code, UI copy and docs (they move to PRODUCT.md's glossary
 on approval). Every duration is whole minutes.
 
-| Term                  | Meaning                                                                                                                            |
-| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| **Work day**          | One row for a date: an optional start and end, break, leave, TOIL taken, and whether a bank holiday was worked.                    |
-| **Worked time**       | The span from start to end, minus the deducted break (rule 3).                                                                     |
-| **Credited time**     | Worked time + leave + TOIL taken + bank holiday credit.                                                                            |
-| **Daily target**      | The time a working day is expected to credit for flexi: 7:30 Mon–Fri. It drives the maths.                                         |
-| **Daily minimum**     | The least time the owner should work on a day: 7:30 Mon–Thu, 5:30 Fri. It raises a warning only and never changes a number.        |
-| **Day flexi**         | Credited time minus the daily target (the target is 0 on a non-working day), less any minutes converted on that day.               |
-| **Settlement day**    | The last working day of a week (Friday by default). The week's conversion applies from then.                                       |
-| **Excess conversion** | The owner's per-week switch. When on, the week's net positive flexi at settlement becomes TOIL and overtime.                       |
-| **TOIL**              | Converted time to be taken off in the same calendar month; at most 7:30 a month.                                                   |
-| **Overtime**          | Converted time over the TOIL cap, or TOIL unused at month end. **Paid** if paid overtime is allowed on that date, else **unpaid**. |
-| **Work terms**        | Effective-dated settings: targets, minimums, break rule, band, paid overtime allowed, caps, maximum leave per day.                 |
-| **Leave year**        | 1 January to 31 December, with an allowance in hours (247:30, plus 37:30 bought leave when chosen).                                |
-| **Time adjustment**   | A signed, dated correction: an opening balance, a confirmed flexi forfeit, a correction.                                           |
+| Term                  | Meaning                                                                                                                                                             |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Work day**          | One row for a date: an optional start and end, break, leave, TOIL taken, and whether a bank holiday was worked.                                                     |
+| **Worked time**       | The span from start to end, minus the deducted break (rule 3).                                                                                                      |
+| **Credited time**     | Worked time + leave + TOIL taken + bank holiday credit.                                                                                                             |
+| **Daily target**      | The time a working day is expected to credit for flexi: 7:30 Mon–Fri. It drives the maths.                                                                          |
+| **Daily minimum**     | The least time the owner should work on a day: 7:30 Mon–Thu, 5:30 Fri. It raises a warning only and never changes a number.                                         |
+| **Day flexi**         | Credited time minus the daily target (the target is 0 on a non-working day), less any minutes converted on that day.                                                |
+| **Settlement day**    | The last working day of a week (Friday by default). The week's conversion applies from then.                                                                        |
+| **Excess conversion** | The owner's per-week switch. When on, whole blocks (default 0:30) of the week's net positive flexi at settlement become TOIL and overtime; the rest stays as flexi. |
+| **TOIL**              | Converted time to be taken off in the same calendar month; at most 7:30 a month.                                                                                    |
+| **Overtime**          | Converted time over the TOIL cap, or TOIL unused at month end. **Paid** if paid overtime is allowed on that date, else **unpaid**.                                  |
+| **Work terms**        | Effective-dated settings: targets, minimums, break rule, band, paid overtime allowed, caps, the conversion block, maximum leave per day.                            |
+| **Leave year**        | 1 January to 31 December, with an allowance in hours (247:30, plus 37:30 bought leave when chosen).                                                                 |
+| **Time adjustment**   | A signed, dated correction: an opening balance, a confirmed flexi forfeit, a correction.                                                                            |
 
 ## Acceptance criteria
 
@@ -69,7 +70,8 @@ on approval). Every duration is whole minutes.
       returns after saving.
 - [ ] With the week's conversion switch on, the week's net positive flexi at
       settlement becomes TOIL, up to the monthly 7:30 cap by allocation date,
-      and then overtime. It is spread over days by the
+      and then overtime, in whole conversion blocks (0:30 by default); the rest
+      stays as flexi. It is spread over days by the
       [levelling rule](#rule-6-allocating-a-weeks-excess-to-days). A preview
       shows the result before settlement.
 - [ ] TOIL unused at month end becomes overtime. Overtime is paid only where the
@@ -141,12 +143,20 @@ same outputs.
    - **Excess** E = max(0, Σ raw day flexi over the week's counted days).
    - If the week's conversion switch is **off**, nothing converts: every day
      keeps its raw flexi.
-   - If it is **on** and `asOf` is on or after the settlement day, E is
-     allocated to days by [levelling](#rule-6-allocating-a-weeks-excess-to-days).
-     Each day's **day flexi** = raw − allocated minutes, and the allocated
-     minutes on that date become **converted minutes**.
+   - If it is **on** and `asOf` is on or after the settlement day, the
+     **convertible** minutes are the largest whole number of **conversion
+     blocks** (a work terms setting, default 0:30) in E. They are allocated to
+     days by [levelling](#rule-6-allocating-a-weeks-excess-to-days). Each
+     day's **day flexi** = raw − allocated minutes, and the allocated minutes
+     on that date become **converted minutes**.
+   - The rest of E (less than one block) is not converted: it **stays as
+     flexi** on the days, because raw flexi is unchanged and only allocated
+     minutes are subtracted. With E = 2:45, 2:30 converts and 0:15 stays in the
+     flexi balance.
    - A week with a net zero or negative total has E = 0, so nothing is
      allocated. The switch stays on and the week shows "Nothing to convert".
+     A week whose E is more than 0 but under one block converts nothing and
+     shows "Less than one block (0:30) to convert"; E stays as flexi.
    - Before settlement, the conversion is only a **preview** and changes no
      balance.
    - Weekend time entered after settlement joins the same week and recomputes
@@ -154,7 +164,9 @@ same outputs.
 7. **TOIL cap by allocation date.** For each calendar month, walk its days in
    date order and add up converted minutes as TOIL until the month's TOIL
    reaches the cap (default 7:30). Converted minutes beyond the cap become
-   **overtime** on their date. In a week that spans two months, each day's
+   **overtime** on their date. The cap is a balance rule, so a day's TOIL and
+   overtime can split in the middle of a block (with 7:15 already converted,
+   a 0:30 block is 0:15 TOIL and 0:15 overtime). In a week that spans two months, each day's
    converted minutes count against **the month that date falls in**.
 8. **Month end.** Once `asOf` is after a month's last day:
    - unused TOIL = the month's TOIL (rule 7) − the TOIL taken in the month;
@@ -194,19 +206,34 @@ same outputs.
 #### Rule 6: allocating a week's excess to days
 
 This is the owner's "best place to average hours": take the week's excess from
-the days furthest above their target, levelling them down together.
+the days furthest above their target, levelling them down together, in the
+whole blocks the owner's timesheet takes.
 
-1. For each counted day in the week with worked time, **surplus** = worked −
+> **Changed on 2026-09-23 at the owner's request:** "i have to input my time
+> sheet in 30min blocks so leveling to 0:23 isn't correct". Levelling now
+> moves whole **conversion blocks** (default 0:30, an effective-dated work
+> terms setting), and the minutes short of a block stay as flexi. It used to
+> move single minutes.
+
+1. The block B is the conversion block in the week's terms (terms never change
+   mid-week). The **convertible** minutes are the largest whole number of
+   blocks ≤ min(E, the week's worked minutes).
+2. For each counted day in the week with worked time, **surplus** = worked −
    target (target 0 on a non-working day).
-2. **Take one minute at a time** from the day with the **largest remaining
+3. **Take one block at a time** from the day with the **largest remaining
    surplus**. On a tie, take from the **latest date**.
-3. A day never gives more than its worked minutes. A surplus may go below zero
-   if that is where the level falls.
-4. Stop when E minutes are allocated.
+4. A day never gives more than its worked minutes, so a block comes only from
+   a day with at least a block of worked minutes left. If no day can give a
+   whole block, stop. A surplus may go below zero if that is where the level
+   falls.
+5. Stop when the convertible minutes are allocated. Every day's converted
+   minutes are a multiple of B.
+6. The rest, E − converted, stays as flexi on the days (it is never
+   allocated).
 
-The result is the same as levelling the highest days down to a common line.
-Rule 4 caps time off at the target, so E is never more than the week's worked
-minutes, and the loop always finishes.
+Previews use the same rule. With B = 1 minute this is the original
+minute-by-minute levelling, the same as levelling the highest days down to a
+common line.
 
 #### Worked example
 
@@ -227,26 +254,33 @@ Fri; break 0:30 over 6:00; TOIL cap 7:30; paid overtime **not allowed**.
 ¹ The flexi balance starts from 0 for the example. Friday's 5:30 meets its
 minimum, so there is no warning.
 
-**Same week, switch on.** Settlement is Fri 9 Oct, and E = **3:00**. Surpluses
-are Mon 1:30, Tue 2:30, Wed 0:00, Thu 1:00, Fri −2:00.
+**Same week, switch on.** Settlement is Fri 9 Oct, and E = **3:00**: six 0:30
+blocks, so all of it converts. Surpluses are Mon 1:30, Tue 2:30, Wed 0:00,
+Thu 1:00, Fri −2:00. One block at a time, from the largest remaining surplus,
+latest date first on a tie:
 
-1. Tue gives 1:00 and is level with Mon at 1:30.
-2. Mon and Tue give 0:30 each and are level with Thu at 1:00 (2:00 given so far).
-3. Mon, Tue and Thu give 0:20 each and level at 0:40. The loop takes one minute
-   at a time, latest date first on ties.
+1. Tue (2:30 → 2:00);
+2. Tue (2:00 → 1:30);
+3. Tue (tie with Mon at 1:30; Tue is later → 1:00);
+4. Mon (1:30 → 1:00);
+5. Thu (Mon, Tue and Thu tie at 1:00; Thu is latest → 0:30);
+6. Tue (Mon and Tue tie at 1:00; Tue is later → 0:30).
 
 | Day   | Raw flexi | Converted | Day flexi | Month-to-date TOIL²  | TOIL | Overtime (unpaid) |
 | ----- | --------- | --------- | --------- | -------------------- | ---- | ----------------- |
-| Mon 5 | +1:30     | 0:50      | +0:40     | 6:30 → 7:20          | 0:50 | —                 |
-| Tue 6 | +2:30     | 1:50      | +0:40     | 7:20 → 7:30 (capped) | 0:10 | 1:40              |
+| Mon 5 | +1:30     | 0:30      | +1:00     | 6:30 → 7:00          | 0:30 | —                 |
+| Tue 6 | +2:30     | 2:00      | +0:30     | 7:00 → 7:30 (capped) | 0:30 | 1:30              |
 | Wed 7 | 0:00      | —         | 0:00      | 7:30                 | —    | —                 |
-| Thu 8 | +1:00     | 0:20      | +0:40     | 7:30 (capped)        | —    | 0:20              |
+| Thu 8 | +1:00     | 0:30      | +0:30     | 7:30 (capped)        | —    | 0:30              |
 | Fri 9 | −2:00     | —         | −2:00     | 7:30                 | —    | —                 |
 
 ² Assumes 6:30 of TOIL was already converted on 1–2 October.
 
 - The week's flexi is now 0:00, and 3:00 was converted: **1:00 TOIL and 2:00
   overtime**.
+- **With a remainder:** had Friday been 5:15 (E = 2:45), five blocks (2:30)
+  would convert (Tue, Tue, Tue, Mon, Thu: Mon 0:30, Tue 1:30, Thu 0:30), and
+  **0:15 stays as flexi**.
 - The overtime is **unpaid**, because paid overtime is not allowed (rule 9).
 - If the owner takes 5:00 TOIL in October, the unused 7:30 − 5:00 = **2:30**
   becomes unpaid overtime on 31 October (rule 8).
@@ -262,7 +296,9 @@ are Mon 1:30, Tue 2:30, Wed 0:00, Thu 1:00, Fri −2:00.
 | Thu 1  | 8:30   | +1:00     | 1:00      | October   |
 | Fri 2  | 7:30   | 0:00      | —         | October   |
 
-- E = 3:00. Levelling takes Mon down to 1:00, then Mon and Thu down to 0:00.
+- E = 3:00, six 0:30 blocks: Mon, Mon, Thu (tie at 1:00, latest), Mon, Thu
+  (tie at 0:30, latest), Mon. Mon gives 2:00 and Thu 1:00, as minute-by-minute
+  levelling would, because both surpluses are whole blocks.
 - The 2:00 on 28 Sep is **September TOIL**. September has ended by settlement,
   so it is unused and becomes **unpaid overtime on 30 Sep** (rule 8). Until
   2 Oct, September's figures did not include it (rule 6); rule 11 reports the
@@ -287,16 +323,22 @@ are Mon 1:30, Tue 2:30, Wed 0:00, Thu 1:00, Fri −2:00.
   - a worked bank holiday;
   - a terms change on a Monday.
 - **Conversion:**
-  - the worked example, switch off and on;
-  - the preview before settlement vs applied from settlement;
+  - the worked example, switch off and on (0:30 blocks);
+  - the preview before settlement vs applied from settlement, both in blocks;
   - a net negative week;
-  - all surpluses equal (latest date wins);
+  - all surpluses equal (latest date wins), and E one minute short of whole
+    blocks (the earliest day gives one block less; the rest stays as flexi);
   - allocation needing minutes below the target;
+  - a remainder: E = 2:45 converts 2:30 and 0:15 stays as flexi;
+  - a 0:15 and a 1:00 block; E under one block (nothing converts); a block
+    larger than E;
+  - converted minutes per day always a multiple of the block, and a block
+    taken only from a day with a whole block of worked time left;
   - weekend time added after settlement;
   - a settlement day other than Friday.
 - **Months:**
   - the cross-month example;
-  - the cap exactly at 7:30 and one minute over;
+  - the cap exactly at 7:30 and one minute over (mid-block);
   - month-end unused TOIL, positive and negative;
   - TOIL taken before it is converted;
   - `asOf` on and after the last day of the month.
@@ -344,6 +386,8 @@ service rejects (422) a night shift that runs into the next day's start.
   - `paid_overtime_allowed boolean default false`. This replaces the earlier
     "eligible for overtime" toggle; the owner's two toggles are the same concept;
   - `toil_monthly_cap_minutes int` (450);
+  - `conversion_block_minutes int` (30), `CHECK` 1–480: conversion turns
+    whole blocks into TOIL and overtime (rule 6; added 2026-09-23);
   - `leave_day_max_minutes int` (450);
   - `flexi_credit_cap_minutes int NULL`, `flexi_debit_cap_minutes int NULL`
     (null, so no cap);
@@ -378,7 +422,8 @@ service rejects (422) a night shift that runs into the next day's start.
 
 Nothing derived is stored. At personal scale (under 400 rows a year) balances are
 computed on read; a stored monthly snapshot is added only if a measurement shows
-the need. **Migrations:** two additive ones, in slices 4 and 6. A `pg_dump` is
+the need. **Migrations:** two additive ones, in slices 4 and 6, and a third,
+`add_conversion_block`, for the 2026-09-23 change. A `pg_dump` is
 taken before each deploy.
 
 ### API
@@ -453,10 +498,10 @@ name in the rail state.
 ```text
 ┌ Hours ─────────────────────────────────────── ‹ Week of 5 Oct 2026 › [Go to today] ┐ ┌ This week ───────────────────────┐
 │ Day        Start  End    Break        Leave  TOIL taken  Worked  Flexi  Converted ⚠ ⋯│ │ Credited 40:30 of 37:30 target   │
-│ Mon 5 Oct  08:00  17:30  0:30                             9:00  +0:40   0:50        ⋯│ │ Week flexi +3:00 → 0:00          │
-│ Tue 6 Oct  07:30  18:00  0:30                            10:00  +0:40   1:50        ⋯│ │ [on] Convert this week's excess  │
+│ Mon 5 Oct  08:00  17:30  0:30                             9:00  +1:00   0:30        ⋯│ │ Week flexi +3:00 → 0:00          │
+│ Tue 6 Oct  07:30  18:00  0:30                            10:00  +0:30   2:00        ⋯│ │ [on] Convert this week's excess  │
 │ Wed 7 Oct  08:00  16:00  0:30                             7:30   0:00               ⋯│ │   TOIL 1:00 · overtime 2:00      │
-│ Thu 8 Oct  08:00  17:00  0:15 → 0:30                      8:30  +0:40   0:20        ⋯│ │   (unpaid) · applied Fri 9 Oct   │
+│ Thu 8 Oct  08:00  17:00  0:15 → 0:30                      8:30  +0:30   0:30        ⋯│ │   (unpaid) · applied Fri 9 Oct   │
 │ Fri 9 Oct  08:00  13:30                                   5:30  −2:00               ⋯│ ├ Balances (to today) ─────────────┤
 │ Sat 10 Oct —                                                                        ⋯│ │ Flexi          +3:12             │
 │ Sun 11 Oct —                                                                        ⋯│ │ TOIL October   7:30 of 7:30      │
@@ -493,7 +538,9 @@ name in the rail state.
     UX_STANDARDS.md allows. Switching it back is the undo, so there is no toast;
   - with the switch on, a live summary: TOIL, overtime paid or unpaid, and
     "preview until Fri 9 Oct" or "applied Fri 9 Oct";
-  - "Nothing to convert" when the week is net zero or negative.
+  - "Nothing to convert" when the week is net zero or negative; "Less than one
+    block (0:30) to convert" when E is under a block; and, when E is not a
+    whole number of blocks, the remainder ("0:15 stays as flexi").
 - **Aside, Balances:** flexi, TOIL this month (with the cap), overtime this year
   (paid and unpaid), and leave remaining.
 - **Edits after settlement:** after the save, an info toast (4s) names the
@@ -539,7 +586,9 @@ name in the rail state.
   - break threshold and minimum; the band;
   - **Paid overtime allowed** (off by default, "When off, all overtime is
     recorded as unpaid");
-  - the TOIL cap, the maximum leave per day, and flexi caps.
+  - the TOIL cap, the **conversion block** ("Conversion turns whole blocks
+    into TOIL and overtime; the rest stays as flexi. Default 0:30."), the
+    maximum leave per day, and flexi caps.
   - Earlier terms are listed read-only, with delete and undo.
 - **Leave:** a row per year with the allowance and a bought-leave toggle, and
   used and remaining hours.
@@ -1539,9 +1588,63 @@ to, groupBy)` and `balancesAt(result, asOf)` shape them for `time-summaries`
   clock set with `page.clock`: Shift+F10 on a row with actions opens its
   menu and Esc returns focus; the aside beside the table at 1920×1080 with
   no page scroll; switching conversion on and off before settlement (a
-  preview) and after it (applied, Tuesday converting 1:50); an edit after
+  preview) and after it (applied; Tuesday's converted figure is 2:00 since
+  the [block change](#change-conversion-in-whole-blocks-2026-09-23)); an edit after
   settlement raising "Week of 5 Oct recalculated: TOIL 3:00 → 2:00, overtime
   0:00 → 0:00." in the toast and the live region; and the **browser's totals
   equal the API's** for the worked-example week of 5 Oct 2026 (seeded through
   the API; the table's totals row and the aside's figures against
   `GET /time-summaries` and `GET /time-balances`), all with axe.
+
+### Change: conversion in whole blocks (2026-09-23)
+
+- **Why:** the owner, after using the shipped tracker: "i have to input my
+  time sheet in 30min blocks so leveling to 0:23 isn't correct". Decided with
+  the owner: minutes that don't make a whole block **stay as flexi** (E =
+  2:45 converts 2:30 and keeps 0:15 in the flexi balance), and the block is an
+  **effective-dated work terms setting, default 0:30**. Rules 6 and 7, the
+  worked examples and the test matrix above are updated.
+- **Engine** (`@repo/domain`): `WorkTerms.conversionBlockMinutes`
+  (`defaultWorkTerms` and `DEFAULT_CONVERSION_BLOCK_MINUTES` = 30);
+  `levelExcess(excess, days, blockMinutes)` takes one block at a time and
+  stops when no day has a whole block of worked time left. `WeekResult` gains
+  `blockMinutes` and `convertedMinutes` (the whole blocks taken, preview or
+  applied). Raw flexi is unchanged; only allocated minutes leave a day, so the
+  remainder stays in the balance with no extra rule. The TOIL cap walk, month
+  end and paid/unpaid are unchanged, so a block can split into TOIL and
+  overtime at the monthly cap (rule 7).
+- **Migration 3** (`add_conversion_block`): `work_terms.conversion_block_minutes
+int NOT NULL DEFAULT 30` with `ck_work_terms_conversion_block_range`
+  (1–480), additive; existing terms take 0:30. **Past weeks recalculate:**
+  nothing derived is stored, so every converted week, settled or not, is now
+  levelled in 0:30 blocks, and past TOIL, overtime and flexi can shift.
+  Intended: the owner's timesheet is in 0:30 blocks, and nothing had been
+  released (database-architect's option of keeping old terms at a 1-minute
+  block was not needed). **The bound:** at least a minute
+  (a 1-minute block is the old minute-by-minute levelling), at most 8:00: a
+  block longer than a working day would rarely convert anything, and 8:00
+  covers any timesheet granularity (15, 30 or 60 minutes). The same bounds are
+  `CONVERSION_BLOCK_MIN_MINUTES` and `CONVERSION_BLOCK_MAX_MINUTES` in
+  `@repo/types`.
+- **API** (additive): `conversionBlockMinutes` on the work terms create,
+  update and response bodies (omitted → 30 on create, kept on update; `null`
+  and out-of-range values are 422s). `time-summaries` week groups also carry
+  `conversionBlockMinutes` and `conversionMinutes` (the whole blocks the
+  conversion takes, preview or applied) for the aside. `pnpm data:export` has
+  the new field through the response DTO.
+- **Web:** Settings → Terms has **Conversion block** in the Limits group
+  (a duration field, 0:01–8:00). The aside's This week panel shows "After
+  conversion" as raw − converted, "0:15 stays as flexi" under the TOIL and
+  overtime when there is a remainder, and "Less than one block (0:30) to
+  convert" (the week's block) when E is above zero but under a block, in
+  place of the split. **Decided:** that wording, rather than "Nothing to
+  convert", so a small excess with the switch on is not mistaken for an empty
+  week.
+- **Tests:** domain unit tests for the new worked example (Mon 0:30, Tue 2:00,
+  Thu 0:30), the cross-month example, ties, below target, a 2:45 remainder,
+  0:15 and 1:00 blocks, E under a block, a block larger than E, previews,
+  a block split at the TOIL cap, and every allocation a multiple of the
+  block; API unit and e2e tests for the default, a custom block, the 422
+  bounds (and the `CHECK`), and a `time-summaries` week whose excess is not a
+  whole block; web tests for the field, the schema bound and the aside's
+  remainder and under-a-block text, and the week journeys' figures.
