@@ -12,6 +12,7 @@ import {
 } from '../api/work-terms';
 import { useFocusAfterRemoval } from '../hooks/use-focus-after-removal';
 import { workTermsFormValues, type WorkTermsFormOutput } from '../schemas/settings';
+import { todayInLondon } from '../week/week-dates';
 
 import { actionErrorMessage, LoadError, LoadingRows, SaveErrorAlert } from './request-states';
 import { WorkTermsForm } from './work-terms-form';
@@ -71,6 +72,9 @@ export function TermsTab() {
 
   const rows = terms.data;
   const latest = rows[0] ?? null;
+  // The terms in force today (rows are latest first): later ones are upcoming.
+  const today = todayInLondon();
+  const current = rows.find((row) => row.effectiveFrom <= today) ?? null;
 
   const submit = (values: WorkTermsFormOutput) => {
     if (editing) {
@@ -210,8 +214,10 @@ export function TermsTab() {
                     <TableRow key={row.id} data-row-id={row.id} tone="zebra">
                       <TableRowHeader className="font-normal">
                         {formatDate(row.effectiveFrom)}
-                        {row === latest ? (
+                        {row === current ? (
                           <span className="text-muted-foreground"> (current)</span>
+                        ) : row.effectiveFrom > today ? (
+                          <span className="text-muted-foreground"> (upcoming)</span>
                         ) : null}
                       </TableRowHeader>
                       <TableCell numeric>{formatDuration(weeklyTarget(row))}</TableCell>

@@ -1070,7 +1070,9 @@ to, groupBy)` and `balancesAt(result, asOf)` shape them for `time-summaries`
 - **Terms tab:** the form adds terms from a Monday (next week's by default, or
   this week's for the first terms) prefilled from the latest terms, or edits
   the latest terms (`PATCH`; the Monday is read-only). Saved terms are listed
-  latest first with the weekly target and paid overtime; each can be deleted
+  latest first with the weekly target and paid overtime; the terms in force
+  today (Europe/London) say "(current)" and any starting later say
+  "(upcoming)"; each can be deleted
   with undo, and the API's 422 for the last terms comes back as a persistent
   error toast with its message. Clearing a target makes a day non-working; a
   minimum without a target, or above it, is a field error before anything is
