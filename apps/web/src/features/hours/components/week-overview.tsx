@@ -50,73 +50,73 @@ export function WeekOverview({ weekStart, asOf, calculation }: WeekAsideContext)
   const balance = balances.data?.trackingStart === null ? undefined : balances.data;
   const year = asOf.slice(0, 4);
 
-  if (summaries.isError || balances.isError) {
-    return (
-      <LoadError
-        message="We couldn't load this week's figures."
-        onRetry={() => {
-          void summaries.refetch();
-          void balances.refetch();
-        }}
-      />
-    );
-  }
-
   const loading = summaries.isPending || balances.isPending;
   return (
     <section aria-label="Headline figures" className="@container">
-      <dl
-        aria-busy={loading || undefined}
-        className="grid grid-cols-1 gap-4 @xl:grid-cols-2 @4xl:grid-cols-4"
-      >
-        <StatTile
-          label="Credited"
-          icon={Clock3}
-          value={week ? formatDuration(week.creditedMinutes) : undefined}
-          meter={
-            week ? <ProgressBar value={week.creditedMinutes} max={week.targetMinutes} /> : null
-          }
-          detail={week ? `of ${formatDuration(week.targetMinutes)} target` : null}
+      {summaries.isError || balances.isError ? (
+        <LoadError
+          message="We couldn't load this week's figures."
+          onRetry={() => {
+            void summaries.refetch();
+            void balances.refetch();
+          }}
         />
-        <StatTile
-          label="Week flexi"
-          icon={TrendingUp}
-          value={week ? <FlexiValue minutes={week.rawFlexiMinutes} /> : undefined}
-          detail={week ? conversionDetail(week) : null}
-        />
-        <StatTile
-          label="Flexi balance"
-          icon={Scale}
-          value={balance ? <FlexiValue minutes={balance.flexiMinutes} /> : undefined}
-          detail={balance ? `To the end of ${formatDate(asOf, 'weekdayDayMonth')}` : null}
-        />
-        <StatTile
-          label={`Leave left ${year}`}
-          icon={CalendarDays}
-          value={
-            balance ? (
-              <span className={balance.leaveRemainingMinutes < 0 ? 'text-warning-text' : undefined}>
-                {formatDuration(balance.leaveRemainingMinutes)}
-              </span>
-            ) : undefined
-          }
-          meter={
-            balance ? (
-              <ProgressBar
-                value={Math.max(0, balance.leaveRemainingMinutes)}
-                max={balance.leaveAllowanceMinutes}
-              />
-            ) : null
-          }
-          detail={
-            balance
-              ? balance.leaveRemainingMinutes < 0
-                ? 'Over allowance'
-                : `of ${formatDuration(balance.leaveAllowanceMinutes)} allowance`
-              : null
-          }
-        />
-      </dl>
+      ) : (
+        <dl
+          aria-busy={loading || undefined}
+          className="grid grid-cols-1 gap-4 @xl:grid-cols-2 @4xl:grid-cols-4"
+        >
+          <StatTile
+            label="Credited"
+            icon={Clock3}
+            value={week ? formatDuration(week.creditedMinutes) : undefined}
+            meter={
+              week ? <ProgressBar value={week.creditedMinutes} max={week.targetMinutes} /> : null
+            }
+            detail={week ? `of ${formatDuration(week.targetMinutes)} target` : null}
+          />
+          <StatTile
+            label="Week flexi"
+            icon={TrendingUp}
+            value={week ? <FlexiValue minutes={week.rawFlexiMinutes} /> : undefined}
+            detail={week ? conversionDetail(week) : null}
+          />
+          <StatTile
+            label="Flexi balance"
+            icon={Scale}
+            value={balance ? <FlexiValue minutes={balance.flexiMinutes} /> : undefined}
+            detail={balance ? `To the end of ${formatDate(asOf, 'weekdayDayMonth')}` : null}
+          />
+          <StatTile
+            label={`Leave left ${year}`}
+            icon={CalendarDays}
+            value={
+              balance ? (
+                <span
+                  className={balance.leaveRemainingMinutes < 0 ? 'text-warning-text' : undefined}
+                >
+                  {formatDuration(balance.leaveRemainingMinutes)}
+                </span>
+              ) : undefined
+            }
+            meter={
+              balance ? (
+                <ProgressBar
+                  value={Math.max(0, balance.leaveRemainingMinutes)}
+                  max={balance.leaveAllowanceMinutes}
+                />
+              ) : null
+            }
+            detail={
+              balance
+                ? balance.leaveRemainingMinutes < 0
+                  ? 'Over allowance'
+                  : `of ${formatDuration(balance.leaveAllowanceMinutes)} allowance`
+                : null
+            }
+          />
+        </dl>
+      )}
     </section>
   );
 }

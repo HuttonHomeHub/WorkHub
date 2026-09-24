@@ -216,7 +216,7 @@ export function AppShell({ tools, actions, children }: AppShellProps) {
         <main
           id={MAIN_ID}
           tabIndex={-1}
-          className="col-start-2 row-start-2 min-w-0 px-8 pt-7 pb-12 outline-none max-md:px-4"
+          className="col-start-2 row-start-2 min-w-0 px-6 pt-6 pb-12 outline-none max-md:px-4"
         >
           {/* Long words wrap rather than widen the page at the reflow floor. */}
           <div className="max-w-(--width-page) break-words">{children}</div>
