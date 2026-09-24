@@ -185,6 +185,11 @@ const STALE_TERMS = [
     /filter @repo\/types build/,
     'the API also needs @repo/domain built: use pnpm --filter "@repo/api^..." build',
   ],
+  // Hours rule 6 changed on 2026-09-23: conversion takes whole blocks.
+  [
+    /one minute at a time|Tuesday (converts|converting) 1:50/i,
+    'excess conversion levels in whole blocks (default 0:30) — hours-tracker.md rule 6',
+  ],
 ];
 
 // Agents and skills must be discoverable under the name their file implies.
