@@ -57,6 +57,7 @@ const applied = (isOn: boolean) =>
           conversion: 'OFF',
           convertedMinutes: 0,
           flexiMinutes: 180,
+          conversionMinutes: 0,
           toilMinutes: 0,
           overtimeUnpaidMinutes: 0,
           conversionToilMinutes: 0,
@@ -170,6 +171,47 @@ describe('ThisWeekPanel', () => {
     expect(screen.queryByText(/Applied/)).not.toBeInTheDocument();
   });
 
+  it('says what stays as flexi when the excess is not a whole number of blocks', async () => {
+    stubWeek({
+      switchedOn: true,
+      group: () =>
+        summaryGroup({
+          rawFlexiMinutes: 165,
+          excessMinutes: 165,
+          conversionMinutes: 150,
+          convertedMinutes: 150,
+          conversionToilMinutes: 60,
+          conversionOvertimeUnpaidMinutes: 90,
+        }),
+    });
+    renderWithApi(<ThisWeekPanel weekStart={WEEK} asOf="2026-10-12" />);
+
+    expect(await screen.findByText('0:15 stays as flexi')).toBeInTheDocument();
+    expect(screen.getByText('After conversion').nextElementSibling).toHaveTextContent('+0:15 over');
+    expect(screen.getByText('1:30 unpaid')).toBeInTheDocument();
+    expect(screen.getByText('Applied Fri 9 Oct')).toBeInTheDocument();
+  });
+
+  it('says when the excess is less than one block', async () => {
+    stubWeek({
+      switchedOn: true,
+      group: () =>
+        summaryGroup({
+          rawFlexiMinutes: 10,
+          excessMinutes: 10,
+          conversionMinutes: 0,
+          convertedMinutes: 0,
+          conversionToilMinutes: 0,
+          conversionOvertimeUnpaidMinutes: 0,
+        }),
+    });
+    renderWithApi(<ThisWeekPanel weekStart={WEEK} asOf="2026-10-12" />);
+
+    expect(await screen.findByText('Less than one block (0:30) to convert')).toBeInTheDocument();
+    expect(screen.queryByText(/stays as flexi/)).not.toBeInTheDocument();
+    expect(screen.queryByText('Nothing to convert')).not.toBeInTheDocument();
+  });
+
   it('keeps the switch as saved and raises a persistent error when the save fails', async () => {
     const user = userEvent.setup();
     stubApi(
@@ -217,13 +259,15 @@ describe('ThisWeekPanel', () => {
       creditedMinutes: 2490,
       rawFlexiMinutes: 240,
       excessMinutes: 240,
+      blockMinutes: 30,
+      convertedMinutes: 240,
     };
     renderWithApi(<ThisWeekPanel weekStart={WEEK} asOf="2026-10-12" live={live} />);
 
     const panel = await screen.findByRole('region', { name: 'This week' });
     expect(await within(panel).findByText('41:30 of 37:30 target')).toBeInTheDocument();
     expect(within(panel).getByText('+4:00 over')).toBeInTheDocument();
-    // After conversion follows the live excess: 4:00 − 4:00.
+    // After conversion follows the live figures: 4:00 − 4:00 converted.
     expect(within(panel).getByText('0:00')).toBeInTheDocument();
     // The split is the saved one until the save is re-read.
     expect(within(panel).getByText('1:00')).toBeInTheDocument();

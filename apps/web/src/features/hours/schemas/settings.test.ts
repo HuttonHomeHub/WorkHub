@@ -36,9 +36,28 @@ describe('workTermsFormSchema', () => {
       bandEnd: '19:00',
       paidOvertimeAllowed: false,
       toilMonthlyCapMinutes: 450,
+      conversionBlockMinutes: 30,
       leaveDayMaxMinutes: 450,
       flexiCreditCapMinutes: null,
       flexiDebitCapMinutes: null,
+    });
+  });
+
+  it('bounds the conversion block to 0:01–8:00', () => {
+    expect(workTermsFormSchema.safeParse(defaults({ conversionBlockMinutes: '0' })).success).toBe(
+      false,
+    );
+    expect(
+      workTermsFormSchema.safeParse(defaults({ conversionBlockMinutes: '8:01' })).success,
+    ).toBe(false);
+    expect(workTermsFormSchema.safeParse(defaults({ conversionBlockMinutes: '' })).success).toBe(
+      false,
+    );
+    expect(workTermsFormSchema.parse(defaults({ conversionBlockMinutes: '15m' }))).toMatchObject({
+      conversionBlockMinutes: 15,
+    });
+    expect(workTermsFormSchema.parse(defaults({ conversionBlockMinutes: '8:00' }))).toMatchObject({
+      conversionBlockMinutes: 480,
     });
   });
 

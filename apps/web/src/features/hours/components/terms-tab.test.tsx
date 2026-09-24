@@ -22,6 +22,7 @@ function terms(id: string, effectiveFrom: string, overrides: Partial<WorkTerm> =
     bandEnd: '19:00',
     paidOvertimeAllowed: false,
     toilMonthlyCapMinutes: 450,
+    conversionBlockMinutes: 30,
     leaveDayMaxMinutes: 450,
     flexiCreditCapMinutes: null,
     flexiDebitCapMinutes: null,
