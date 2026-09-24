@@ -87,9 +87,9 @@ function dismissToast(id?: number): void {
 const ICONS = { success: CircleCheck, error: CircleAlert, info: Info } as const;
 
 const VARIANT_CLASSES: Record<ToastVariant, string> = {
-  success: '[&>svg]:text-success',
-  error: 'border-destructive/50 [&>svg]:text-destructive',
-  info: '[&>svg]:text-info',
+  success: '[&>svg]:text-success-text',
+  error: 'border-destructive-text [&>svg]:text-destructive-text',
+  info: '[&>svg]:text-info-text',
 };
 
 interface ToasterProps {
@@ -116,7 +116,7 @@ function Toaster({ label, dismissLabel }: ToasterProps) {
               if (!open) dismissToast(id);
             }}
             className={cn(
-              'bg-popover text-popover-foreground focus-visible:ring-ring pointer-events-auto flex items-start gap-3 rounded-md border p-3 text-sm shadow-md outline-none focus-visible:ring-2 [&>svg]:mt-0.5 [&>svg]:size-4',
+              'focus-ring bg-popover text-popover-foreground animate-enter-from-end text-body pointer-events-auto flex items-start gap-3 rounded-lg border p-3 shadow-lg [&>svg]:mt-0.5 [&>svg]:size-4',
               VARIANT_CLASSES[variant],
             )}
           >
@@ -142,7 +142,7 @@ function Toaster({ label, dismissLabel }: ToasterProps) {
               <ToastPrimitive.Close
                 aria-label={dismissLabel}
                 className={cn(
-                  buttonVariants({ variant: 'ghost', size: 'icon' }),
+                  buttonVariants({ variant: 'ghost', size: 'icon-sm' }),
                   'text-muted-foreground',
                 )}
               >

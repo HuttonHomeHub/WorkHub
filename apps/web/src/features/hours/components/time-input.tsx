@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 
 interface TimeInputProps extends Omit<
   React.ComponentProps<'input'>,
-  'value' | 'onChange' | 'type' | 'defaultValue'
+  'value' | 'onChange' | 'type' | 'defaultValue' | 'size'
 > {
   /** The text in the field, as typed or as `HH:MM`. */
   value: string;
@@ -50,12 +50,12 @@ export function TimeInput({
           onBlur?.(event);
         }}
         aria-describedby={describedBy ? `${describedBy} ${hintId}` : hintId}
-        className={cn('w-24 tabular-nums', className)}
+        className={cn('w-(--width-input-short) tabular-nums', className)}
         {...props}
       />
       <p
         id={hintId}
-        className={hintVisibility === 'visible' ? 'text-muted-foreground text-xs' : 'sr-only'}
+        className={hintVisibility === 'visible' ? 'text-muted-foreground text-meta' : 'sr-only'}
       >
         24-hour, e.g. 08:30
       </p>

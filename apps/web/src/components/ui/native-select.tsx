@@ -1,27 +1,26 @@
+import { type VariantProps } from 'class-variance-authority';
 import { ChevronDown } from 'lucide-react';
 import * as React from 'react';
 
+import { fieldVariants } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+
+interface NativeSelectProps
+  extends Omit<React.ComponentProps<'select'>, 'size'>, VariantProps<typeof fieldVariants> {}
 
 /**
  * NativeSelect — a styled native `<select>` for a short, fixed list of options
- * (docs/DESIGN_SYSTEM.md → NativeSelect). It matches `Input`, and the browser
- * supplies the popup, typeahead and screen-reader support.
+ * (docs/DESIGN_SYSTEM.md → NativeSelect). It matches `Input`, sizes included,
+ * and the browser supplies the popup, typeahead and screen-reader support.
  *
  * Keyboard contract: the browser's own. ↑/↓ change the value (Firefox and
  * Chromium on Windows and Linux), Alt+↓ or Space opens the list, typing a letter
  * jumps to a matching option, Esc closes the list; focus stays on the select.
  */
-function NativeSelect({ className, children, ...props }: React.ComponentProps<'select'>) {
+function NativeSelect({ className, size, children, ...props }: NativeSelectProps) {
   return (
     <div className="relative">
-      <select
-        className={cn(
-          'border-input bg-background focus-visible:ring-ring aria-invalid:border-destructive flex h-9 w-full appearance-none rounded-md border py-1 pr-8 pl-3 text-sm shadow-xs transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50',
-          className,
-        )}
-        {...props}
-      >
+      <select className={cn(fieldVariants({ size }), 'appearance-none pr-8', className)} {...props}>
         {children}
       </select>
       <ChevronDown

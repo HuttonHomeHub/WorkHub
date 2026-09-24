@@ -51,7 +51,7 @@ function AlertDialogContent({
           }
         }}
         className={cn(
-          'bg-popover text-popover-foreground fixed top-1/2 left-1/2 z-(--z-modal) grid max-h-svh w-full max-w-(--width-dialog) -translate-x-1/2 -translate-y-1/2 gap-4 overflow-y-auto rounded-lg border p-6 shadow-lg',
+          'bg-popover text-popover-foreground animate-enter fixed top-1/2 left-1/2 z-(--z-modal) grid max-h-svh w-full max-w-(--width-dialog) -translate-x-1/2 -translate-y-1/2 gap-4 overflow-y-auto rounded-xl border p-5 shadow-lg',
           className,
         )}
         {...props}
@@ -65,9 +65,7 @@ function AlertDialogTitle({
   className,
   ...props
 }: React.ComponentProps<typeof AlertDialogPrimitive.Title>) {
-  return (
-    <AlertDialogPrimitive.Title className={cn('text-lg font-semibold', className)} {...props} />
-  );
+  return <AlertDialogPrimitive.Title className={cn('text-h2', className)} {...props} />;
 }
 
 /** What happens if the owner goes ahead (it describes the dialog). */
@@ -77,7 +75,7 @@ function AlertDialogDescription({
 }: React.ComponentProps<typeof AlertDialogPrimitive.Description>) {
   return (
     <AlertDialogPrimitive.Description
-      className={cn('text-muted-foreground text-sm', className)}
+      className={cn('text-muted-foreground text-body', className)}
       {...props}
     />
   );

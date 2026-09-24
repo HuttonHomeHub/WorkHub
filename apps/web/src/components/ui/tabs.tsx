@@ -21,7 +21,7 @@ function Tabs(props: React.ComponentProps<typeof TabsPrimitive.Root>) {
 function TabsList({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.List>) {
   return (
     <TabsPrimitive.List
-      className={cn('flex flex-wrap items-end gap-1 border-b', className)}
+      className={cn('flex flex-wrap items-end gap-2 border-b', className)}
       {...props}
     />
   );
@@ -35,7 +35,7 @@ function TabsTrigger({ className, ...props }: React.ComponentProps<typeof TabsPr
   return (
     <TabsPrimitive.Trigger
       className={cn(
-        'text-muted-foreground hover:text-foreground focus-visible:ring-ring focus-visible:ring-offset-background data-[state=active]:border-primary data-[state=active]:text-foreground -mb-px inline-flex h-9 items-center justify-center border-b-2 border-transparent px-3 text-sm whitespace-nowrap transition-colors outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:font-medium',
+        'focus-ring text-muted-foreground hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground text-body -mb-px inline-flex h-(--control-lg) items-center justify-center rounded-t-md border-b-2 border-transparent px-3 whitespace-nowrap transition-colors disabled:pointer-events-none disabled:opacity-50 data-[state=active]:font-medium',
         className,
       )}
       {...props}
@@ -46,13 +46,7 @@ function TabsTrigger({ className, ...props }: React.ComponentProps<typeof TabsPr
 /** A tab's panel. Only the open panel is rendered, so a tab loads its data when opened. */
 function TabsContent({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.Content>) {
   return (
-    <TabsPrimitive.Content
-      className={cn(
-        'focus-visible:ring-ring focus-visible:ring-offset-background pt-6 outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
-        className,
-      )}
-      {...props}
-    />
+    <TabsPrimitive.Content className={cn('focus-ring rounded-md pt-6', className)} {...props} />
   );
 }
 

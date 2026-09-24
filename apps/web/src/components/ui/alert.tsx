@@ -4,12 +4,13 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 
 const alertVariants = cva(
-  'relative w-full rounded-lg border px-4 py-3 text-sm [&>svg]:absolute [&>svg]:top-3.5 [&>svg]:left-4 [&>svg~*]:pl-7',
+  'text-body relative w-full rounded-lg border px-4 py-3 [&>svg]:absolute [&>svg]:top-3.5 [&>svg]:left-4 [&>svg]:size-4 [&>svg~*]:pl-7',
   {
     variants: {
       variant: {
-        default: 'bg-background text-foreground',
-        destructive: 'border-destructive/50 text-destructive [&>svg]:text-destructive',
+        default: 'bg-card text-foreground',
+        destructive: 'bg-destructive-soft text-destructive-text border-transparent',
+        info: 'bg-info-soft text-info-text border-transparent',
       },
     },
     defaultVariants: {
@@ -35,7 +36,7 @@ function AlertTitle({ className, children, ...props }: React.ComponentPropsWitho
 }
 
 function AlertDescription({ className, ...props }: React.ComponentPropsWithoutRef<'div'>) {
-  return <div className={cn('text-sm [&_p]:leading-relaxed', className)} {...props} />;
+  return <div className={cn('text-body [&_p]:leading-relaxed', className)} {...props} />;
 }
 
 export { Alert, AlertTitle, AlertDescription };
