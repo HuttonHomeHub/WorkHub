@@ -178,6 +178,7 @@ custom properties on `:root`, used as `w-(--sidebar-width)` or
 | `--width-dialog`        | 28rem  | An AlertDialog's width (full width below it)                                                              | implemented |
 | `--width-aside`         | 16rem  | A page's side column, beside the content from a 56rem content width (container query); below it otherwise | implemented |
 | `--width-aside-wide`    | 20rem  | The same column from an 80rem content width                                                               | implemented |
+| `--width-data-card`     | 62rem  | The most a dense data card (the week table) grows to beside its aside; its columns share that width       | implemented |
 | `--width-input-compact` | 3rem   | A time or duration field in a dense table row                                                             | implemented |
 | `--width-input-short`   | 6.5rem | A short form field: a duration, a year                                                                    | implemented |
 | `--width-input-date`    | 10rem  | A date field or a short select                                                                            | implemented |

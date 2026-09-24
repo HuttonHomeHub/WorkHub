@@ -107,7 +107,7 @@ function HeaderRows({ groupBy }: { groupBy: SummaryGroupBy }) {
           key={column.group}
           scope="colgroup"
           colSpan={span}
-          className="border-l px-1.5 pb-0 text-center"
+          className="border-l px-1 pb-0 text-center"
         >
           {column.group}
         </TableHead>,
@@ -119,7 +119,7 @@ function HeaderRows({ groupBy }: { groupBy: SummaryGroupBy }) {
           key={column.field}
           rowSpan={2}
           numeric
-          className="max-w-24 px-1.5 whitespace-normal"
+          className="max-w-24 px-1 whitespace-normal"
         >
           {column.label}
         </TableHead>,
@@ -138,7 +138,7 @@ function HeaderRows({ groupBy }: { groupBy: SummaryGroupBy }) {
           <TableHead
             key={column.field}
             numeric
-            className={cn('px-1.5', grouped[position - 1]?.group !== column.group && 'border-l')}
+            className={cn('px-1', grouped[position - 1]?.group !== column.group && 'border-l')}
           >
             {column.short ?? column.label}
           </TableHead>
@@ -195,7 +195,7 @@ export function SummaryTable({ groups, groupBy, today, caption, describedBy }: S
                     <TableCell
                       key={column.field}
                       numeric
-                      className={cn('px-1.5', state === 'upcoming' && 'text-muted-foreground')}
+                      className={cn('px-1', state === 'upcoming' && 'text-muted-foreground')}
                     >
                       <Amount column={column} minutes={group[column.field]} />
                     </TableCell>
@@ -210,7 +210,7 @@ export function SummaryTable({ groups, groupBy, today, caption, describedBy }: S
           <TableRow hover={false}>
             <TableRowHeader>Total</TableRowHeader>
             {SUMMARY_COLUMNS.map((column) => (
-              <TableCell key={column.field} numeric className="px-1.5">
+              <TableCell key={column.field} numeric className="px-1">
                 <Amount column={column} minutes={totals[column.field]} />
               </TableCell>
             ))}

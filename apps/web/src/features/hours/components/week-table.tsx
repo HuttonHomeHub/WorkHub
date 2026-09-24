@@ -143,7 +143,7 @@ export function WeekTableHead({
             ) : null}
           </TableHead>
         ))}
-        <TableHead className="w-full pl-1 last:pr-3">
+        <TableHead className="pl-1 last:pr-3">
           <span className="sr-only">Actions</span>
         </TableHead>
       </TableRow>

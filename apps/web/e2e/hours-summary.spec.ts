@@ -137,6 +137,9 @@ test('reads October by week, then by month, and back', async ({ page }) => {
   expect(lastWeek[9]).toBe('3:00');
   expect(lastWeek[11]).toBe('3:00');
   await expect(page.getByRole('region', { name: 'Leave year 2088' })).toContainText('Allowance');
+  // At 1280×800 with the sidebar expanded, every column fits: nothing is clipped.
+  const region = page.getByRole('region', { name: /^Hours by week/ });
+  expect(await region.evaluate((element) => element.scrollWidth - element.clientWidth)).toBe(0);
   await expectNoA11yViolations(page);
 
   await page.getByLabel('Group by').selectOption('month');

@@ -72,9 +72,8 @@ function DurationField({
       control={control}
       name={name}
       render={({ field }) => (
-        <FormItem className="content-start">
+        <FormItem className="w-64 max-w-full content-start">
           <FormLabel>{label}</FormLabel>
-          {description ? <FormDescription>{description}</FormDescription> : null}
           <FormControl>
             <DurationInput
               ref={field.ref}
@@ -84,6 +83,10 @@ function DurationField({
               onBlur={field.onBlur}
             />
           </FormControl>
+          {/* Under the input with its format hint, so the group's inputs line up. */}
+          {description ? (
+            <FormDescription className="text-meta">{description}</FormDescription>
+          ) : null}
           <FormMessage />
         </FormItem>
       )}

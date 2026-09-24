@@ -112,6 +112,14 @@ unchanged.
   the week table at 1280px.
 - `--width-aside` 16rem beside the week table at 1280px, `--width-aside-wide`
   20rem from an 80rem content width (1920px windows). Both by container query.
+- On a wide window the week card grows to `--width-data-card` (62rem) with the
+  aside straight beside it, and the table's columns share the card's width, so
+  there is no empty band before the row menu.
+- The summary's numeric columns pad 4px a side, so every column, a balance of
+  "−380:15 under" included, fits at 1280px with the sidebar expanded.
+- In a settings group, a field's description sits under its input with the
+  format hint, and fields are a fixed width (`w-64`), so every input in a group
+  lines up.
 - Settings are capped at `--width-form` (880px) at the content's left edge.
 
 ### Week view: warnings in their own row

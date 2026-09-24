@@ -283,6 +283,12 @@ async function layoutCheck(page: Page, viewport: { width: number; height: number
       (element) => element.parentElement!.scrollWidth - element.parentElement!.clientWidth,
     ),
   ).toBeLessThanOrEqual(0);
+  // No empty band on a wide window: the card is sized to the table's needs and
+  // the columns share its width, so the row menu's column stays narrow.
+  const actions = page.getByRole('columnheader', { name: 'Actions' });
+  // The row being edited shows Save beside the menu: the column holds just those.
+  expect((await actions.boundingBox())!.width).toBeLessThanOrEqual(140);
+  expect(asideBox.x - (tableBox.x + tableBox.width)).toBeLessThanOrEqual(24);
   await expectNoA11yViolations(page);
   // Esc reverts the edited row, so nothing is left to guard.
   await field(page, 'Start', 'Thu 8 Oct').focus();
