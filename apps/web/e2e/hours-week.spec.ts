@@ -293,7 +293,8 @@ async function layoutCheck(page: Page, viewport: { width: number; height: number
   await expect(row(page, 'Thu 8 Oct')).toContainText('Unsaved');
   const table = page.getByRole('table', { name: 'Week of 5 Oct 2026' });
   const aside = page.getByRole('complementary', { name: 'This week and balances' });
-  await expect(aside.getByRole('region', { name: 'Balances' })).toBeVisible();
+  await expect(aside.getByRole('region', { name: 'TOIL and overtime' })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Headline figures' })).toBeVisible();
   await expect(table).toBeVisible();
   await expect(field(page, 'Start', 'Mon 5 Oct')).toBeVisible();
   const tableBox = (await table.boundingBox())!;
@@ -396,9 +397,10 @@ function asideOf(page: Page) {
   return page.getByRole('complementary', { name: 'This week and balances' });
 }
 
-/** A figure in an aside panel, by its term. */
+/** A figure in a headline tile or an aside panel, by its term. */
 function figure(page: Page, term: string) {
-  return asideOf(page)
+  return page
+    .getByRole('main')
     .getByRole('definition')
     .filter({
       has: page.locator('xpath=preceding-sibling::dt[1]', { hasText: new RegExp(`^${term}$`) }),
@@ -464,7 +466,7 @@ test('an edit after settlement says what it recalculated', async ({ page }) => {
   const message = 'Week of 5 Oct recalculated: TOIL 3:00 → 2:00, overtime 0:00 → 0:00.';
   await expect(toast(page, message)).toBeVisible();
   await expect(
-    asideOf(page).getByRole('region', { name: 'This week' }).getByRole('status').filter({
+    asideOf(page).getByRole('region', { name: 'Conversion' }).getByRole('status').filter({
       hasText: message,
     }),
   ).toBeVisible();
@@ -503,7 +505,8 @@ test('the browser totals equal the API totals for the worked-example week', asyn
   await expect(figure(page, 'Credited')).toHaveText(
     `${hm(api.creditedMinutes!)} of ${hm(api.targetMinutes!)} target`,
   );
-  await expect(figure(page, 'Week flexi')).toHaveText(flexi(api.rawFlexiMinutes!));
+  // The tiles' figures come first in their <dd>, before a detail line.
+  await expect(figure(page, 'Week flexi')).toContainText(flexi(api.rawFlexiMinutes!));
   await expect(figure(page, 'After conversion')).toHaveText(
     flexi(api.rawFlexiMinutes! - api.conversionMinutes!),
   );
@@ -511,5 +514,5 @@ test('the browser totals equal the API totals for the worked-example week', asyn
   await expect(figure(page, 'Overtime')).toHaveText(
     `${hm(api.conversionOvertimeUnpaidMinutes!)} unpaid`,
   );
-  await expect(figure(page, 'Flexi')).toHaveText(flexi(balances.flexiMinutes!));
+  await expect(figure(page, 'Flexi balance')).toContainText(flexi(balances.flexiMinutes!));
 });

@@ -92,17 +92,20 @@ const SCREENS: [name: string, path: string, ready: (page: Page) => Promise<void>
   [
     'week',
     '/hours?week=2026-04-06',
-    (page) => expect(page.getByRole('region', { name: 'Balances' })).toContainText('Flexi'),
+    (page) =>
+      expect(page.getByRole('region', { name: 'Headline figures' })).toContainText('Flexi balance'),
   ],
   [
     'week-bank-holiday',
     '/hours?week=2026-03-30',
-    (page) => expect(page.getByRole('region', { name: 'Balances' })).toContainText('Flexi'),
+    (page) =>
+      expect(page.getByRole('region', { name: 'Headline figures' })).toContainText('Flexi balance'),
   ],
   [
     'week-night-shift',
     '/hours?week=2026-03-23',
-    (page) => expect(page.getByRole('region', { name: 'Balances' })).toContainText('Flexi'),
+    (page) =>
+      expect(page.getByRole('region', { name: 'Headline figures' })).toContainText('Flexi balance'),
   ],
   [
     'summary-weeks',

@@ -71,13 +71,14 @@ afterEach(() => {
 });
 
 describe('ThisWeekPanel', () => {
-  it('shows credited against target and the week flexi, with the switch off', async () => {
+  it('shows the switch off, with nothing after conversion', async () => {
     const { calls } = stubWeek({ switchedOn: false, group: applied });
     renderWithApi(<ThisWeekPanel weekStart={WEEK} asOf="2026-10-12" />);
 
-    const panel = await screen.findByRole('region', { name: 'This week' });
-    expect(await within(panel).findByText('40:30 of 37:30 target')).toBeInTheDocument();
-    expect(within(panel).getByText('+3:00 over')).toBeInTheDocument();
+    const panel = await screen.findByRole('region', { name: 'Conversion' });
+    await within(panel).findByRole('switch');
+    // Credited and the week flexi are headline tiles (WeekOverview).
+    expect(within(panel).queryByText(/of 37:30 target/)).not.toBeInTheDocument();
     expect(within(panel).queryByText('After conversion')).not.toBeInTheDocument();
     expect(
       within(panel).getByRole('switch', {
@@ -167,7 +168,7 @@ describe('ThisWeekPanel', () => {
     renderWithApi(<ThisWeekPanel weekStart={WEEK} asOf="2026-10-12" />);
 
     expect(await screen.findByText('Nothing to convert')).toBeInTheDocument();
-    expect(screen.getByText('−1:00 under')).toBeInTheDocument();
+    expect(screen.queryByText('After conversion')).not.toBeInTheDocument();
     expect(screen.queryByText(/Applied/)).not.toBeInTheDocument();
   });
 
@@ -264,11 +265,11 @@ describe('ThisWeekPanel', () => {
     };
     renderWithApi(<ThisWeekPanel weekStart={WEEK} asOf="2026-10-12" live={live} />);
 
-    const panel = await screen.findByRole('region', { name: 'This week' });
-    expect(await within(panel).findByText('41:30 of 37:30 target')).toBeInTheDocument();
-    expect(within(panel).getByText('+4:00 over')).toBeInTheDocument();
+    const panel = await screen.findByRole('region', { name: 'Conversion' });
     // After conversion follows the live figures: 4:00 − 4:00 converted.
-    expect(within(panel).getByText('0:00')).toBeInTheDocument();
+    expect(
+      (await within(panel).findByText('After conversion')).nextElementSibling,
+    ).toHaveTextContent('0:00');
     // The split is the saved one until the save is re-read.
     expect(within(panel).getByText('1:00')).toBeInTheDocument();
     expect(within(panel).getByText('2:00 unpaid')).toBeInTheDocument();
@@ -284,7 +285,7 @@ describe('ThisWeekPanel', () => {
         recalculationNotice="Week of 5 Oct recalculated: TOIL 3:00 → 2:00, overtime 0:00 → 0:00."
       />,
     );
-    const panel = await screen.findByRole('region', { name: 'This week' });
+    const panel = await screen.findByRole('region', { name: 'Conversion' });
     const notice = within(panel).getByText(/Week of 5 Oct recalculated/);
     expect(notice).toHaveAttribute('aria-live', 'polite');
   });
@@ -305,6 +306,6 @@ describe('ThisWeekPanel', () => {
     expect(await screen.findByText("We couldn't load this week's totals.")).toBeInTheDocument();
     fail = false;
     await user.click(screen.getByRole('button', { name: 'Retry' }));
-    expect(await screen.findByText('40:30 of 37:30 target')).toBeInTheDocument();
+    expect(await screen.findByRole('switch')).toBeInTheDocument();
   });
 });

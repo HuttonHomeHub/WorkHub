@@ -8,6 +8,7 @@
 export { HoursSettings } from './components/hours-settings';
 export { WeekView, type WeekAsideContext } from './components/week-view';
 export { WeekAside } from './components/week-aside';
+export { WeekOverview } from './components/week-overview';
 export { SETTINGS_TABS, type SettingsTab } from './settings-tabs';
 export { hoursKeys } from './api/keys';
 export { HoursSummary } from './components/hours-summary';

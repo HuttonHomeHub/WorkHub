@@ -49,7 +49,10 @@ One shell, composed once as a layout route (`routes/_authed.tsx` →
 ```
 
 **Sidebar** (`components/layout/sidebar.tsx`): one entry per tool, built from
-the tool manifests in `app/tools.ts` (ADR-0020).
+the tool manifests in `app/tools.ts` (ADR-0020). It runs the full height of the
+window on a deep indigo surface in both themes, with the WorkHub mark and name
+at its top (the mark alone as the rail); the header sits beside it. In the DOM
+the header still comes first, so Tab reaches its controls before the tools.
 
 - Two states: **expanded** (icon + label) and **rail** (icon only, with a
   tooltip); their widths are `--sidebar-width` and `--sidebar-rail` in
@@ -66,7 +69,7 @@ the tool manifests in `app/tools.ts` (ADR-0020).
   preference, and the header toggle is not shown because it would do nothing.
   The sidebar never becomes an overlay panel.
 
-**Header** (48px, sticky, `z-index: --z-header`): the sidebar toggle, app name,
+**Header** (48px, sticky, `z-index: --z-header`): the sidebar toggle,
 the command-palette trigger (_planned_), theme control, account menu. Sticky
 chrome must not obscure focus — `scroll-padding-top: var(--header-height)` on
 `<html>` keeps focused elements clear of it

@@ -68,6 +68,8 @@ export interface WeekViewProps {
    * both do not fit (down to the reflow floor): `WeekAside`.
    */
   aside?: (context: WeekAsideContext) => React.ReactNode;
+  /** The headline figures above the table and aside, for a tracked week: `WeekOverview`. */
+  overview?: (context: WeekAsideContext) => React.ReactNode;
 }
 
 const HEADING_ID = 'hours-week-heading';
@@ -124,7 +126,7 @@ function ErrorTable({ onRetry }: { onRetry: () => void }) {
  * week-local, so nothing earlier than the week is loaded
  * (`week/week-calculation.ts`).
  */
-export function WeekView({ weekStart, today, onWeekChange, aside }: WeekViewProps) {
+export function WeekView({ weekStart, today, onWeekChange, aside, overview }: WeekViewProps) {
   const terms = useWorkTerms();
   const days = useWeekWorkDays(weekStart);
   const conversion = useWeekConversion(weekStart);
@@ -248,11 +250,18 @@ export function WeekView({ weekStart, today, onWeekChange, aside }: WeekViewProp
   }
 
   const empty = tracked && days.data?.length === 0;
+  const context: WeekAsideContext = {
+    weekStart,
+    asOf: today,
+    calculation: tracked && calculation?.week.weekStart === weekStart ? calculation : null,
+    recalculationNotice: recalculation.notice,
+  };
 
   return (
     <div className="grid grid-cols-1 gap-6">
       <PageHeader
         title="Hours"
+        description={`Today is ${formatDate(today, 'long')}`}
         actions={
           <>
             <Button variant="ghost" asChild>
@@ -275,12 +284,13 @@ export function WeekView({ weekStart, today, onWeekChange, aside }: WeekViewProp
           </>
         }
       />
+      {overview && tracked ? overview(context) : null}
       {/* Layout: the table takes the room and the aside sits beside it once the
           content is 56rem wide (a 1280px window); below that, down to the reflow
           floor, the aside stacks under the table. */}
       <div className="@container">
         <div className="@4xl:grid-cols-main-aside @7xl:grid-cols-main-aside-wide grid grid-cols-1 items-start gap-4">
-          <section aria-labelledby={HEADING_ID} className="min-w-0">
+          <section aria-labelledby={HEADING_ID} className="@container min-w-0">
             <Card className="overflow-hidden">
               <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b px-3 py-2">
                 <div className="flex min-w-0 items-center gap-1">
@@ -321,13 +331,7 @@ export function WeekView({ weekStart, today, onWeekChange, aside }: WeekViewProp
           </section>
           {aside ? (
             <div data-slot="week-aside" className="min-w-0">
-              {aside({
-                weekStart,
-                asOf: today,
-                calculation:
-                  tracked && calculation?.week.weekStart === weekStart ? calculation : null,
-                recalculationNotice: recalculation.notice,
-              })}
+              {aside(context)}
             </div>
           ) : null}
         </div>

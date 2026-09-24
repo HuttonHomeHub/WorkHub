@@ -18,4 +18,9 @@ describe('FlexiValue', () => {
       else expect(value.className).not.toMatch(/text-(success|warning)-text/);
     },
   );
+
+  it("as a pill, sits on its status colour's soft fill", () => {
+    render(<FlexiValue minutes={60} pill />);
+    expect(screen.getByText('+1:00 over')).toHaveClass('bg-success-soft', 'text-success-text');
+  });
 });

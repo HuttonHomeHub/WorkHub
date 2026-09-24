@@ -101,7 +101,7 @@ const PAIRS: [string, string, number][] = [
   ['primary', 'background', 4.5],
   ['primary', 'card', 4.5],
   // The focus ring and state fills (a switch's track, the progress bar).
-  ...['background', 'card', 'popover', 'table-stripe', 'highlight', 'sidebar'].map(
+  ...['background', 'card', 'popover', 'table-stripe', 'highlight'].map(
     (surface): [string, string, number] => ['ring', surface, 3],
   ),
   // The switch's track and the progress bar's fill on the muted track or well
@@ -110,12 +110,20 @@ const PAIRS: [string, string, number][] = [
   ['success', 'muted', 3],
   ['ring', 'muted', 3],
   ['muted-foreground', 'muted', 3],
+  // The week's timeline bars on their muted track, and StatTile's icon.
+  ['timeline-upcoming', 'muted', 3],
+  ['primary', 'highlight', 3],
   // The sidebar.
   ['sidebar-foreground', 'sidebar', 4.5],
   ['sidebar-foreground', 'sidebar-accent', 4.5],
   ['sidebar-accent-foreground', 'sidebar-accent', 4.5],
-  ['muted-foreground', 'sidebar', 4.5],
+  ['sidebar-accent-foreground', 'sidebar', 4.5],
+  ['sidebar-primary', 'sidebar', 3],
   ['sidebar-primary', 'sidebar-accent', 3],
+  ['sidebar-primary-foreground', 'sidebar-primary', 4.5],
+  // The sidebar's own focus ring (`sidebar-scope`).
+  ['sidebar-ring', 'sidebar', 3],
+  ['sidebar-ring', 'sidebar-accent', 3],
 ];
 
 describe.each([
