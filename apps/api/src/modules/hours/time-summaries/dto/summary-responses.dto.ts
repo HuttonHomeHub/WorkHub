@@ -71,6 +71,17 @@ export class SummaryGroupDto {
   excessMinutes?: number;
 
   @ApiPropertyOptional({
+    description: 'Week groups only: the conversion block in the week’s terms (rule 6).',
+  })
+  conversionBlockMinutes?: number;
+
+  @ApiPropertyOptional({
+    description:
+      'Week groups only: the whole blocks of E the conversion takes, preview or applied (0 when off); the rest of E stays as flexi.',
+  })
+  conversionMinutes?: number;
+
+  @ApiPropertyOptional({
     description: 'Week groups only: TOIL from the conversion (preview or applied).',
   })
   conversionToilMinutes?: number;

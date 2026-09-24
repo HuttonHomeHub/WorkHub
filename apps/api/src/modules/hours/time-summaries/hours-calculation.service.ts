@@ -86,6 +86,8 @@ export class HoursCalculationService {
           ? {
               settlementDate: week.settlementDate,
               excessMinutes: week.excessMinutes,
+              conversionBlockMinutes: week.blockMinutes,
+              conversionMinutes: week.convertedMinutes,
               conversionToilMinutes: week.toilMinutes,
               conversionOvertimePaidMinutes: week.overtimePaidMinutes,
               conversionOvertimeUnpaidMinutes: week.overtimeUnpaidMinutes,

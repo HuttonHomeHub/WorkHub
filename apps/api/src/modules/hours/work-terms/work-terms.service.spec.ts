@@ -38,6 +38,7 @@ function makeTerms(overrides: Partial<WorkTerm> = {}): WorkTerm {
     bandEnd: toDbTime('19:00'),
     paidOvertimeAllowed: false,
     toilMonthlyCapMinutes: 450,
+    conversionBlockMinutes: 30,
     leaveDayMaxMinutes: 450,
     flexiCreditCapMinutes: null,
     flexiDebitCapMinutes: null,
@@ -104,6 +105,7 @@ describe('WorkTermsService', () => {
           targetMinutesSat: null,
           bandStart: toDbTime('07:00'),
           paidOvertimeAllowed: false,
+          conversionBlockMinutes: 30,
         }),
       );
     });
@@ -158,6 +160,25 @@ describe('WorkTermsService', () => {
           minMinutesMon: 450,
           version: { increment: 1 },
         }),
+      );
+    });
+
+    it('keeps the stored conversion block unless one is sent', async () => {
+      repository.findActiveById.mockResolvedValue(makeTerms({ conversionBlockMinutes: 15 }));
+      repository.updateIfVersionMatches.mockResolvedValue(1);
+
+      await service.update(owner, ID, { version: 1, toilMonthlyCapMinutes: 600 });
+      expect(repository.updateIfVersionMatches).toHaveBeenLastCalledWith(
+        ID,
+        1,
+        expect.objectContaining({ conversionBlockMinutes: 15, toilMonthlyCapMinutes: 600 }),
+      );
+
+      await service.update(owner, ID, { version: 1, conversionBlockMinutes: 60 });
+      expect(repository.updateIfVersionMatches).toHaveBeenLastCalledWith(
+        ID,
+        1,
+        expect.objectContaining({ conversionBlockMinutes: 60 }),
       );
     });
 

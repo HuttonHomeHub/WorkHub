@@ -2199,6 +2199,10 @@
           "toilMonthlyCapMinutes": {
             "type": "number"
           },
+          "conversionBlockMinutes": {
+            "type": "number",
+            "description": "Conversion turns whole blocks of this many minutes (rule 6)."
+          },
           "leaveDayMaxMinutes": {
             "type": "number"
           },
@@ -2235,6 +2239,7 @@
           "bandEnd",
           "paidOvertimeAllowed",
           "toilMonthlyCapMinutes",
+          "conversionBlockMinutes",
           "leaveDayMaxMinutes",
           "flexiCreditCapMinutes",
           "flexiDebitCapMinutes",
@@ -2398,6 +2403,13 @@
             "maximum": 10080,
             "default": 450
           },
+          "conversionBlockMinutes": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 480,
+            "default": 30,
+            "description": "Conversion turns whole blocks of this many minutes into TOIL and overtime; the rest of the week’s excess stays as flexi."
+          },
           "leaveDayMaxMinutes": {
             "type": "number",
             "minimum": 0,
@@ -2485,6 +2497,13 @@
             "minimum": 0,
             "maximum": 10080,
             "default": 450
+          },
+          "conversionBlockMinutes": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 480,
+            "default": 30,
+            "description": "Conversion turns whole blocks of this many minutes into TOIL and overtime; the rest of the week’s excess stays as flexi."
           },
           "leaveDayMaxMinutes": {
             "type": "number",
@@ -3111,6 +3130,14 @@
           "excessMinutes": {
             "type": "number",
             "description": "Week groups only: E, the net positive flexi."
+          },
+          "conversionBlockMinutes": {
+            "type": "number",
+            "description": "Week groups only: the conversion block in the week’s terms (rule 6)."
+          },
+          "conversionMinutes": {
+            "type": "number",
+            "description": "Week groups only: the whole blocks of E the conversion takes, preview or applied (0 when off); the rest of E stays as flexi."
           },
           "conversionToilMinutes": {
             "type": "number",

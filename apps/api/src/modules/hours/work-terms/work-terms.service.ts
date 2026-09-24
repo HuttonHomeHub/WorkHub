@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, type WorkTerm } from '@prisma/client';
 import type { PageMeta, Weekday } from '@repo/types';
-import { WEEKDAYS } from '@repo/types';
+import { CONVERSION_BLOCK_DEFAULT_MINUTES, WEEKDAYS } from '@repo/types';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 
 import type { Principal } from '../../../common/auth/principal';
@@ -30,6 +30,7 @@ interface TermsValues {
   bandEnd: string;
   paidOvertimeAllowed: boolean;
   toilMonthlyCapMinutes: number;
+  conversionBlockMinutes: number;
   leaveDayMaxMinutes: number;
   flexiCreditCapMinutes: number | null;
   flexiDebitCapMinutes: number | null;
@@ -45,6 +46,7 @@ const DEFAULTS: TermsValues = {
   bandEnd: '19:00',
   paidOvertimeAllowed: false,
   toilMonthlyCapMinutes: 450,
+  conversionBlockMinutes: CONVERSION_BLOCK_DEFAULT_MINUTES,
   leaveDayMaxMinutes: 450,
   flexiCreditCapMinutes: null,
   flexiDebitCapMinutes: null,
@@ -215,6 +217,7 @@ function valuesOf(row: WorkTerm): TermsValues {
     bandEnd: fromDbTime(row.bandEnd),
     paidOvertimeAllowed: row.paidOvertimeAllowed,
     toilMonthlyCapMinutes: row.toilMonthlyCapMinutes,
+    conversionBlockMinutes: row.conversionBlockMinutes,
     leaveDayMaxMinutes: row.leaveDayMaxMinutes,
     flexiCreditCapMinutes: row.flexiCreditCapMinutes,
     flexiDebitCapMinutes: row.flexiDebitCapMinutes,
@@ -254,6 +257,7 @@ export function merge(
     bandEnd: dto.bandEnd ?? base.bandEnd,
     paidOvertimeAllowed: dto.paidOvertimeAllowed ?? base.paidOvertimeAllowed,
     toilMonthlyCapMinutes: dto.toilMonthlyCapMinutes ?? base.toilMonthlyCapMinutes,
+    conversionBlockMinutes: dto.conversionBlockMinutes ?? base.conversionBlockMinutes,
     leaveDayMaxMinutes: dto.leaveDayMaxMinutes ?? base.leaveDayMaxMinutes,
     flexiCreditCapMinutes:
       dto.flexiCreditCapMinutes !== undefined
@@ -291,6 +295,7 @@ function toColumns(
     bandEnd: toDbTime(values.bandEnd),
     paidOvertimeAllowed: values.paidOvertimeAllowed,
     toilMonthlyCapMinutes: values.toilMonthlyCapMinutes,
+    conversionBlockMinutes: values.conversionBlockMinutes,
     leaveDayMaxMinutes: values.leaveDayMaxMinutes,
     flexiCreditCapMinutes: values.flexiCreditCapMinutes,
     flexiDebitCapMinutes: values.flexiDebitCapMinutes,
