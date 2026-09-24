@@ -17,6 +17,10 @@ export interface SummaryColumn {
   flexi?: boolean;
   /** How the totals row adds it up: a sum, or the last group's value (a balance). */
   total: 'sum' | 'last';
+  /** The table's group heading over this column (the CSV keeps the full label). */
+  group?: 'TOIL' | 'Overtime';
+  /** The table's shorter label under its group heading ("Taken" under "TOIL"). */
+  short?: string;
 }
 
 /**
@@ -31,11 +35,29 @@ export const SUMMARY_COLUMNS: readonly SummaryColumn[] = [
   { field: 'bankHolidayMinutes', label: 'Bank holidays', total: 'sum' },
   { field: 'flexiMinutes', label: 'Flexi', flexi: true, total: 'sum' },
   { field: 'convertedMinutes', label: 'Converted', total: 'sum' },
-  { field: 'toilMinutes', label: 'TOIL', total: 'sum' },
-  { field: 'toilTakenMinutes', label: 'TOIL taken', total: 'sum' },
-  { field: 'toilUnusedMinutes', label: 'TOIL unused', total: 'sum' },
-  { field: 'overtimePaidMinutes', label: 'Overtime paid', total: 'sum' },
-  { field: 'overtimeUnpaidMinutes', label: 'Overtime unpaid', total: 'sum' },
+  { field: 'toilMinutes', label: 'TOIL', total: 'sum', group: 'TOIL', short: 'Earned' },
+  { field: 'toilTakenMinutes', label: 'TOIL taken', total: 'sum', group: 'TOIL', short: 'Taken' },
+  {
+    field: 'toilUnusedMinutes',
+    label: 'TOIL unused',
+    total: 'sum',
+    group: 'TOIL',
+    short: 'Unused',
+  },
+  {
+    field: 'overtimePaidMinutes',
+    label: 'Overtime paid',
+    total: 'sum',
+    group: 'Overtime',
+    short: 'Paid',
+  },
+  {
+    field: 'overtimeUnpaidMinutes',
+    label: 'Overtime unpaid',
+    total: 'sum',
+    group: 'Overtime',
+    short: 'Unpaid',
+  },
   { field: 'flexiBalanceEndMinutes', label: 'Flexi balance at end', flexi: true, total: 'last' },
 ];
 
@@ -54,6 +76,20 @@ export function summaryTotals(groups: readonly SummaryGroup[]): Record<MinutesFi
         : groups.reduce((sum, group) => sum + group[column.field], 0);
   }
   return totals;
+}
+
+/**
+ * Where a period stands on `today`: `past` once it has ended, `in-progress`
+ * while it holds today, `upcoming` before it starts. A period's target counts
+ * all its working days, while flexi counts only the days up to today, so a
+ * period that is not past shows more target than it has credited.
+ */
+export function periodState(
+  group: Pick<SummaryGroup, 'start' | 'end'>,
+  today: string,
+): 'past' | 'in-progress' | 'upcoming' {
+  if (today < group.start) return 'upcoming';
+  return today < group.end ? 'in-progress' : 'past';
 }
 
 /** "Week of 5 Oct 2026" or "October 2026". */

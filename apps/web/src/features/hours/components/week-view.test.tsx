@@ -163,6 +163,9 @@ async function renderWeek({
 const field = (name: string, day: string) =>
   screen.getByRole('textbox', { name: `${name}, ${day}` });
 const row = (day: string) => screen.getByRole('row', { name: new RegExp(`^${day}`) });
+/** A day's warnings and notes: a row of its own under the day's row. */
+const notes = (day: string) =>
+  screen.getByRole('row', { name: new RegExp(`^(Warnings|Notes) for ${day}:`) });
 
 beforeEach(() => {
   vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
@@ -181,10 +184,13 @@ describe('WeekView', () => {
     expect(await screen.findByText('No time recorded this week.')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Week of 5 Oct 2026' })).toBeInTheDocument();
     const table = screen.getByRole('table', { name: 'Week of 5 Oct 2026' });
-    // Seven day rows plus the head and the totals.
-    expect(within(table).getAllByRole('row')).toHaveLength(9);
+    // Seven day rows (each weekday's warnings in a row under it), the head and the totals.
+    expect(
+      within(table).getAllByRole('row', { name: /^(Mon|Tue|Wed|Thu|Fri|Sat|Sun) \d/ }),
+    ).toHaveLength(7);
+    expect(within(table).getAllByRole('rowheader')).toHaveLength(8);
     expect(field('Start', 'Mon 5 Oct')).toHaveValue('');
-    expect(row('Fri 9 Oct')).toHaveTextContent('Nothing recorded');
+    expect(notes('Fri 9 Oct')).toHaveTextContent('Warning: Nothing recorded');
     const list = calls.find((call) => call.path === '/api/v1/work-days');
     expect(list?.search.get('from')).toBe(WEEK);
     expect(list?.search.get('to')).toBe('2026-10-12');
@@ -285,7 +291,7 @@ describe('WeekView', () => {
     // make it come and go while typing.
     expect(screen.getByText('+1 day').closest('[aria-live]')).toBeNull();
     expect(row('Wed 7 Oct')).toHaveTextContent('7:30');
-    expect(row('Wed 7 Oct')).toHaveTextContent('After 19:00');
+    expect(notes('Wed 7 Oct')).toHaveTextContent('After 19:00');
   });
 
   it('reverts a row with Esc', async () => {

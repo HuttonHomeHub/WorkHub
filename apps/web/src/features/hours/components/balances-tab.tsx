@@ -21,6 +21,7 @@ import {
 
 import { DurationInput } from './duration-input';
 import { actionErrorMessage, LoadError, LoadingRows, SaveErrorAlert } from './request-states';
+import { SectionCard } from './section-card';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -33,6 +34,16 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { NativeSelect } from '@/components/ui/native-select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableHeader,
+  TableRow,
+  TableRowHeader,
+} from '@/components/ui/table';
 import { toast } from '@/components/ui/toast';
 import { formatDate } from '@/lib/format';
 
@@ -79,9 +90,9 @@ function AddAdjustmentForm({ defaultDate }: { defaultDate: string }) {
         onSubmit={form.handleSubmit(submit)}
         noValidate
         aria-labelledby="add-adjustment-heading"
-        className="grid max-w-(--width-form) grid-cols-1 gap-4"
+        className="bg-card grid grid-cols-1 gap-4 rounded-xl border p-4 shadow-xs"
       >
-        <h3 id="add-adjustment-heading" className="font-semibold">
+        <h3 id="add-adjustment-heading" className="text-h3">
           Add an adjustment
         </h3>
         {create.isError ? (
@@ -90,7 +101,7 @@ function AddAdjustmentForm({ defaultDate }: { defaultDate: string }) {
             conflictMessage="That adjustment could not be added. Reload the page and try again."
           />
         ) : null}
-        <div className="flex flex-wrap items-start gap-4">
+        <div className="flex flex-wrap items-start gap-x-6 gap-y-4">
           <FormField
             control={form.control}
             name="effectiveDate"
@@ -98,7 +109,7 @@ function AddAdjustmentForm({ defaultDate }: { defaultDate: string }) {
               <FormItem className="content-start">
                 <FormLabel>Date</FormLabel>
                 <FormControl>
-                  <Input type="date" className="w-44" {...field} />
+                  <Input type="date" className="w-(--width-input-date)" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -111,7 +122,7 @@ function AddAdjustmentForm({ defaultDate }: { defaultDate: string }) {
               <FormItem className="content-start">
                 <FormLabel>Balance</FormLabel>
                 <FormControl>
-                  <NativeSelect className="w-36" {...field}>
+                  <NativeSelect className="w-(--width-input-date)" {...field}>
                     {Object.entries(BALANCE_LABELS).map(([value, label]) => (
                       <option key={value} value={value}>
                         {label}
@@ -130,7 +141,7 @@ function AddAdjustmentForm({ defaultDate }: { defaultDate: string }) {
               <FormItem className="content-start">
                 <FormLabel>Reason</FormLabel>
                 <FormControl>
-                  <NativeSelect className="w-44" {...field}>
+                  <NativeSelect className="w-(--width-input-date)" {...field}>
                     {Object.entries(REASON_LABELS).map(([value, label]) => (
                       <option key={value} value={value}>
                         {label}
@@ -163,13 +174,13 @@ function AddAdjustmentForm({ defaultDate }: { defaultDate: string }) {
             )}
           />
         </div>
-        <p className="text-muted-foreground max-w-(--width-prose) text-sm">
+        <p className="text-muted-foreground text-small max-w-(--width-prose)">
           For flexi and TOIL, a positive amount is time in credit. For leave, a positive amount adds
           to the leave remaining; use a negative one for leave taken before tracking started.
         </p>
         <div>
-          <Button type="submit" disabled={create.isPending}>
-            {create.isPending ? 'Adding…' : 'Add adjustment'}
+          <Button type="submit" isPending={create.isPending}>
+            Add adjustment
           </Button>
         </div>
       </form>
@@ -235,54 +246,47 @@ export function BalancesTab() {
   };
 
   return (
-    <div className="grid grid-cols-1 gap-8">
-      <section aria-labelledby="adjustments-heading" className="grid grid-cols-1 gap-3">
-        <h2 id="adjustments-heading" className="text-lg font-semibold">
-          Balance adjustments
-        </h2>
-        <p className="text-muted-foreground max-w-(--width-prose) text-sm">
-          {trackingStart
-            ? `Date opening balances on your tracking start, ${formatDate(trackingStart)}. `
-            : 'Date opening balances on your tracking start, the Monday of your first terms. '}
-          Record a flexi forfeit here once you have confirmed it.
-        </p>
+    <div className="grid grid-cols-1 gap-6">
+      <SectionCard
+        headingId="adjustments-heading"
+        title="Balance adjustments"
+        description={
+          <>
+            {trackingStart
+              ? `Date opening balances on your tracking start, ${formatDate(trackingStart)}. `
+              : 'Date opening balances on your tracking start, the Monday of your first terms. '}
+            Record a flexi forfeit here once you have confirmed it.
+          </>
+        }
+        flush
+      >
         <div ref={listRef} tabIndex={-1} className="outline-none">
           {rows.length === 0 ? (
-            <p className="text-sm">No adjustments yet.</p>
+            <p className="text-muted-foreground text-small px-4 py-3">No adjustments yet.</p>
           ) : (
-            <div className="relative overflow-x-auto">
-              <table className="w-full max-w-(--width-form) text-sm">
-                <thead>
-                  <tr className="border-b text-left">
-                    <th scope="col" className="py-2 pr-4 font-medium">
-                      Date
-                    </th>
-                    <th scope="col" className="py-2 pr-4 font-medium">
-                      Balance
-                    </th>
-                    <th scope="col" className="py-2 pr-4 font-medium">
-                      Reason
-                    </th>
-                    <th scope="col" className="py-2 pr-4 text-right font-medium">
-                      Amount
-                    </th>
-                    <th scope="col" className="py-2 font-medium">
+            <TableContainer>
+              <Table>
+                <TableHeader>
+                  <TableRow hover={false}>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Balance</TableHead>
+                    <TableHead>Reason</TableHead>
+                    <TableHead numeric>Amount</TableHead>
+                    <TableHead>
                       <span className="sr-only">Actions</span>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {rows.map((row) => (
-                    <tr key={row.id} data-row-id={row.id} className="border-b">
-                      <th scope="row" className="py-2 pr-4 text-left font-normal">
+                    <TableRow key={row.id} data-row-id={row.id} tone="zebra">
+                      <TableRowHeader className="font-normal tabular-nums">
                         {formatDate(row.effectiveDate)}
-                      </th>
-                      <td className="py-2 pr-4">{BALANCE_LABELS[row.balance]}</td>
-                      <td className="py-2 pr-4">{REASON_LABELS[row.reason]}</td>
-                      <td className="py-2 pr-4 text-right tabular-nums">
-                        {formatSignedDuration(row.minutes)}
-                      </td>
-                      <td className="py-2 text-right">
+                      </TableRowHeader>
+                      <TableCell>{BALANCE_LABELS[row.balance]}</TableCell>
+                      <TableCell>{REASON_LABELS[row.reason]}</TableCell>
+                      <TableCell numeric>{formatSignedDuration(row.minutes)}</TableCell>
+                      <TableCell className="text-right">
                         <Button variant="outline" size="sm" onClick={() => deleteAdjustment(row)}>
                           Delete{' '}
                           <span className="sr-only">
@@ -290,15 +294,15 @@ export function BalancesTab() {
                             {formatSignedDuration(row.minutes)} on {formatDate(row.effectiveDate)}
                           </span>
                         </Button>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
-            </div>
+                </TableBody>
+              </Table>
+            </TableContainer>
           )}
         </div>
-      </section>
+      </SectionCard>
       <AddAdjustmentForm key={trackingStart ?? today} defaultDate={trackingStart ?? today} />
     </div>
   );

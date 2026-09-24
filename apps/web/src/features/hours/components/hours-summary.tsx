@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { addDays, formatDuration, toCsv } from '@repo/domain';
-import { Download } from 'lucide-react';
+import { CalendarSearch, Download, Info } from 'lucide-react';
 import * as React from 'react';
 import { useForm } from 'react-hook-form';
 
@@ -8,7 +8,7 @@ import type { SummaryGroup } from '../api/keys';
 import { useTimeBalances } from '../api/time-balances';
 import { useTimeSummaries } from '../api/time-summaries';
 import { summaryRangeFormSchema, type SummaryRangeFormValues } from '../schemas/summary';
-import { summaryCsvRows } from '../summary-columns';
+import { periodState, summaryCsvRows } from '../summary-columns';
 import {
   apiRange,
   PRESET_LABELS,
@@ -24,8 +24,11 @@ import {
 import { LoadError, LoadingRows } from './request-states';
 import { SummaryTable } from './summary-table';
 
+import { PageHeader } from '@/components/layout/page-header';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
 import {
   Form,
   FormControl,
@@ -37,6 +40,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { NativeSelect } from '@/components/ui/native-select';
+import { ProgressBar } from '@/components/ui/progress';
 import { ApiRequestError } from '@/lib/api/client';
 import { downloadText } from '@/lib/download';
 import { formatDate } from '@/lib/format';
@@ -82,9 +86,9 @@ function CustomRangeForm({
         onSubmit={form.handleSubmit(onSubmit)}
         noValidate
         aria-label="Custom dates"
-        className="grid gap-4"
+        className="grid gap-3"
       >
-        <div className="flex flex-wrap items-start gap-4">
+        <div className="flex flex-wrap items-start gap-3">
           {(['from', 'to'] as const).map((name) => (
             <FormField
               key={name}
@@ -98,7 +102,7 @@ function CustomRangeForm({
                       type="date"
                       min="2000-01-01"
                       max="2100-12-31"
-                      className="w-40"
+                      className="w-(--width-input-date)"
                       {...field}
                     />
                   </FormControl>
@@ -118,7 +122,7 @@ function CustomRangeForm({
   );
 }
 
-/** The leave year of the range's end: allowance, used and remaining (rule 12). */
+/** The leave year of the range's end: allowance, used and remaining (rule 12), as a card. */
 function LeaveYearStrip({ year }: { year: number }) {
   const balances = useTimeBalances(`${String(year)}-12-31`);
   const headingId = React.useId();
@@ -136,32 +140,42 @@ function LeaveYearStrip({ year }: { year: number }) {
     body = <p className="text-muted-foreground">No leave is tracked yet.</p>;
   } else {
     const data = balances.data;
-    const items: [string, string][] = [
+    const over = data.leaveRemainingMinutes < 0;
+    const items: [string, React.ReactNode][] = [
       ['Allowance', formatDuration(data.leaveAllowanceMinutes)],
       ['Used', formatDuration(data.leaveUsedMinutes)],
       [
         'Remaining',
-        `${formatDuration(data.leaveRemainingMinutes)}${data.leaveRemainingMinutes < 0 ? ' (over allowance)' : ''}`,
+        <>
+          {formatDuration(data.leaveRemainingMinutes)}
+          {over ? <span className="text-warning-text text-small"> (over allowance)</span> : null}
+        </>,
       ],
     ];
     body = (
-      <dl className="flex flex-wrap gap-x-8 gap-y-2">
-        {items.map(([term, value]) => (
-          <div key={term} className="flex gap-2">
-            <dt className="text-muted-foreground">{term}</dt>
-            <dd className="font-medium tabular-nums">{value}</dd>
-          </div>
-        ))}
-      </dl>
+      <div className="grid gap-3">
+        <dl className="flex flex-wrap gap-3">
+          {items.map(([term, value]) => (
+            <div
+              key={term}
+              className="bg-muted/60 grid min-w-40 flex-1 gap-0.5 rounded-lg px-3 py-2.5"
+            >
+              <dt className="text-muted-foreground text-small">{term}</dt>
+              <dd className="text-h2 tabular-nums">{value}</dd>
+            </div>
+          ))}
+        </dl>
+        <ProgressBar value={data.leaveUsedMinutes} max={data.leaveAllowanceMinutes} />
+      </div>
     );
   }
   return (
-    <section aria-labelledby={headingId} className="grid gap-2 border-y py-3 text-sm">
-      <h2 id={headingId} className="font-semibold">
+    <Card role="region" aria-labelledby={headingId} className="grid gap-3 p-4">
+      <h2 id={headingId} className="text-h3">
         Leave year {year}
       </h2>
       {body}
-    </section>
+    </Card>
   );
 }
 
@@ -208,6 +222,7 @@ export function HoursSummary({ search, onSearchChange, today }: HoursSummaryProp
   const groups = summaries.data ?? [];
   const hasRows = summaries.isSuccess && !nothingRecorded(groups);
   const noteId = React.useId();
+  const targetNoteId = React.useId();
 
   const go = (next: Partial<SummarySearch>) => onSearchChange({ ...range, groupBy, ...next });
 
@@ -246,20 +261,43 @@ export function HoursSummary({ search, onSearchChange, today }: HoursSummaryProp
         />
       );
   } else if (!hasRows) {
-    content = <p className="text-sm">No time recorded between these dates.</p>;
-  } else {
     content = (
-      <div className="grid gap-2" aria-busy={summaries.isPlaceholderData}>
+      <EmptyState
+        icon={CalendarSearch}
+        title="No time recorded between these dates."
+        description="Choose other dates, or record time in the week view."
+      />
+    );
+  } else {
+    // A period that has not ended counts its whole target but only the days
+    // up to today in its flexi, so the table says so (app-shell-refresh.md).
+    const unfinished = groups.some((group) => periodState(group, today) !== 'past');
+    const describedBy =
+      [widened ? noteId : null, unfinished ? targetNoteId : null].filter(Boolean).join(' ') ||
+      undefined;
+    content = (
+      <div className="grid" aria-busy={summaries.isPlaceholderData}>
         <SummaryTable
           groups={groups}
           groupBy={groupBy}
+          today={today}
           caption={`Hours by ${groupBy}, ${rangeText}`}
-          describedBy={widened ? noteId : undefined}
+          describedBy={describedBy}
         />
-        {widened ? (
-          <p id={noteId} className="text-muted-foreground text-sm">
-            {widened}
-          </p>
+        {widened || unfinished ? (
+          <div className="text-muted-foreground text-small grid gap-1 border-t px-4 py-3">
+            {widened ? <p id={noteId}>{widened}</p> : null}
+            {unfinished ? (
+              <p id={targetNoteId} className="flex gap-1.5">
+                <Info aria-hidden className="mt-0.5 size-3.5 shrink-0" />
+                <span>
+                  Target counts every working day of a period, including days still to come; flexi
+                  counts the days up to today, {formatDate(today, 'weekdayDayMonth')}. So a period
+                  in progress shows more target than credited time.
+                </span>
+              </p>
+            ) : null}
+          </div>
         ) : null}
       </div>
     );
@@ -267,72 +305,73 @@ export function HoursSummary({ search, onSearchChange, today }: HoursSummaryProp
 
   return (
     <div className="grid grid-cols-1 gap-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="grid gap-1">
-          <h1 className="text-2xl font-semibold tracking-tight">Hours summary</h1>
-          <p className="text-muted-foreground text-sm">
-            {rangeText}, by {groupBy}
-          </p>
-        </div>
-        <Button onClick={download} disabled={!hasRows || problem !== null}>
-          <Download aria-hidden />
-          Download CSV
-        </Button>
-      </div>
+      <PageHeader
+        title="Hours summary"
+        description={`${rangeText}, by ${groupBy}`}
+        actions={
+          <Button onClick={download} disabled={!hasRows || problem !== null}>
+            <Download aria-hidden />
+            Download CSV
+          </Button>
+        }
+      />
 
-      <div className="flex flex-wrap items-start gap-4">
-        <div className="grid gap-2">
-          <Label htmlFor="summary-dates">Dates</Label>
-          <NativeSelect
-            id="summary-dates"
-            className="w-40"
-            value={showCustom ? 'custom' : preset}
-            onChange={(event) => {
-              const chosen = event.target.value as SummaryPreset;
-              const next = presetRange(chosen, today);
-              if (next) {
-                setCustomFor(null);
+      <Card className="overflow-hidden">
+        <div className="grid gap-4 border-b p-4">
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="grid gap-1.5">
+              <Label htmlFor="summary-dates">Dates</Label>
+              <NativeSelect
+                id="summary-dates"
+                className="w-(--width-input-date)"
+                value={showCustom ? 'custom' : preset}
+                onChange={(event) => {
+                  const chosen = event.target.value as SummaryPreset;
+                  const next = presetRange(chosen, today);
+                  if (next) {
+                    setCustomFor(null);
+                    go(next);
+                  } else {
+                    setCustomFor(rangeKey);
+                  }
+                }}
+              >
+                {PRESETS.map((value) => (
+                  <option key={value} value={value}>
+                    {PRESET_LABELS[value]}
+                  </option>
+                ))}
+              </NativeSelect>
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="summary-group-by">Group by</Label>
+              <NativeSelect
+                id="summary-group-by"
+                className="w-(--width-input-short)"
+                value={groupBy}
+                onChange={(event) => go({ groupBy: event.target.value as SummaryGroupBy })}
+              >
+                {(['week', 'month'] as const).map((value) => (
+                  <option key={value} value={value}>
+                    {GROUP_LABELS[value]}
+                  </option>
+                ))}
+              </NativeSelect>
+            </div>
+          </div>
+          {showCustom ? (
+            <CustomRangeForm
+              key={rangeKey}
+              range={range}
+              onSubmit={(next) => {
+                setCustomFor(`${next.from}/${next.to}`);
                 go(next);
-              } else {
-                setCustomFor(rangeKey);
-              }
-            }}
-          >
-            {PRESETS.map((value) => (
-              <option key={value} value={value}>
-                {PRESET_LABELS[value]}
-              </option>
-            ))}
-          </NativeSelect>
+              }}
+            />
+          ) : null}
         </div>
-        <div className="grid gap-2">
-          <Label htmlFor="summary-group-by">Group by</Label>
-          <NativeSelect
-            id="summary-group-by"
-            className="w-32"
-            value={groupBy}
-            onChange={(event) => go({ groupBy: event.target.value as SummaryGroupBy })}
-          >
-            {(['week', 'month'] as const).map((value) => (
-              <option key={value} value={value}>
-                {GROUP_LABELS[value]}
-              </option>
-            ))}
-          </NativeSelect>
-        </div>
-      </div>
-      {showCustom ? (
-        <CustomRangeForm
-          key={rangeKey}
-          range={range}
-          onSubmit={(next) => {
-            setCustomFor(`${next.from}/${next.to}`);
-            go(next);
-          }}
-        />
-      ) : null}
-
-      {content}
+        {problem || summaries.isError ? <div className="p-4">{content}</div> : content}
+      </Card>
 
       <LeaveYearStrip year={Number(range.to.slice(0, 4))} />
     </div>

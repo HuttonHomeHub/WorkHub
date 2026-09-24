@@ -1,3 +1,5 @@
+import { CircleAlert } from 'lucide-react';
+
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -17,7 +19,9 @@ export function LoadingRows({ label, rows = 3 }: { label: string; rows?: number 
     <div aria-busy="true" className="grid gap-2">
       <span className="sr-only">{label}</span>
       {show
-        ? Array.from({ length: rows }, (_, index) => <Skeleton key={index} className="h-8" />)
+        ? Array.from({ length: rows }, (_, index) => (
+            <Skeleton key={index} className="h-(--row-height)" />
+          ))
         : null}
     </div>
   );
@@ -27,7 +31,8 @@ export function LoadingRows({ label, rows = 3 }: { label: string; rows?: number 
 export function LoadError({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
     <Alert variant="destructive">
-      <AlertDescription className="flex flex-wrap items-center justify-between gap-4">
+      <CircleAlert aria-hidden />
+      <AlertDescription className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
         {message}
         <Button variant="outline" size="sm" onClick={onRetry}>
           Retry

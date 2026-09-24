@@ -1,7 +1,7 @@
 import { toCsv } from '@repo/domain';
 import { describe, expect, it } from 'vitest';
 
-import { periodLabel, summaryCsvRows, summaryTotals } from './summary-columns';
+import { periodLabel, periodState, summaryCsvRows, summaryTotals } from './summary-columns';
 
 import { summaryGroup } from '@/test/hours-fixtures';
 
@@ -25,6 +25,15 @@ describe('summary columns', () => {
     }),
     summaryGroup(),
   ];
+
+  it('says where a period stands on a day: past, in progress or upcoming', () => {
+    const week = { start: '2026-10-05', end: '2026-10-12' };
+    expect(periodState(week, '2026-10-04')).toBe('upcoming');
+    expect(periodState(week, '2026-10-05')).toBe('in-progress');
+    expect(periodState(week, '2026-10-11')).toBe('in-progress');
+    // The end is exclusive: the week is over on the next Monday.
+    expect(periodState(week, '2026-10-12')).toBe('past');
+  });
 
   it('labels weeks and months', () => {
     expect(periodLabel(summaryGroup(), 'week')).toBe('Week of 5 Oct 2026');

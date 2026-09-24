@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { HOURS_YEAR_MAX, HOURS_YEAR_MIN } from '@repo/types';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { CalendarPlus, CalendarX, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 
 import { useFocusAfterRemoval } from '../hooks/use-focus-after-removal';
@@ -13,6 +13,7 @@ import {
 import { actionErrorMessage, LoadError, LoadingRows, SaveErrorAlert } from './request-states';
 
 import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/empty-state';
 import {
   Form,
   FormControl,
@@ -22,6 +23,16 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableHeader,
+  TableRow,
+  TableRowHeader,
+} from '@/components/ui/table';
 import { toast } from '@/components/ui/toast';
 import {
   useCreatePublicHoliday,
@@ -38,7 +49,7 @@ function ImportButton({ year }: { year: number }) {
   return (
     <Button
       wrap
-      disabled={importHolidays.isPending}
+      isPending={importHolidays.isPending}
       onClick={() =>
         importHolidays.mutate(year, {
           onSuccess: ({ added }) =>
@@ -61,9 +72,8 @@ function ImportButton({ year }: { year: number }) {
         })
       }
     >
-      {importHolidays.isPending
-        ? 'Adding bank holidays…'
-        : `Add England and Wales bank holidays for ${String(year)}`}
+      <CalendarPlus aria-hidden />
+      {`Add England and Wales bank holidays for ${String(year)}`}
     </Button>
   );
 }
@@ -92,9 +102,9 @@ function AddHolidayForm({ year }: { year: number }) {
         onSubmit={form.handleSubmit(submit)}
         noValidate
         aria-labelledby="add-holiday-heading"
-        className="grid max-w-(--width-form) grid-cols-1 gap-4"
+        className="bg-card grid grid-cols-1 gap-4 rounded-xl border p-4 shadow-xs"
       >
-        <h3 id="add-holiday-heading" className="font-semibold">
+        <h3 id="add-holiday-heading" className="text-h3">
           Add a holiday
         </h3>
         {create.isError ? (
@@ -103,7 +113,7 @@ function AddHolidayForm({ year }: { year: number }) {
             conflictMessage="There is already a holiday on that date."
           />
         ) : null}
-        <div className="flex flex-wrap items-start gap-4">
+        <div className="flex flex-wrap items-start gap-x-6 gap-y-4">
           <FormField
             control={form.control}
             name="date"
@@ -113,7 +123,7 @@ function AddHolidayForm({ year }: { year: number }) {
                 <FormControl>
                   <Input
                     type="date"
-                    className="w-44"
+                    className="w-(--width-input-date)"
                     min={`${String(year)}-01-01`}
                     max={`${String(year)}-12-31`}
                     {...field}
@@ -138,8 +148,8 @@ function AddHolidayForm({ year }: { year: number }) {
           />
         </div>
         <div>
-          <Button type="submit" variant="outline" disabled={create.isPending}>
-            {create.isPending ? 'Adding…' : 'Add holiday'}
+          <Button type="submit" variant="outline" isPending={create.isPending}>
+            Add holiday
           </Button>
         </div>
       </form>
@@ -196,25 +206,28 @@ export function HolidaysTab({ year, onYearChange }: HolidaysTabProps) {
   };
 
   return (
-    <div className="grid grid-cols-1 gap-8">
-      <section aria-labelledby="holidays-heading" className="grid grid-cols-1 gap-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
+    <div className="grid grid-cols-1 gap-6">
+      <section
+        aria-labelledby="holidays-heading"
+        className="bg-card grid grid-cols-1 overflow-hidden rounded-xl border shadow-xs"
+      >
+        <div className="flex flex-wrap items-center justify-between gap-3 px-4 pt-3">
+          <div className="flex items-center gap-1">
             <Button
-              variant="outline"
-              size="icon"
+              variant="ghost"
+              size="icon-sm"
               aria-label="Previous year"
               disabled={year <= HOURS_YEAR_MIN}
               onClick={() => onYearChange(year - 1)}
             >
               <ChevronLeft aria-hidden />
             </Button>
-            <h2 id="holidays-heading" className="text-lg font-semibold">
+            <h2 id="holidays-heading" className="text-h3 px-1 tabular-nums">
               Holidays in {year}
             </h2>
             <Button
-              variant="outline"
-              size="icon"
+              variant="ghost"
+              size="icon-sm"
               aria-label="Next year"
               disabled={year >= HOURS_YEAR_MAX}
               onClick={() => onYearChange(year + 1)}
@@ -224,54 +237,58 @@ export function HolidaysTab({ year, onYearChange }: HolidaysTabProps) {
           </div>
           <ImportButton year={year} />
         </div>
-        <p className="text-muted-foreground max-w-(--width-prose) text-sm">
+        <p className="text-muted-foreground text-small max-w-(--width-prose) px-4 pb-4">
           A holiday on a working day credits the most leave in a day and counts against your leave
           allowance.
         </p>
         {holidays.isPending ? (
-          <LoadingRows label={`Loading the holidays in ${String(year)}`} rows={8} />
+          <div className="border-t p-4">
+            <LoadingRows label={`Loading the holidays in ${String(year)}`} rows={8} />
+          </div>
         ) : holidays.isError ? (
-          <LoadError
-            message={`We couldn't load the holidays in ${String(year)}.`}
-            onRetry={() => void holidays.refetch()}
-          />
+          <div className="border-t p-4">
+            <LoadError
+              message={`We couldn't load the holidays in ${String(year)}.`}
+              onRetry={() => void holidays.refetch()}
+            />
+          </div>
         ) : (
-          <div ref={listRef} tabIndex={-1} className="outline-none">
+          <div ref={listRef} tabIndex={-1} className="border-t outline-none">
             {holidays.data.length === 0 ? (
-              <p className="text-sm">No holidays in {year} yet.</p>
+              <EmptyState
+                icon={CalendarX}
+                title={`No holidays in ${String(year)} yet.`}
+                description="Add the England and Wales bank holidays, or add a holiday of your own below."
+              />
             ) : (
-              <div className="relative overflow-x-auto">
-                <table className="w-full max-w-(--width-form) text-sm">
-                  <thead>
-                    <tr className="border-b text-left">
-                      <th scope="col" className="py-2 pr-4 font-medium">
-                        Date
-                      </th>
-                      <th scope="col" className="py-2 pr-4 font-medium">
-                        Name
-                      </th>
-                      <th scope="col" className="py-2 font-medium">
+              <TableContainer>
+                <Table>
+                  <TableHeader>
+                    <TableRow hover={false}>
+                      <TableHead>Date</TableHead>
+                      <TableHead className="w-full">Name</TableHead>
+                      <TableHead>
                         <span className="sr-only">Actions</span>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                     {holidays.data.map((row) => (
-                      <tr key={row.id} data-row-id={row.id} className="border-b">
-                        <th scope="row" className="py-2 pr-4 text-left font-normal tabular-nums">
+                      <TableRow key={row.id} data-row-id={row.id} tone="zebra">
+                        <TableRowHeader className="font-normal whitespace-nowrap tabular-nums">
                           {formatDate(row.date)}
-                        </th>
-                        <td className="py-2 pr-4">{row.name}</td>
-                        <td className="py-2 text-right">
+                        </TableRowHeader>
+                        <TableCell>{row.name}</TableCell>
+                        <TableCell className="text-right">
                           <Button variant="outline" size="sm" onClick={() => deleteHoliday(row)}>
                             Delete <span className="sr-only">{row.name}</span>
                           </Button>
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     ))}
-                  </tbody>
-                </table>
-              </div>
+                  </TableBody>
+                </Table>
+              </TableContainer>
             )}
           </div>
         )}

@@ -179,7 +179,12 @@ export function WorkTermsForm({
                   : 'To change the date, add new terms from that Monday instead.'}
               </FormDescription>
               <FormControl>
-                <Input type="date" className="w-44" readOnly={mode === 'edit'} {...field} />
+                <Input
+                  type="date"
+                  className="w-(--width-input-date)"
+                  readOnly={mode === 'edit'}
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -187,26 +192,29 @@ export function WorkTermsForm({
         />
 
         <fieldset className="grid grid-cols-1 gap-2">
-          <legend className="text-sm font-medium">Working week</legend>
-          <p id={gridHintId} className="text-muted-foreground text-sm">
+          <legend className="text-body mb-1 font-semibold">Working week</legend>
+          <p id={gridHintId} className="text-muted-foreground text-small">
             Hours and minutes, e.g. 7:30. Clear a flexi target to make the day non-working.
           </p>
           <div className="relative overflow-x-auto">
             <table className="text-sm" aria-describedby={gridHintId}>
               <thead>
                 <tr className="text-left">
-                  <th scope="col" className="py-1 pr-4 font-medium">
+                  <th
+                    scope="col"
+                    className="text-muted-foreground text-small py-1 pr-4 font-medium"
+                  >
                     Day
                   </th>
-                  <th scope="col" className="py-1 pr-4 font-medium">
+                  <th scope="col" className="text-small py-1 pr-4 font-medium">
                     Flexi target
-                    <span className="text-muted-foreground block text-xs font-normal">
+                    <span className="text-muted-foreground text-meta block font-normal">
                       counts towards flexi
                     </span>
                   </th>
-                  <th scope="col" className="py-1 font-medium">
+                  <th scope="col" className="text-small py-1 font-medium">
                     Minimum
-                    <span className="text-muted-foreground block text-xs font-normal">
+                    <span className="text-muted-foreground text-meta block font-normal">
                       warning only
                     </span>
                   </th>
@@ -216,7 +224,9 @@ export function WorkTermsForm({
                 {WEEKDAYS.map((day) => (
                   <tr key={day} className="align-top">
                     <th scope="row" className="py-1 pr-4 text-left font-normal">
-                      <span className="inline-flex h-9 items-center">{DAY_NAMES[day]}</span>
+                      <span className="inline-flex h-(--control-md) items-center">
+                        {DAY_NAMES[day]}
+                      </span>
                     </th>
                     <td className="py-1 pr-4">
                       <WeekdayField control={form.control} day={day} column="targetMinutes" />
@@ -232,11 +242,11 @@ export function WorkTermsForm({
         </fieldset>
 
         <fieldset className="grid grid-cols-1 gap-3">
-          <legend className="text-sm font-medium">Breaks</legend>
-          <p className="text-muted-foreground text-sm">
+          <legend className="text-body mb-1 font-semibold">Breaks</legend>
+          <p className="text-muted-foreground text-small">
             A day longer than the threshold has at least the minimum break deducted.
           </p>
-          <div className="flex flex-wrap gap-4">
+          <div className="flex flex-wrap gap-x-6 gap-y-4">
             <DurationField control={form.control} name="breakThresholdMinutes" label="Threshold" />
             <DurationField
               control={form.control}
@@ -247,11 +257,11 @@ export function WorkTermsForm({
         </fieldset>
 
         <fieldset className="grid grid-cols-1 gap-3">
-          <legend className="text-sm font-medium">Working band</legend>
-          <p className="text-muted-foreground text-sm">
+          <legend className="text-body mb-1 font-semibold">Working band</legend>
+          <p className="text-muted-foreground text-small">
             Time before the start or after the end raises a warning.
           </p>
-          <div className="flex flex-wrap gap-4">
+          <div className="flex flex-wrap gap-x-6 gap-y-4">
             {(['bandStart', 'bandEnd'] as const).map((name) => (
               <FormField
                 key={name}
@@ -300,12 +310,12 @@ export function WorkTermsForm({
         />
 
         <fieldset className="grid grid-cols-1 gap-3">
-          <legend className="text-sm font-medium">Limits</legend>
-          <p className="text-muted-foreground text-sm">
+          <legend className="text-body mb-1 font-semibold">Limits</legend>
+          <p className="text-muted-foreground text-small">
             TOIL over the monthly cap becomes overtime. A flexi balance past a cap raises a warning;
             nothing is forfeited unless you confirm it.
           </p>
-          <div className="flex flex-wrap gap-4">
+          <div className="flex flex-wrap gap-x-6 gap-y-4">
             <DurationField
               control={form.control}
               name="toilMonthlyCapMinutes"
@@ -338,8 +348,8 @@ export function WorkTermsForm({
         </fieldset>
 
         <div className="flex flex-wrap gap-2">
-          <Button type="submit" disabled={isPending}>
-            {isPending ? 'Saving…' : mode === 'create' ? 'Save new terms' : 'Save changes'}
+          <Button type="submit" isPending={isPending}>
+            {mode === 'create' ? 'Save new terms' : 'Save changes'}
           </Button>
           <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>
             Cancel

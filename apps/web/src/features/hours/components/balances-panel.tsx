@@ -1,9 +1,10 @@
-import { formatDuration, formatFlexi } from '@repo/domain';
+import { formatDuration } from '@repo/domain';
 import * as React from 'react';
 
 import { useTimeBalances } from '../api/time-balances';
 
 import { Figure } from './figure';
+import { FlexiValue } from './flexi-value';
 import { LoadError, LoadingRows } from './request-states';
 
 import { formatDate } from '@/lib/format';
@@ -40,7 +41,7 @@ export function BalancesPanel({ asOf }: BalancesPanelProps) {
     );
   } else if (balances.data.trackingStart === null) {
     body = (
-      <p className="text-muted-foreground">
+      <p className="text-muted-foreground text-small">
         No balances yet. Set your working terms to start tracking hours.
       </p>
     );
@@ -49,7 +50,9 @@ export function BalancesPanel({ asOf }: BalancesPanelProps) {
     const year = asOf.slice(0, 4);
     body = (
       <dl className="grid gap-1">
-        <Figure term="Flexi">{formatFlexi(data.flexiMinutes)}</Figure>
+        <Figure term="Flexi">
+          <FlexiValue minutes={data.flexiMinutes} />
+        </Figure>
         <Figure term={`TOIL ${formatDate(asOf, 'month')}`}>
           {formatDuration(data.toilMonthMinutes)} of {formatDuration(data.toilCapMinutes)}
         </Figure>
@@ -61,19 +64,24 @@ export function BalancesPanel({ asOf }: BalancesPanelProps) {
         </Figure>
         <Figure term={`Leave left ${year}`}>
           {formatDuration(data.leaveRemainingMinutes)}
-          {data.leaveRemainingMinutes < 0 ? ' (over allowance)' : ''}
+          {data.leaveRemainingMinutes < 0 ? (
+            <span className="text-warning-text"> (over allowance)</span>
+          ) : null}
         </Figure>
       </dl>
     );
   }
 
   return (
-    <section aria-labelledby={headingId} className="grid gap-3 text-sm">
+    <section
+      aria-labelledby={headingId}
+      className="bg-card text-body grid gap-3 rounded-xl border p-4 shadow-xs"
+    >
       <div className="grid gap-0.5">
-        <h2 id={headingId} className="text-base font-semibold">
+        <h2 id={headingId} className="text-h3">
           Balances
         </h2>
-        <p className="text-muted-foreground text-xs">
+        <p className="text-muted-foreground text-meta">
           To the end of {formatDate(asOf, 'weekdayDayMonth')}
         </p>
       </div>
