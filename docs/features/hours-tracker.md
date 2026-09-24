@@ -1615,7 +1615,12 @@ to, groupBy)` and `balancesAt(result, asOf)` shape them for `time-summaries`
   overtime at the monthly cap (rule 7).
 - **Migration 3** (`add_conversion_block`): `work_terms.conversion_block_minutes
 int NOT NULL DEFAULT 30` with `ck_work_terms_conversion_block_range`
-  (1–480), additive; existing terms take 0:30. **The bound:** at least a minute
+  (1–480), additive; existing terms take 0:30. **Past weeks recalculate:**
+  nothing derived is stored, so every converted week, settled or not, is now
+  levelled in 0:30 blocks, and past TOIL, overtime and flexi can shift.
+  Intended: the owner's timesheet is in 0:30 blocks, and nothing had been
+  released (database-architect's option of keeping old terms at a 1-minute
+  block was not needed). **The bound:** at least a minute
   (a 1-minute block is the old minute-by-minute levelling), at most 8:00: a
   block longer than a working day would rarely convert anything, and 8:00
   covers any timesheet granularity (15, 30 or 60 minutes). The same bounds are
