@@ -33,7 +33,7 @@ function Table({ className, ...props }: React.ComponentPropsWithoutRef<'table'>)
 }
 
 function TableHeader({ className, ...props }: React.ComponentPropsWithoutRef<'thead'>) {
-  return <thead className={cn('bg-muted/60 [&_tr]:border-b', className)} {...props} />;
+  return <thead className={cn('bg-muted [&_tr]:border-b', className)} {...props} />;
 }
 
 /** The rows. The last row drops its rule: the card's edge or the footer's rule follows it. */
@@ -44,7 +44,7 @@ function TableBody({ className, ...props }: React.ComponentPropsWithoutRef<'tbod
 function TableFooter({ className, ...props }: React.ComponentPropsWithoutRef<'tfoot'>) {
   return (
     <tfoot
-      className={cn('bg-muted/60 border-t font-medium [&>tr]:border-b-0', className)}
+      className={cn('bg-muted border-t font-medium [&>tr]:border-b-0', className)}
       {...props}
     />
   );

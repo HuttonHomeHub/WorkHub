@@ -47,12 +47,43 @@ function ThemeMenu() {
   const { theme, setTheme } = useTheme();
   const current = THEMES.find((option) => option.value === theme) ?? THEMES[2];
   const Icon = current.icon;
+  // The tooltip names the button; it never shows over the open menu, and the
+  // focus the menu hands back as it closes does not reopen it (it would stay
+  // up after the pointer had gone). Leaving or blurring the button re-arms it.
+  const [menuOpen, setMenuOpen] = React.useState(false);
+  const [tooltipOpen, setTooltipOpen] = React.useState(false);
+  const menuJustClosed = React.useRef(false);
+  const rearm = () => {
+    menuJustClosed.current = false;
+  };
   return (
-    <DropdownMenu>
-      <Tooltip>
+    <DropdownMenu
+      open={menuOpen}
+      onOpenChange={(open) => {
+        setMenuOpen(open);
+        if (open) setTooltipOpen(false);
+        else menuJustClosed.current = true;
+      }}
+    >
+      <Tooltip
+        open={tooltipOpen && !menuOpen}
+        onOpenChange={(open) => {
+          if (open && menuJustClosed.current) {
+            menuJustClosed.current = false;
+            return;
+          }
+          setTooltipOpen(open);
+        }}
+      >
         <TooltipTrigger asChild>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" aria-label={`Theme: ${current.label}`}>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={`Theme: ${current.label}`}
+              onPointerLeave={rearm}
+              onBlur={rearm}
+            >
               <Icon aria-hidden />
             </Button>
           </DropdownMenuTrigger>

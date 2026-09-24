@@ -68,7 +68,7 @@ function ConversionSwitchField({
   const id = React.useId();
   const checked = change.isPending ? change.variables.on : row !== undefined;
   return (
-    <div className="bg-muted/60 flex items-start gap-2.5 rounded-lg px-3 py-2.5">
+    <div className="bg-muted flex items-start gap-2.5 rounded-lg px-3 py-2.5">
       <Switch
         id={id}
         className="mt-0.5"

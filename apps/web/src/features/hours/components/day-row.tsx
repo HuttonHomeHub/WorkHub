@@ -238,10 +238,10 @@ function DayRowComponent({
       'aria-describedby': describedBy || undefined,
       hintVisibility: 'sr-only' as const,
       size: 'sm' as const,
-      className: 'text-small w-(--width-input-compact) px-1.5 text-center',
+      className: 'text-small w-(--width-input-compact) px-0.5 text-center',
     };
     return (
-      <TableCell className="px-1 align-top">
+      <TableCell className="px-0.5 align-top">
         {name === 'start' || name === 'end' ? (
           <TimeInput {...common} />
         ) : (
@@ -289,7 +289,7 @@ function DayRowComponent({
           >
             <TableRowHeader
               id={headerId}
-              className="pr-2 align-top first:pl-3"
+              className="pr-1 align-top first:pl-3"
               aria-current={isToday ? 'date' : undefined}
             >
               <div className="flex min-h-(--control-sm) flex-col items-start justify-center gap-0.5">
@@ -325,7 +325,7 @@ function DayRowComponent({
                 {figure(convertedMinutes > 0 ? formatDuration(convertedMinutes) : <Empty />)}
               </TableCell>
             ) : null}
-            <TableCell className="pl-1 align-top last:pr-3">
+            <TableCell className="pl-1 align-top last:pr-2">
               <div className="flex min-h-(--control-sm) items-center justify-end gap-0.5">
                 {dirty ? (
                   <Button

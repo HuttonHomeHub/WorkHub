@@ -104,7 +104,12 @@ const PAIRS: [string, string, number][] = [
   ...['background', 'card', 'popover', 'table-stripe', 'highlight', 'sidebar'].map(
     (surface): [string, string, number] => ['ring', surface, 3],
   ),
+  // The switch's track and the progress bar's fill on the muted track or well
+  // they sit in (the conversion switch is in a `muted` well).
   ['primary', 'muted', 3],
+  ['success', 'muted', 3],
+  ['ring', 'muted', 3],
+  ['muted-foreground', 'muted', 3],
   // The sidebar.
   ['sidebar-foreground', 'sidebar', 4.5],
   ['sidebar-foreground', 'sidebar-accent', 4.5],

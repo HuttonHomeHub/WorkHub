@@ -42,17 +42,18 @@ One shell, composed once as a layout route (`routes/_authed.tsx` →
 ├────────┬─────────────────────────────────────────────────┤
 │ side   │ page                                            │
 │ bar    │  ┌ page header: h1 · breadcrumb · primary action│
-│ 240px  │  ├ content                                      │
-│ (rail  │  │   list pane  │  detail pane                  │
-│  56px) │  └                                              │
+│ (or    │  ├ content                                      │
+│  the   │  │   list pane  │  detail pane                  │
+│  rail) │  └                                              │
 └────────┴─────────────────────────────────────────────────┘
 ```
 
 **Sidebar** (`components/layout/sidebar.tsx`): one entry per tool, built from
 the tool manifests in `app/tools.ts` (ADR-0020).
 
-- Two states: **expanded** (240px, icon + label) and **rail** (56px, icon only
-  with a tooltip). The toggle is a header button named "Sidebar" with
+- Two states: **expanded** (icon + label) and **rail** (icon only, with a
+  tooltip); their widths are `--sidebar-width` and `--sidebar-rail` in
+  [DESIGN_SYSTEM.md → Layout](DESIGN_SYSTEM.md#layout--partly-implemented). The toggle is a header button named "Sidebar" with
   `aria-expanded` and `aria-controls`, and a tooltip naming its action
   ("Collapse sidebar"); the state persists per browser in `localStorage` and is
   restored before first paint.

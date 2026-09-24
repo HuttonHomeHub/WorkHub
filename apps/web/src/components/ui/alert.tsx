@@ -19,12 +19,25 @@ const alertVariants = cva(
   },
 );
 
+/**
+ * Alert — a message in the page (docs/DESIGN_SYSTEM.md → Alert). An error
+ * (`destructive`) is `role="alert"`, announced at once; the others are
+ * `role="status"`, announced politely, since nothing is wrong. Pass `role` to
+ * choose otherwise.
+ */
 function Alert({
   className,
   variant,
+  role,
   ...props
 }: React.ComponentPropsWithoutRef<'div'> & VariantProps<typeof alertVariants>) {
-  return <div role="alert" className={cn(alertVariants({ variant }), className)} {...props} />;
+  return (
+    <div
+      role={role ?? (variant === 'destructive' ? 'alert' : 'status')}
+      className={cn(alertVariants({ variant }), className)}
+      {...props}
+    />
+  );
 }
 
 function AlertTitle({ className, children, ...props }: React.ComponentPropsWithoutRef<'h5'>) {

@@ -204,16 +204,28 @@ test.describe('the theme menu', () => {
     await page.keyboard.press('Enter');
     await expect(page.locator('html')).toHaveClass(/\bdark\b/);
     await expect(page.getByRole('button', { name: 'Theme: Dark' })).toBeFocused();
+    // The focus the menu hands back does not bring the tooltip up.
+    await page.waitForTimeout(600);
+    await expect(page.getByRole('tooltip')).toHaveCount(0);
     await expectNoA11yViolations(page);
 
     // Kept across a reload, before first paint.
     await page.reload();
     await expect(page.locator('html')).toHaveClass(/\bdark\b/);
 
-    // Back to the system's (light) theme.
-    await page.getByRole('button', { name: 'Theme: Dark' }).click();
+    // With the mouse: the tooltip names the button on hover, never shows over
+    // the open menu, and is gone once a choice closes it.
+    const button = page.getByRole('button', { name: 'Theme: Dark' });
+    await button.hover();
+    await expect(page.getByRole('tooltip', { name: 'Theme' })).toBeVisible();
+    await button.click();
+    await expect(page.getByRole('menu')).toBeVisible();
+    await expect(page.getByRole('tooltip')).toHaveCount(0);
     await page.getByRole('menuitemradio', { name: 'System' }).click();
     await expect(page.locator('html')).not.toHaveClass(/\bdark\b/);
+    await page.mouse.move(600, 500);
+    await page.waitForTimeout(600);
+    await expect(page.getByRole('tooltip')).toHaveCount(0);
   });
 });
 

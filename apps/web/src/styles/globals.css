@@ -164,7 +164,7 @@
   --width-dialog: 28rem;
   /* A page's side column, such as the hours week view's aside; it stacks below
      the main content when both do not fit (DESIGN_SYSTEM.md → Layout). */
-  --width-aside: 16rem;
+  --width-aside: 15.5rem;
   /* The same column once the content is 80rem wide or more (a 1920px window). */
   --width-aside-wide: 20rem;
   /* The most a dense data card (the hours week table) grows to beside its aside;
@@ -172,7 +172,7 @@
   --width-data-card: 62rem;
   /* Field widths: a time or duration in a dense table row, a short form field
      (a duration, a year), a date. */
-  --width-input-compact: 3rem;
+  --width-input-compact: 3.25rem;
   --width-input-short: 6.5rem;
   --width-input-date: 10rem;
 

@@ -110,6 +110,10 @@ const STALE_TERMS = [
   ],
   [/\bdrawer\b/i, 'the sidebar collapses to an icon rail, never a drawer (docs/UX_STANDARDS.md)'],
   [
+    /sidebar[^.\n]{0,40}\b240px|\b240px[^.\n]{0,40}(sidebar|icon \+ label)|│ 240px/i,
+    'the sidebar is --sidebar-width; link DESIGN_SYSTEM.md → Layout rather than a number',
+  ],
+  [
     /ThemeToggle|two-way (theme )?(toggle|control)/i,
     'the theme control is the three-way Theme menu (docs/features/app-shell-refresh.md)',
   ],

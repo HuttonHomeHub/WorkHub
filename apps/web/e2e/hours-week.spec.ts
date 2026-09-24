@@ -252,6 +252,31 @@ for (const viewport of [
   });
 }
 
+test('keeps every time readable with WCAG 1.4.12 text spacing', async ({ page }) => {
+  await page.clock.setFixedTime(BEFORE_SETTLEMENT);
+  await signIn(page, E2E_WEEK_USER);
+  await seedExampleWeek(page.request, true);
+  await page.goto(`/hours?week=${EXAMPLE_WEEK}`);
+  await expect(field(page, 'Start', 'Mon 5 Oct')).toHaveValue('08:00');
+  // The success criterion's spacing: nothing may clip or overlap.
+  await page.addStyleTag({
+    content: `* {
+      line-height: 1.5 !important;
+      letter-spacing: 0.12em !important;
+      word-spacing: 0.16em !important;
+    }
+    p { margin-bottom: 2em !important; }`,
+  });
+  const clipped = await page
+    .getByRole('table', { name: 'Week of 5 Oct 2026' })
+    .evaluate((table) =>
+      [...table.querySelectorAll('input')]
+        .filter((input) => input.scrollWidth > input.clientWidth)
+        .map((input) => `${input.getAttribute('aria-label') ?? ''} "${input.value}"`),
+    );
+  expect(clipped).toEqual([]);
+});
+
 /**
  * The aside sits beside the table, and the table fits its column: no page
  * scroll and no table scroll, with the conversion's column showing and a row

@@ -132,7 +132,7 @@ export function WeekTableHead({
             key={column.key}
             numeric={column.numeric}
             // Field headers wrap ("TOIL taken") to the fields' width.
-            className={column.numeric ? 'px-1' : 'px-1 whitespace-normal first:pr-2 first:pl-3'}
+            className={column.numeric ? 'px-1' : 'px-0.5 whitespace-normal first:pr-1 first:pl-3'}
           >
             {column.label}
             {column.key === 'converted' && preview ? (
@@ -143,7 +143,7 @@ export function WeekTableHead({
             ) : null}
           </TableHead>
         ))}
-        <TableHead className="pl-1 last:pr-3">
+        <TableHead className="pl-1 last:pr-2">
           <span className="sr-only">Actions</span>
         </TableHead>
       </TableRow>
@@ -491,7 +491,7 @@ export function WeekTable({
           </TableBody>
           <TableFooter>
             <TableRow hover={false}>
-              <TableRowHeader className="pr-2 align-top first:pl-3">Week</TableRowHeader>
+              <TableRowHeader className="pr-1 align-top first:pl-3">Week</TableRowHeader>
               <TableCell colSpan={5} />
               <TableCell numeric className="px-1 align-top">
                 {formatDuration(days.reduce((sum, day) => sum + day.workedMinutes, 0))}

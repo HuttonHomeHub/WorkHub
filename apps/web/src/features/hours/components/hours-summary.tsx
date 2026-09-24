@@ -158,7 +158,7 @@ function LeaveYearStrip({ year }: { year: number }) {
           {items.map(([term, value]) => (
             <div
               key={term}
-              className="bg-muted/60 grid min-w-40 flex-1 gap-0.5 rounded-lg px-3 py-2.5"
+              className="bg-muted grid min-w-40 flex-1 gap-0.5 rounded-lg px-3 py-2.5"
             >
               <dt className="text-muted-foreground text-small">{term}</dt>
               <dd className="text-h2 tabular-nums">{value}</dd>
