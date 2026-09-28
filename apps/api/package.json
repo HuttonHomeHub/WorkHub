@@ -31,7 +31,7 @@
     "@nestjs/platform-express": "^11.2.5",
     "@nestjs/swagger": "^11.4.7",
     "@nestjs/terminus": "^11.0.0",
-    "@nestjs/throttler": "^6.7.0",
+    "@nestjs/throttler": "^6.7.1",
     "@prisma/client": "^6.2.1",
     "@repo/domain": "workspace:*",
     "@repo/types": "workspace:*",
